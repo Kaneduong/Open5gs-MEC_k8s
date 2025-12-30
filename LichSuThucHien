@@ -1,5 +1,13 @@
 ###########################################################################################################################
 ### 30/12/2025
+- chuyển đổi mô hình (thực hiện phương án 2)
+- xóa cấu hình cũ trên VM open5gs
+- Join open5gs vào cluster k8s
+- Cài Cloudcore trên masterk8
+- Đang kết nối edgecore2 trên open5gs vào cloudcore (masterk8s) - Line 313
+
+
+###
 source https://github.com/niloysh/open5gs-k8s. để thực hiện 2 luận văn 
 - nghiên cứu sự di chuyển của UE tại MEC
 - nghiên cứu chuyển tải và lập lịch tài nguyên tại MEC
@@ -231,39 +239,168 @@ STATUS: deployed
 REVISION: 1
 root@MasterK8s:~#
 
+nano cloudcore-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudcore
+  namespace: kubeedge
+spec:
+  type: NodePort
+  selector:
+    app: cloudcore
+  ports:
+    - name: cloudcore-ws
+      port: 10000
+      targetPort: 10000
+      nodePort: 30000
+    - name: cloudcore-rest
+      port: 10002
+      targetPort: 10002
+      nodePort: 30002
+
+
+kubectl apply -f cloudcore-svc.yaml
+
 3. Cài keadm trên Edge nodes (VM1, VM3)
 Lặp lại bước tải và copy keadm trên VM1 và VM3.
 
 4. Join EdgeCore từ VM1 và VM3
 Trên VM1:
+nano /etc/containerd/config.toml
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+  SystemdCgroup = true
+Khởi động lại containerd:
+
 bash
-keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-name=edge2
-############### Lỗi
-root@Open5GS:~# keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-name=edge2
-I1230 11:17:55.120442  323952 command.go:901] 1. Check KubeEdge edgecore process status
-I1230 11:17:55.134426  323952 command.go:901] 2. Check if the management directory is clean
-Error: the management directory /etc/kubeedge/ is not clean, please remove it first
-execute keadm command failed:  the management directory /etc/kubeedge/ is not clean, please remove it first
-root@Open5GS:~# sudo systemctl restart containerd
-root@Open5GS:~# sudo rm -rf /var/lib/kubeedge
+sudo systemctl restart containerd
+Xóa dữ liệu cũ của KubeEdge (nếu có):
+
+bash
+sudo rm -rf /var/lib/kubeedge
 sudo rm -rf /etc/kubeedge
-root@Open5GS:~# keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-name=edge2
-I1230 11:18:24.005455  324226 command.go:901] 1. Check KubeEdge edgecore process status
-I1230 11:18:24.028034  324226 command.go:901] 2. Check if the management directory is clean
-I1230 11:18:25.531904  324226 common.go:307] remote version is much newer: v1.22.0; falling back to: v1.15.0
-I1230 11:18:25.532011  324226 join.go:107] 3. Create the necessary directories
-I1230 11:18:25.540472  324226 join.go:184] 4. Pull Images
-Pulling docker.io/kubeedge/installation-package:v1.15.0 ...
-Successfully pulled docker.io/kubeedge/installation-package:v1.15.0
-Pulling docker.io/library/eclipse-mosquitto:1.6.15 ...
-Successfully pulled docker.io/library/eclipse-mosquitto:1.6.15
-Pulling docker.io/kubeedge/pause:3.6 ...
-Successfully pulled docker.io/kubeedge/pause:3.6
-I1230 11:18:25.547193  324226 join.go:184] 5. Copy resources from the image to the management directory
-E1230 11:18:28.516612  324226 remote_runtime.go:176] "RunPodSandbox from runtime service failed" err="rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: expected cgroupsPath to be of format \"slice:prefix:name\" for systemd cgroups, got \"/k8s.io/2ef78eff64653f2e0eec7334ceeb70f1ae782a17e6331a745d81c5b62205436e\" instead: unknown"
-Error: edge node join failed: copy resources failed: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: expected cgroupsPath to be of format "slice:prefix:name" for systemd cgroups, got "/k8s.io/2ef78eff64653f2e0eec7334ceeb70f1ae782a17e6331a745d81c5b62205436e" instead: unknown
-execute keadm command failed:  edge node join failed: copy resources failed: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: expected cgroupsPath to be of format "slice:prefix:name" for systemd cgroups, got "/k8s.io/2ef78eff64653f2e0eec7334ceeb70f1ae782a17e6331a745d81c5b62205436e" instead: unknown
-root@Open5GS:~#
+
+keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-name=edge2
+
+############### Lỗi
+#I1230 11:17:55.120442  323952 command.go:901] 1. Check KubeEdge edgecore process status
+#I1230 11:17:55.134426  323952 command.go:901] 2. Check if the management directory is clean
+#Error: the management directory /etc/kubeedge/ is not clean, please remove it first
+#execute keadm command failed:  the management directory /etc/kubeedge/ is not clean, please remove it first
+#root@Open5GS:~# sudo systemctl restart containerd
+#root@Open5GS:~# sudo rm -rf /var/lib/kubeedge
+#root@Open5GS:~# keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-name=edge2
+#I1230 11:18:24.005455  324226 command.go:901] 1. Check KubeEdge edgecore process status
+#I1230 11:18:24.028034  324226 command.go:901] 2. Check if the management directory is clean
+#I1230 11:18:25.531904  324226 common.go:307] remote version is much newer: v1.22.0; falling back to: v1.15.0
+#I1230 11:18:25.532011  324226 join.go:107] 3. Create the necessary directories
+#I1230 11:18:25.540472  324226 join.go:184] 4. Pull Images
+#Pulling docker.io/kubeedge/installation-package:v1.15.0 ...
+#Successfully pulled docker.io/kubeedge/installation-package:v1.15.0
+#Pulling docker.io/library/eclipse-mosquitto:1.6.15 ...
+#Successfully pulled docker.io/library/eclipse-mosquitto:1.6.15
+#Pulling docker.io/kubeedge/pause:3.6 ...
+#Successfully pulled docker.io/kubeedge/pause:3.6
+#I1230 11:18:25.547193  324226 join.go:184] 5. Copy resources from the image to the management directory
+#E1230 11:18:28.516612  324226 remote_runtime.go:176] "RunPodSandbox from runtime service failed" err="rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: expected cgroupsPath to be of format \"slice:prefix:name\" for systemd cgroups, got \"/k8s.io/2ef78eff64653f2e0eec7334ceeb70f1ae782a17e6331a745d81c5b62205436e\" instead: unknown"
+#Error: edge node join failed: copy resources failed: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: expected cgroupsPath to be of format "slice:prefix:name" for systemd cgroups, got "/k8s.io/2ef78eff64653f2e0eec7334ceeb70f1ae782a17e6331a745d81c5b62205436e" instead: unknown
+#execute keadm command failed:  edge node join failed: copy resources failed: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: expected cgroupsPath to be of format "slice:prefix:name" for systemd cgroups, got "/k8s.io/2ef78eff64653f2e0eec7334ceeb70f1ae782a17e6331a745d81c5b62205436e" instead: unknown
+#root@Open5GS:~#
+############### Khắc phục cách 1: chuyển SystemdCgroup = false
+############### Khắc phục cách 2: updated như Line 234 CloudCore cần một Service kiểu NodePort hoặc LoadBalancer để EdgeCore có thể kết nối từ bên ngoài cluster. Bạn có thể tạo thủ công như sau:
+
+
+Vẫn lỗi 
+
+kubectl edit cm -n kubeedge cloudcore
+### Cấu hình mặc định
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+data:
+  cloudcore.yaml: "apiVersion: cloudcore.config.kubeedge.io/v1alpha2\nkind: CloudCore\nkubeAPIConfig:\n
+    \ kubeConfig: \"\"\n  master: \"\"\nmodules:\n  cloudHub:\n    advertiseAddress:\n
+    \   - 10.10.33.45\n    dnsNames:\n    - \n    nodeLimit: 1000\n    tlsCAFile:
+    /etc/kubeedge/ca/rootCA.crt\n    tlsCertFile: /etc/kubeedge/certs/edge.crt\n    tlsPrivateKeyFile:
+    /etc/kubeedge/certs/edge.key\n    unixsocket:\n      address: unix:///var/lib/kubeedge/kubeedge.sock\n
+    \     enable: true\n    websocket:\n      address: 0.0.0.0\n      enable: true\n
+    \     port: 10000\n    quic:\n      address: 0.0.0.0\n      enable: false\n      maxIncomingStreams:
+    10000\n      port: 10001\n    https:\n      address: 0.0.0.0\n      enable: true\n
+    \     port: 10002\n  cloudStream:\n    enable: true\n    streamPort: 10003\n    tunnelPort:
+    10004\n  dynamicController:\n    enable: false\n  router:\n    enable: false\n
+    \ iptablesManager:\n    enable: true\n    mode: internal\n  nodeUpgradeJobController:\n
+    \   enable: false\n"
+kind: ConfigMap
+metadata:
+  annotations:
+    meta.helm.sh/release-name: cloudcore
+    meta.helm.sh/release-namespace: kubeedge
+  creationTimestamp: "2025-12-30T03:48:27Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+  name: cloudcore
+  namespace: kubeedge
+  resourceVersion: "2153618"
+  uid: 9b1ddfd4-f3fb-4390-a5ed-b9507e80fcd1
+
+### Thay thành cấu hình mới:
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudcore
+  namespace: kubeedge
+data:
+  cloudcore.yaml: |
+    apiVersion: cloudcore.config.kubeedge.io/v1alpha2
+    kind: CloudCore
+    kubeAPIConfig:
+      kubeConfig: ""
+      master: ""
+    modules:
+      cloudHub:
+        advertiseAddress:
+          - 10.10.33.45
+        dnsNames:
+          - ""
+        nodeLimit: 1000
+        tlsCAFile: /etc/kubeedge/ca/rootCA.crt
+        tlsCertFile: /etc/kubeedge/certs/edge.crt
+        tlsPrivateKeyFile: /etc/kubeedge/certs/edge.key
+        unixsocket:
+          address: unix:///var/lib/kubeedge/kubeedge.sock
+          enable: true
+        websocket:
+          address: 0.0.0.0
+          enable: true
+          port: 10000
+        quic:
+          address: 0.0.0.0
+          enable: false
+          maxIncomingStreams: 10000
+          port: 10001
+        https:
+          address: 0.0.0.0
+          enable: true
+          port: 10002
+        # nếu muốn disable TLS, có thể bỏ certfile/keyfile
+      cloudStream:
+        enable: true
+        streamPort: 10003
+        tunnelPort: 10004
+      dynamicController:
+        enable: false
+      router:
+        enable: false
+      iptablesManager:
+        enable: true
+        mode: internal
+      nodeUpgradeJobController:
+        enable: false
+
 
 
 Trên VM3:
@@ -505,5 +642,6 @@ root@MasterK8s:~# kubectl get deployments -A
 NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
 kube-system   calico-kube-controllers   1/1     1            1           16d
 kube-system   coredns                   2/2     2            2           17d
+
 
 
