@@ -52,7 +52,228 @@ make
 ./build/nr-gnb -c config/gnb.yaml
 ./build/nr-ue -c config/ue.yaml
 Như vậy bạn vẫn dùng được “UERANSIM của open5gs-k8s” nhưng chạy ngoài cluster trên VM4.
+###
+root@MasterK8s:~# kubectl get nodes -o wide
+NAME        STATUS   ROLES           AGE   VERSION    INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION       CONTAINER-RUNTIME
+masterk8s   Ready    control-plane   17d   v1.30.14   10.10.33.45     <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://1.7.28
+workerk8s   Ready    <none>          16d   v1.30.14   103.121.91.87   <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://1.7.28
+root@MasterK8s:~# kubeadm token create --print-join-command
+kubeadm join 10.10.33.45:6443 --token h2y2iy.omdtnf02hb6hl7t5 --discovery-token-ca-cert-hash sha256:d5f0eb55725fe43442f54be565eb3b58d43ace993a5c4fae59668271ff132c4b
+###
+Cách gỡ sạch Open5GS cài từ source
+Xóa thư mục source code (nếu không cần giữ lại):
 
+bash
+sudo rm -rf ~/open5gs
+Xóa các binary đã cài trong hệ thống (thường nằm ở /usr/local/bin):
+
+bash
+sudo rm -f /usr/local/bin/open5gs-*
+Xóa thư mục config:
+
+bash
+sudo rm -rf /usr/local/etc/open5gs
+Xóa thư viện và share data:
+
+bash
+sudo rm -rf /usr/local/lib/x86_64-linux-gnu/open5gs
+sudo rm -rf /usr/local/share/open5gs
+Xóa log và runtime data (nếu có):
+
+bash
+sudo rm -rf /usr/local/var/log/open5gs
+sudo rm -rf /usr/local/var/run/open5gs
+Kiểm tra service systemd (nếu bạn đã tạo):
+
+bash
+sudo systemctl stop open5gs*
+sudo systemctl disable open5gs*
+sudo rm -f /etc/systemd/system/open5gs*
+sudo systemctl daemon-reload
+
+root@Open5GS:~# sudo rm -rf ~/open5gs
+root@Open5GS:~# sudo rm -f /usr/local/bin/open5gs-*
+root@Open5GS:~# sudo rm -rf /usr/local/etc/open5gs
+root@Open5GS:~# sudo rm -rf /usr/local/lib/x86_64-linux-gnu/open5gs
+sudo rm -rf /usr/local/share/open5gs
+root@Open5GS:~# sudo rm -rf /usr/local/var/log/open5gs
+sudo rm -rf /usr/local/var/run/open5gs
+root@Open5GS:~# sudo systemctl stop open5gs*
+sudo systemctl disable open5gs*
+sudo rm -f /etc/systemd/system/open5gs*
+sudo systemctl daemon-reload
+Failed to stop open5gs.pcap.service: Unit open5gs.pcap.service not loaded.
+Failed to disable unit: Unit file open5gs.pcap.service does not exist.
+root@Open5GS:~# ls
+open5gs.pcap  sbi.pcap  snap
+root@Open5GS:~# which open5gs-amfd
+root@Open5GS:~# which open5gs-smfd
+root@Open5GS:~# ps aux | grep open5gs
+root      284750  0.0  0.3 291716 31708 ?        Sl   Dec23   0:00 /root/open5gs                                     /install/bin/open5gs-upfd
+root      295273  0.0  0.7 1730820 57144 ?       Sl   Dec26   0:24 /root/open5gs                                     /install/bin/open5gs-amfd
+root      295275  0.0  0.7 469752 63772 ?        Sl   Dec26   0:38 /root/open5gs                                     /install/bin/open5gs-smfd
+root      295278  0.0  0.3 140940 27588 ?        Sl   Dec26   0:25 /root/open5gs                                     /install/bin/open5gs-udmd
+root      295281  0.0  0.3 134088 28124 ?        Sl   Dec26   0:23 /root/open5gs                                     /install/bin/open5gs-ausfd
+root      295283  0.0  0.4 170580 32844 ?        Sl   Dec26   0:23 /root/open5gs                                     /install/bin/open5gs-udrd
+root      295286  0.0  0.4 190440 33356 ?        Sl   Dec26   0:25 /root/open5gs                                     /install/bin/open5gs-pcfd
+root      300436  0.0  0.0   6480  2420 pts/1    S+   10:13   0:00 grep --color=                                     auto open5gs
+root@Open5GS:~#
+root@Open5GS:~# sudo pkill -f open5gs
+root@Open5GS:~# ps aux | grep open5gs
+root      300443  0.0  0.0   6480  2356 pts/1    S+   10:14   0:00 grep --color=auto open5gs
+root@Open5GS:~# sudo kill -9 300443
+kill: (300443): No such process
+root@Open5GS:~# sudo kill -9 6480
+kill: (6480): No such process
+root@Open5GS:~# sudo kill -9 2356
+kill: (2356): No such process
+root@Open5GS:~# ps aux | grep open5gs
+root      300454  0.0  0.0   6480  2416 pts/1    S+   10:15   0:00 grep --color=auto open5gs
+root@Open5GS:~# sudo rm -rf /root/open5gs/install
+root@Open5GS:~# which open5gs-amfd
+ps aux | grep open5gs
+root      300460  0.0  0.0   6480  2168 pts/1    S+   10:16   0:00 grep --color=auto open5gs
+root@Open5GS:~#
+
+###
+apt update
+apt install -y containerd
+
+mkdir -p /etc/containerd
+containerd config default | tee /etc/containerd/config.toml
+
+nano /etc/containerd/config.toml
+Tìm đoạn:
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+  SystemdCgroup = false
+→ Sửa thành:
+  SystemdCgroup = true
+
+systemctl restart containerd
+systemctl enable containerd
+
+cat <<EOF | tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+modprobe overlay
+modprobe br_netfilter
+
+cat <<EOF | tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward = 1
+EOF
+
+sysctl --system
+
+root@Open5GS:~# sudo swapoff -a
+sudo sed -i '/ swap / s/^/#/' /etc/fstab
+
+apt update
+apt install -y apt-transport-https ca-certificates curl
+
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
+
+apt update
+apt install -y kubelet kubeadm kubectl
+
+apt-mark hold kubelet kubeadm kubectl
+
+root@Open5GS:~# kubeadm version
+kubectl version --client
+kubelet --version
+kubeadm version: &version.Info{Major:"1", Minor:"30", GitVersion:"v1.30.14", GitCommit:"9e18483918821121abdf9aa82bc14d66df5d68cd", GitTreeState:"clean", BuildDate:"2025-06-17T18:34:53Z", GoVersion:"go1.23.10", Compiler:"gc", Platform:"linux/amd64"}
+Client Version: v1.30.14
+Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3
+Kubernetes v1.30.14
+root@Open5GS:~#
+
+root@MasterK8s:~# kubectl get nodes -o wide
+NAME        STATUS   ROLES           AGE   VERSION    INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION       CONTAINER-RUNTIME
+masterk8s   Ready    control-plane   17d   v1.30.14   10.10.33.45     <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://1.7.28
+open5gs     Ready    <none>          16m   v1.30.14   10.10.33.54     <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://1.7.28
+workerk8s   Ready    <none>          16d   v1.30.14   103.121.91.87   <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://1.7.28
+
+###
+cài đặt keadm (KubeEdge)
+1. Cài đặt keadm trên MasterK8s (VM2)
+bash
+# Tải bản mới nhất (ví dụ v1.15.0, bạn có thể đổi theo version mới)
+wget https://github.com/kubeedge/kubeedge/releases/download/v1.15.0/keadm-v1.15.0-linux-amd64.tar.gz
+
+# Giải nén
+tar -xvf keadm-v1.15.0-linux-amd64.tar.gz
+
+# Copy binary vào /usr/local/bin
+sudo cp keadm-v1.15.0-linux-amd64/keadm/keadm /usr/local/bin/
+Kiểm tra:
+
+bash
+keadm version
+root@MasterK8s:~# keadm version
+version: version.Info{Major:"1", Minor:"15", GitVersion:"v1.15.0", GitCommit:"3a95909a1b318add3f75fb5422f6e210ee1eaa51", GitTreeState:"clean", BuildDate:"2023-10-13T09:48:33Z", GoVersion:"go1.19.12", Compiler:"gc", Platform:"linux/amd64"}
+
+2. Khởi tạo CloudCore trên MasterK8s
+bash
+keadm init --advertise-address 10.10.33.45
+# Sau khi chạy, CloudCore sẽ lắng nghe kết nối từ EdgeCore.
+root@MasterK8s:~# keadm init --advertise-address 10.10.33.45
+Kubernetes version verification passed, KubeEdge installation will start...
+CLOUDCORE started
+=========CHART DETAILS=======
+NAME: cloudcore
+LAST DEPLOYED: Tue Dec 30 10:48:23 2025
+NAMESPACE: kubeedge
+STATUS: deployed
+REVISION: 1
+root@MasterK8s:~#
+
+3. Cài keadm trên Edge nodes (VM1, VM3)
+Lặp lại bước tải và copy keadm trên VM1 và VM3.
+
+4. Join EdgeCore từ VM1 và VM3
+Trên VM1:
+bash
+keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-name=edge2
+############### Lỗi
+root@Open5GS:~# keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-name=edge2
+I1230 11:17:55.120442  323952 command.go:901] 1. Check KubeEdge edgecore process status
+I1230 11:17:55.134426  323952 command.go:901] 2. Check if the management directory is clean
+Error: the management directory /etc/kubeedge/ is not clean, please remove it first
+execute keadm command failed:  the management directory /etc/kubeedge/ is not clean, please remove it first
+root@Open5GS:~# sudo systemctl restart containerd
+root@Open5GS:~# sudo rm -rf /var/lib/kubeedge
+sudo rm -rf /etc/kubeedge
+root@Open5GS:~# keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-name=edge2
+I1230 11:18:24.005455  324226 command.go:901] 1. Check KubeEdge edgecore process status
+I1230 11:18:24.028034  324226 command.go:901] 2. Check if the management directory is clean
+I1230 11:18:25.531904  324226 common.go:307] remote version is much newer: v1.22.0; falling back to: v1.15.0
+I1230 11:18:25.532011  324226 join.go:107] 3. Create the necessary directories
+I1230 11:18:25.540472  324226 join.go:184] 4. Pull Images
+Pulling docker.io/kubeedge/installation-package:v1.15.0 ...
+Successfully pulled docker.io/kubeedge/installation-package:v1.15.0
+Pulling docker.io/library/eclipse-mosquitto:1.6.15 ...
+Successfully pulled docker.io/library/eclipse-mosquitto:1.6.15
+Pulling docker.io/kubeedge/pause:3.6 ...
+Successfully pulled docker.io/kubeedge/pause:3.6
+I1230 11:18:25.547193  324226 join.go:184] 5. Copy resources from the image to the management directory
+E1230 11:18:28.516612  324226 remote_runtime.go:176] "RunPodSandbox from runtime service failed" err="rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: expected cgroupsPath to be of format \"slice:prefix:name\" for systemd cgroups, got \"/k8s.io/2ef78eff64653f2e0eec7334ceeb70f1ae782a17e6331a745d81c5b62205436e\" instead: unknown"
+Error: edge node join failed: copy resources failed: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: expected cgroupsPath to be of format "slice:prefix:name" for systemd cgroups, got "/k8s.io/2ef78eff64653f2e0eec7334ceeb70f1ae782a17e6331a745d81c5b62205436e" instead: unknown
+execute keadm command failed:  edge node join failed: copy resources failed: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: expected cgroupsPath to be of format "slice:prefix:name" for systemd cgroups, got "/k8s.io/2ef78eff64653f2e0eec7334ceeb70f1ae782a17e6331a745d81c5b62205436e" instead: unknown
+root@Open5GS:~#
+
+
+Trên VM3:
+bash
+keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-name=edge1
+5. Kiểm tra node trong cluster
+Trên MasterK8s:
+
+bash
+kubectl get nodes
 
 
 ###########################################################################################################################
@@ -284,4 +505,5 @@ root@MasterK8s:~# kubectl get deployments -A
 NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
 kube-system   calico-kube-controllers   1/1     1            1           16d
 kube-system   coredns                   2/2     2            2           17d
+
 
