@@ -1,3 +1,62 @@
+###########################################################################################################################
+### 30/12/2025
+source https://github.com/niloysh/open5gs-k8s. để thực hiện 2 luận văn 
+- nghiên cứu sự di chuyển của UE tại MEC
+- nghiên cứu chuyển tải và lập lịch tài nguyên tại MEC
+Hiện tại đã có 4 VM như sau:
+VM1	Open5GS
+VM2	MasterK8s (đã cài cluster k8s)
+VM3	WokerK8s (đã join cluster k8s)
+VM4	UE
+
+cài source trên theo mô hình mới như sau:
+VM2: K8s master + Open5GS core + CloudCore.
+VM3: Edge node 1 (MEC app).
+VM1: Edge node 2 (MEC app).
+VM4: UERANSIM (RAN/UE).
+###
+Mô hình mới:
+VM2 (MasterK8s):
+Kubernetes control-plane.
+Triển khai Open5GS Core (AMF, SMF, NRF, UDM).
+Triển khai CloudCore (KubeEdge) để quản lý các edge node.
+
+VM3 (WorkerK8s):
+Edge node 1.
+Chạy EdgeCore (KubeEdge).
+Deploy MEC App (ví dụ inference service).
+
+VM1 (Open5GS cũ):
+Edge node 2.
+Chạy EdgeCore (KubeEdge).
+Deploy MEC App.
+
+VM4 (UE):
+UERANSIM (gNB + UE).
+Sinh traffic, di chuyển UE.
+
+Riêng VM: UE sẽ cài test lần lượt 2 cách:
+- Cách 1: remove kiểm tra xem các source cũ và remove sạch, cài https://github.com/aligungr/UERANSIM
+
+- Cách 2: remove kiểm tra xem các source cũ và remove sạch, cài: Trên VM4, clone repo open5gs-k8s:
+
+git clone https://github.com/niloysh/open5gs-k8s
+cd open5gs-k8s/ueransim
+Trong thư mục này có Dockerfile và manifest → bạn có thể build image hoặc chạy binary.
+Nếu muốn chạy trực tiếp trên VM4 (không join cluster):
+
+Lấy Dockerfile hoặc script build từ đó.
+
+Build UERANSIM binary:
+make
+./build/nr-gnb -c config/gnb.yaml
+./build/nr-ue -c config/ue.yaml
+Như vậy bạn vẫn dùng được “UERANSIM của open5gs-k8s” nhưng chạy ngoài cluster trên VM4.
+
+
+
+###########################################################################################################################
+### 29/12/2025
 ### Kiểm tra thông tin để xóa
 
 root@MasterK8s:~# kubectl get pods -A
@@ -225,3 +284,4 @@ root@MasterK8s:~# kubectl get deployments -A
 NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
 kube-system   calico-kube-controllers   1/1     1            1           16d
 kube-system   coredns                   2/2     2            2           17d
+
