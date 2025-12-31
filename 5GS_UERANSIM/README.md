@@ -1,5 +1,6 @@
 Nguồn
 Open5gs:https://github.com/open5gs/open5gs
+
 UERANSIM: https://github.com/aligungr/UERANSIM
 #
 Mô hình:
