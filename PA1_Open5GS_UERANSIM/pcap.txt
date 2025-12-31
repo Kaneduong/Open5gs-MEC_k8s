@@ -1,0 +1,515 @@
+root@Open5GS:~# tcpdump -r open5gs.pcap -vvv
+reading from file open5gs.pcap, link-type LINUX_SLL2 (Linux cooked v2), snapshot length 262144
+Warning: interface names might be incorrect
+14:04:30.762641 ens19 Out IP (tos 0x0, ttl 64, id 28415, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x3d94!] UDP, length 16
+14:04:30.763430 ens19 In  IP (tos 0x0, ttl 64, id 62243, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:04:30.763479 ens19 In  IP (tos 0x0, ttl 64, id 62244, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:04:30.763817 ens19 Out IP (tos 0x0, ttl 64, id 28416, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xcb7f!] UDP, length 16
+14:04:41.769287 ens19 Out IP (tos 0x0, ttl 64, id 30515, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x3c94!] UDP, length 16
+14:04:41.770131 ens19 In  IP (tos 0x0, ttl 64, id 64762, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:04:41.770131 ens19 In  IP (tos 0x0, ttl 64, id 64763, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:04:41.770540 ens19 Out IP (tos 0x0, ttl 64, id 30516, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xca7f!] UDP, length 16
+14:04:48.442991 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 68)
+    localhost.51436 > localhost.3868: sctp
+        1) [INIT] [init tag: 1298055762] [rwnd: 106496] [OS: 30] [MIS: 65535] [init TSN: 2623059315]
+14:04:48.443023 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 36)
+    localhost.3868 > localhost.51436: sctp
+        1) [ABORT]
+14:04:52.777205 ens19 Out IP (tos 0x0, ttl 64, id 32148, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x3b94!] UDP, length 16
+14:04:52.778068 ens19 In  IP (tos 0x0, ttl 64, id 701, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:04:52.778069 ens19 In  IP (tos 0x0, ttl 64, id 702, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:04:52.778419 ens19 Out IP (tos 0x0, ttl 64, id 32149, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xc97f!] UDP, length 16
+14:04:59.633277 ens19 Out IP (tos 0x0, ttl 64, id 33319, offset 0, flags [DF], proto UDP (17), length 58)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56bd -> 0xb41b!] UDP, length 30
+14:04:59.633577 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 68)
+    localhost.55252 > localhost.3868: sctp
+        1) [INIT] [init tag: 1430228433] [rwnd: 106496] [OS: 30] [MIS: 65535] [init TSN: 3998471521]
+14:04:59.633628 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 36)
+    localhost.3868 > localhost.55252: sctp
+        1) [ABORT]
+14:04:59.634443 ens19 In  IP (tos 0x0, ttl 64, id 1988, offset 0, flags [DF], proto UDP (17), length 66)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 38
+14:04:59.635870 ens19 Out IP (tos 0x0, ttl 64, id 33320, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x976c!] UDP, length 16
+14:04:59.636793 ens19 In  IP (tos 0x0, ttl 64, id 1989, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:04:59.638492 ens19 In  IP (tos 0x0, ttl 64, id 1990, offset 0, flags [DF], proto UDP (17), length 61)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 33
+14:04:59.640496 ens19 Out IP (tos 0x0, ttl 64, id 33321, offset 0, flags [DF], proto UDP (17), length 63)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56c2 -> 0x6f53!] UDP, length 35
+14:04:59.641255 ens19 In  IP (tos 0x0, ttl 64, id 1991, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:04:59.642232 ens19 Out IP (tos 0x0, ttl 64, id 33322, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xc357!] UDP, length 16
+14:05:10.641197 ens19 Out IP (tos 0x0, ttl 64, id 35199, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x966c!] UDP, length 16
+14:05:10.641927 ens19 In  IP (tos 0x0, ttl 64, id 2882, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:05:10.643234 ens19 In  IP (tos 0x0, ttl 64, id 2883, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:05:10.644353 ens19 Out IP (tos 0x0, ttl 64, id 35200, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xc257!] UDP, length 16
+14:05:18.622222 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 68)
+    UE.52360 > Open5GS.38412: sctp
+        1) [INIT] [init tag: 39452247] [rwnd: 106496] [OS: 10] [MIS: 10] [init TSN: 4225881239]
+14:05:18.622357 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 292)
+    Open5GS.38412 > UE.52360: sctp
+        1) [INIT ACK] [init tag: 3620239608] [rwnd: 106496] [OS: 10] [MIS: 10] [init TSN: 2236203568]
+14:05:18.622729 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 264)
+    UE.52360 > Open5GS.38412: sctp
+        1) [COOKIE ECHO]
+14:05:18.622817 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 36)
+    Open5GS.38412 > UE.52360: sctp
+        1) [COOKIE ACK]
+14:05:18.623693 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 1, offset 0, flags [DF], proto SCTP (132), length 120)
+    UE.52360 > Open5GS.38412: sctp
+        1) [DATA] (B)(E) [TSN: 4225881239] [SID: 0] [SSEQ 0] [PPID 0x3c] [Payload:
+        0x0000:  0015 0041 0000 0400 1b00 0900 99f9 0750  ...A...........P
+        0x0010:  0000 0001 0052 4017 0a00 5545 5241 4e53  .....R@...UERANS
+        0x0020:  494d 2d67 6e62 2d39 3939 2d37 302d 3100  IM-gnb-999-70-1.
+        0x0030:  6600 0d00 0000 0001 0099 f907 0000 0008  f...............
+        0x0040:  0015 4001 40                             ..@.@]
+14:05:18.623732 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 46744, offset 0, flags [DF], proto SCTP (132), length 48)
+    Open5GS.38412 > UE.52360: sctp
+        1) [SACK] [cum ack 4225881239] [a_rwnd 106427] [#gap acks 0] [#dup tsns 0]
+14:05:18.635558 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 46745, offset 0, flags [DF], proto SCTP (132), length 68)
+    Open5GS.38412 > UE.52360: sctp
+        1) [DATA] (B)(E) [TSN: 2236203568] [SID: 0] [SSEQ 0] [PPID 0x3c] [Payload:
+        0x0000:  4015 000e 0000 0200 0f40 0209 c000 6b40  @........@....k@
+        0x0010:  0130                                     .0]
+14:05:18.636090 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 2, offset 0, flags [DF], proto SCTP (132), length 48)
+    UE.52360 > Open5GS.38412: sctp
+        1) [SACK] [cum ack 2236203568] [a_rwnd 106478] [#gap acks 0] [#dup tsns 0]
+14:05:21.643148 ens19 Out IP (tos 0x0, ttl 64, id 37907, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x956c!] UDP, length 16
+14:05:21.644711 ens19 In  IP (tos 0x0, ttl 64, id 5535, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:05:21.646161 ens19 In  IP (tos 0x0, ttl 64, id 5536, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:05:21.646575 ens19 Out IP (tos 0x0, ttl 64, id 37908, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xc157!] UDP, length 16
+14:05:25.351166 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 46746, offset 0, flags [DF], proto SCTP (132), length 92)
+    Open5GS.38412 > UE.52360: sctp
+        1) [HB REQ]
+14:05:25.351729 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 3, offset 0, flags [DF], proto SCTP (132), length 92)
+    UE.52360 > Open5GS.38412: sctp
+        1) [HB ACK]
+14:05:30.316689 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 68)
+    localhost.48797 > localhost.3868: sctp
+        1) [INIT] [init tag: 3569105566] [rwnd: 106496] [OS: 30] [MIS: 65535] [init TSN: 82145441]
+14:05:30.316730 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 36)
+    localhost.3868 > localhost.48797: sctp
+        1) [ABORT]
+14:05:31.495156 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 46747, offset 0, flags [DF], proto SCTP (132), length 92)
+    Open5GS.38412 > UE.52360: sctp
+        1) [HB REQ]
+14:05:31.495598 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 4, offset 0, flags [DF], proto SCTP (132), length 92)
+    UE.52360 > Open5GS.38412: sctp
+        1) [HB ACK]
+14:05:32.647317 ens19 Out IP (tos 0x0, ttl 64, id 38057, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x946c!] UDP, length 16
+14:05:32.648059 ens19 In  IP (tos 0x0, ttl 64, id 5826, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:05:32.649381 ens19 In  IP (tos 0x0, ttl 64, id 5827, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:05:32.649789 ens19 Out IP (tos 0x0, ttl 64, id 38058, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xc057!] UDP, length 16
+14:05:35.563215 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 5, offset 0, flags [DF], proto SCTP (132), length 40)
+    UE.52360 > Open5GS.38412: sctp
+        1) [SHUTDOWN]
+14:05:35.563345 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 46748, offset 0, flags [DF], proto SCTP (132), length 36)
+    Open5GS.38412 > UE.52360: sctp
+        1) [SHUTDOWN ACK]
+14:05:35.563933 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 6, offset 0, flags [DF], proto SCTP (132), length 36)
+    UE.52360 > Open5GS.38412: sctp
+        1) [SHUTDOWN COMPLETE]
+14:05:43.652988 ens19 Out IP (tos 0x0, ttl 64, id 39312, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x936c!] UDP, length 16
+14:05:43.654043 ens19 In  IP (tos 0x0, ttl 64, id 6842, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:05:43.654043 ens19 In  IP (tos 0x0, ttl 64, id 6843, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:05:43.654531 ens19 Out IP (tos 0x0, ttl 64, id 39313, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xbf57!] UDP, length 16
+14:05:54.660269 ens19 Out IP (tos 0x0, ttl 64, id 40704, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x926c!] UDP, length 16
+14:05:54.661042 ens19 In  IP (tos 0x0, ttl 64, id 7677, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:05:54.661421 ens19 In  IP (tos 0x0, ttl 64, id 7678, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:05:54.661671 ens19 Out IP (tos 0x0, ttl 64, id 40705, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xbe57!] UDP, length 16
+14:06:02.275656 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 68)
+    localhost.56926 > localhost.3868: sctp
+        1) [INIT] [init tag: 1038966909] [rwnd: 106496] [OS: 30] [MIS: 65535] [init TSN: 2217173597]
+14:06:02.275700 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 36)
+    localhost.3868 > localhost.56926: sctp
+        1) [ABORT]
+14:06:05.667863 ens19 Out IP (tos 0x0, ttl 64, id 43420, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x916c!] UDP, length 16
+14:06:05.669821 ens19 In  IP (tos 0x0, ttl 64, id 9166, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:06:05.669822 ens19 In  IP (tos 0x0, ttl 64, id 9167, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:06:05.670344 ens19 Out IP (tos 0x0, ttl 64, id 43421, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xbd57!] UDP, length 16
+14:06:16.678868 ens19 Out IP (tos 0x0, ttl 64, id 45985, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x906c!] UDP, length 16
+14:06:16.679781 ens19 In  IP (tos 0x0, ttl 64, id 9432, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:06:16.679781 ens19 In  IP (tos 0x0, ttl 64, id 9433, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:06:16.680746 ens19 Out IP (tos 0x0, ttl 64, id 45986, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xbc57!] UDP, length 16
+14:06:27.685829 ens19 In  IP (tos 0x0, ttl 64, id 9821, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:06:27.686305 ens19 Out IP (tos 0x0, ttl 64, id 47510, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xbb57!] UDP, length 16
+14:06:27.686423 ens19 Out IP (tos 0x0, ttl 64, id 47511, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x8f6c!] UDP, length 16
+14:06:27.687178 ens19 In  IP (tos 0x0, ttl 64, id 9822, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:06:30.958460 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 68)
+    UE.49095 > Open5GS.38412: sctp
+        1) [INIT] [init tag: 4275205333] [rwnd: 106496] [OS: 10] [MIS: 10] [init TSN: 2984568489]
+14:06:30.958633 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 292)
+    Open5GS.38412 > UE.49095: sctp
+        1) [INIT ACK] [init tag: 1216838846] [rwnd: 106496] [OS: 10] [MIS: 10] [init TSN: 1966223165]
+14:06:30.959018 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 264)
+    UE.49095 > Open5GS.38412: sctp
+        1) [COOKIE ECHO]
+14:06:30.959112 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 36)
+    Open5GS.38412 > UE.49095: sctp
+        1) [COOKIE ACK]
+14:06:30.960122 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 1, offset 0, flags [DF], proto SCTP (132), length 120)
+    UE.49095 > Open5GS.38412: sctp
+        1) [DATA] (B)(E) [TSN: 2984568489] [SID: 0] [SSEQ 0] [PPID 0x3c] [Payload:
+        0x0000:  0015 0044 0000 0400 1b00 0900 99f9 0750  ...D...........P
+        0x0010:  0000 0001 0052 4017 0a00 5545 5241 4e53  .....R@...UERANS
+        0x0020:  494d 2d67 6e62 2d39 3939 2d37 302d 3100  IM-gnb-999-70-1.
+        0x0030:  6600 1000 0000 0001 0099 f907 0000 1008  f...............
+        0x0040:  0000 0100 1540 0140                      .....@.@]
+14:06:30.960153 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42986, offset 0, flags [DF], proto SCTP (132), length 48)
+    Open5GS.38412 > UE.49095: sctp
+        1) [SACK] [cum ack 2984568489] [a_rwnd 106424] [#gap acks 0] [#dup tsns 0]
+14:06:30.973653 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42987, offset 0, flags [DF], proto SCTP (132), length 108)
+    Open5GS.38412 > UE.49095: sctp
+        1) [DATA] (B)(E) [TSN: 1966223165] [SID: 0] [SSEQ 0] [PPID 0x3c] [Payload:
+        0x0000:  2015 0035 0000 0400 0100 0e05 806f 7065  ...5.........ope
+        0x0010:  6e35 6773 2d61 6d66 3000 6000 0800 0099  n5gs-amf0.`.....
+        0x0020:  f907 0200 4000 5640 01ff 0050 000b 0099  ....@.V@...P....
+        0x0030:  f907 0000 1008 0000 01                   .........]
+14:06:30.974033 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 2, offset 0, flags [DF], proto SCTP (132), length 48)
+    UE.49095 > Open5GS.38412: sctp
+        1) [SACK] [cum ack 1966223165] [a_rwnd 106439] [#gap acks 0] [#dup tsns 0]
+14:06:33.997739 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 68)
+    localhost.39149 > localhost.3868: sctp
+        1) [INIT] [init tag: 1860250487] [rwnd: 106496] [OS: 30] [MIS: 65535] [init TSN: 3612873765]
+14:06:33.997779 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 36)
+    localhost.3868 > localhost.39149: sctp
+        1) [ABORT]
+14:06:37.144024 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 3, offset 0, flags [DF], proto SCTP (132), length 124)
+    UE.49095 > Open5GS.38412: sctp
+        1) [DATA] (B)(E) [TSN: 2984568490] [SID: 1] [SSEQ 0] [PPID 0x3c] [Payload:
+        0x0000:  000f 4048 0000 0500 5500 0200 0100 2600  ..@H....U.....&.
+        0x0010:  1a19 7e00 4179 000d 0199 f907 0000 0000  ..~.Ay..........
+        0x0020:  0000 0000 102e 04f0 f0f0 f000 7900 1350  ............y..P
+        0x0030:  99f9 0700 0000 0100 99f9 0700 0001 ecf4  ................
+        0x0040:  bdfd 005a 4001 1800 7040 0100            ...Z@...p@..]
+14:06:37.152209 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42988, offset 0, flags [DF], proto SCTP (132), length 132)
+    Open5GS.38412 > UE.49095: sctp
+        1) [SACK] [cum ack 2984568490] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+        2) [DATA] (B)(E) [TSN: 1966223166] [SID: 1] [SSEQ 0] [PPID 0x3c] [Payload:
+        0x0000:  0004 403e 0000 0300 0a00 0200 0100 5500  ..@>..........U.
+        0x0010:  0200 0100 2600 2b2a 7e00 5600 0200 0021  ....&.+*~.V....!
+        0x0020:  cc15 40f0 c04b e5ae 1237 0d81 777c f48e  ..@..K...7..w|..
+        0x0030:  2010 9c61 235d 0950 8000 20c0 08ed 63d0  ...a#].P......c.
+        0x0040:  e8aa                                     ..]
+14:06:37.154183 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 4, offset 0, flags [DF], proto SCTP (132), length 132)
+    UE.49095 > Open5GS.38412: sctp
+        1) [SACK] [cum ack 1966223166] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+        2) [DATA] (B)(E) [TSN: 2984568491] [SID: 1] [SSEQ 1] [PPID 0x3c] [Payload:
+        0x0000:  002e 4040 0000 0400 0a00 0200 0100 5500  ..@@..........U.
+        0x0010:  0200 0100 2600 1615 7e00 572d 1079 f77f  ....&...~.W-.y..
+        0x0020:  c85a 194f ecc7 60b3 eec0 6f01 d200 7940  .Z.O..`...o...y@
+        0x0030:  1350 99f9 0700 0000 0100 99f9 0700 0001  .P..............
+        0x0040:  ecf4 bdfd                                ....]
+14:06:37.160817 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42989, offset 0, flags [DF], proto SCTP (132), length 112)
+    Open5GS.38412 > UE.49095: sctp
+        1) [SACK] [cum ack 2984568491] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+        2) [DATA] (B)(E) [TSN: 1966223167] [SID: 1] [SSEQ 1] [PPID 0x3c] [Payload:
+        0x0000:  0004 4029 0000 0300 0a00 0200 0100 5500  ..@)..........U.
+        0x0010:  0200 0100 2600 1615 7e03 919f da64 007e  ....&...~....d.~
+        0x0020:  005d 0200 04f0 f0f0 f0e1 3601 02         .]........6..]
+14:06:37.163234 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 5, offset 0, flags [DF], proto SCTP (132), length 176)
+    UE.49095 > Open5GS.38412: sctp
+        1) [SACK] [cum ack 1966223167] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+        2) [DATA] (B)(E) [TSN: 2984568492] [SID: 1] [SSEQ 2] [PPID 0x3c] [Payload:
+        0x0000:  002e 406a 0000 0400 0a00 0200 0100 5500  ..@j..........U.
+        0x0010:  0200 0100 2600 403f 7e04 1af5 9598 007e  ....&.@?~......~
+        0x0020:  005e 7700 0945 7380 6121 8561 51f1 7100  .^w..Es.a!.aQ.q.
+        0x0030:  267e 0041 7900 0d01 99f9 0700 0000 0000  &~.Ay...........
+        0x0040:  0000 0010 1001 002e 04f0 f0f0 f02f 0504  ............./..
+        0x0050:  0100 0001 5301 0000 7940 1350 99f9 0700  ....S...y@.P....
+        0x0060:  0000 0100 99f9 0700 0001 ecf4 bdfd       ..............]
+14:06:37.185059 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42990, offset 0, flags [DF], proto SCTP (132), length 220)
+    Open5GS.38412 > UE.49095: sctp
+        1) [SACK] [cum ack 2984568492] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+        2) [DATA] (B)(E) [TSN: 1966223168] [SID: 1] [SSEQ 2] [PPID 0x3c] [Payload:
+        0x0000:  000e 0080 9600 0008 000a 0002 0001 0055  ...............U
+        0x0010:  0002 0001 001c 0007 0099 f907 0200 4000  ..............@.
+        0x0020:  0000 0502 0100 0001 0077 0009 1c00 0e00  .........w......
+        0x0030:  0700 0380 0000 5e00 2067 0c4a 2a55 0f3d  ......^..g.J*U.=
+        0x0040:  58fd ef43 6eb6 a051 63fc 8fb1 4ba6 5a04  X..Cn..Qc...K.Z.
+        0x0050:  e25d 12ce e307 e215 8400 2240 0843 7081  .]........"@.Cp.
+        0x0060:  6125 ffff 5100 2640 3231 7e02 8940 2317  a%..Q.&@21~..@#.
+        0x0070:  017e 0042 0101 7700 0bf2 99f9 0702 0040  .~.B..w........@
+        0x0080:  c000 0219 5407 4099 f907 0000 0115 0504  ....T.@.........
+        0x0090:  0100 0001 2102 0100 5e01 92              ....!...^..]
+14:06:37.186143 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 6, offset 0, flags [DF], proto SCTP (132), length 84)
+    UE.49095 > Open5GS.38412: sctp
+        1) [SACK] [cum ack 1966223168] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+        2) [DATA] (B)(E) [TSN: 2984568493] [SID: 1] [SSEQ 3] [PPID 0x3c] [Payload:
+        0x0000:  200e 000f 0000 0200 0a40 0200 0100 5540  .........@....U@
+        0x0010:  0200 01                                  ...]
+14:06:37.387157 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42991, offset 0, flags [DF], proto SCTP (132), length 48)
+    Open5GS.38412 > UE.49095: sctp
+        1) [SACK] [cum ack 2984568493] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+14:06:37.387689 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 7, offset 0, flags [DF], proto SCTP (132), length 228)
+    UE.49095 > Open5GS.38412: sctp
+        1) [DATA] (B)(E) [TSN: 2984568494] [SID: 1] [SSEQ 4] [PPID 0x3c] [Payload:
+        0x0000:  002e 4035 0000 0400 0a00 0200 0100 5500  ..@5..........U.
+        0x0010:  0200 0100 2600 0b0a 7e02 ccd8 1629 017e  ....&...~....).~
+        0x0020:  0043 0079 4013 5099 f907 0000 0001 0099  .C.y@.P.........
+        0x0030:  f907 0000 01ec f4bd fd                   .........]
+        2) [DATA] (B)(E) [TSN: 2984568495] [SID: 1] [SSEQ 5] [PPID 0x3c] [Payload:
+        0x0000:  002e 4061 0000 0400 0a00 0200 0100 5500  ..@a..........U.
+        0x0010:  0200 0100 2600 3736 7e02 27fb 4cba 027e  ....&.76~.'.L..~
+        0x0020:  0067 0100 152e 0101 c1ff ff91 a128 0100  .g...........(..
+        0x0030:  7b00 0780 000a 0000 0d00 1201 8122 0401  {............"..
+        0x0040:  0000 0125 0908 696e 7465 726e 6574 0079  ...%..internet.y
+        0x0050:  4013 5099 f907 0000 0001 0099 f907 0000  @.P.............
+        0x0060:  01ec f4bd fd                             .....]
+14:06:37.388561 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42992, offset 0, flags [DF], proto SCTP (132), length 140)
+    Open5GS.38412 > UE.49095: sctp
+        1) [SACK] [cum ack 2984568495] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+        2) [DATA] (B)(E) [TSN: 1966223169] [SID: 1] [SSEQ 3] [PPID 0x3c] [Payload:
+        0x0000:  0004 4047 0000 0300 0a00 0200 0100 5500  ..@G..........U.
+        0x0010:  0200 0100 2600 3433 7e02 7d15 de9b 027e  ....&.43~.}....~
+        0x0020:  0054 430f 9000 4f00 7000 6500 6e00 3500  .TC...O.p.e.n.5.
+        0x0030:  4700 5345 0990 004e 0065 0078 0074 4682  G.SE...N.e.x.tF.
+        0x0040:  4752 2132 7060 7382 4901 00              GR!2p`s.I..]
+14:06:37.590448 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 8, offset 0, flags [DF], proto SCTP (132), length 48)
+    UE.49095 > Open5GS.38412: sctp
+        1) [SACK] [cum ack 1966223169] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+14:06:38.688686 ens19 Out IP (tos 0x0, ttl 64, id 47912, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x8e6c!] UDP, length 16
+14:06:38.688741 ens19 In  IP (tos 0x0, ttl 64, id 12501, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:06:38.688996 ens19 Out IP (tos 0x0, ttl 64, id 47913, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xba57!] UDP, length 16
+14:06:38.690078 ens19 In  IP (tos 0x0, ttl 64, id 12502, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:06:42.919181 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42993, offset 0, flags [DF], proto SCTP (132), length 92)
+    Open5GS.38412 > UE.49095: sctp
+        1) [HB REQ]
+14:06:42.919692 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 9, offset 0, flags [DF], proto SCTP (132), length 92)
+    UE.49095 > Open5GS.38412: sctp
+        1) [HB ACK]
+14:06:47.398150 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42994, offset 0, flags [DF], proto SCTP (132), length 116)
+    Open5GS.38412 > UE.49095: sctp
+        1) [DATA] (B)(E) [TSN: 1966223170] [SID: 1] [SSEQ 4] [PPID 0x3c] [Payload:
+        0x0000:  0004 403d 0000 0300 0a00 0200 0100 5500  ..@=..........U.
+        0x0010:  0200 0100 2600 2a29 7e02 74e5 6b41 037e  ....&.*)~.t.kA.~
+        0x0020:  0068 0100 152e 0101 c1ff ff91 a128 0100  .h...........(..
+        0x0030:  7b00 0780 000a 0000 0d00 1201 585a 3701  {...........XZ7.
+        0x0040:  63                                       c]
+14:06:47.602490 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 10, offset 0, flags [DF], proto SCTP (132), length 48)
+    UE.49095 > Open5GS.38412: sctp
+        1) [SACK] [cum ack 1966223170] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+14:06:48.150619 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 11, offset 0, flags [DF], proto SCTP (132), length 152)
+    UE.49095 > Open5GS.38412: sctp
+        1) [DATA] (B)(E) [TSN: 2984568496] [SID: 1] [SSEQ 6] [PPID 0x3c] [Payload:
+        0x0000:  002e 4061 0000 0400 0a00 0200 0100 5500  ..@a..........U.
+        0x0010:  0200 0100 2600 3736 7e02 12e2 af88 037e  ....&.76~......~
+        0x0020:  0067 0100 152e 0101 c1ff ff91 a128 0100  .g...........(..
+        0x0030:  7b00 0780 000a 0000 0d00 1201 8122 0401  {............"..
+        0x0040:  0000 0125 0908 696e 7465 726e 6574 0079  ...%..internet.y
+        0x0050:  4013 5099 f907 0000 0001 0099 f907 0000  @.P.............
+        0x0060:  01ec f4be 08                             .....]
+14:06:48.351171 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42995, offset 0, flags [DF], proto SCTP (132), length 48)
+    Open5GS.38412 > UE.49095: sctp
+        1) [SACK] [cum ack 2984568496] [a_rwnd 106496] [#gap acks 0] [#dup tsns 0]
+14:06:49.691181 ens19 Out IP (tos 0x0, ttl 64, id 50206, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x8d6c!] UDP, length 16
+14:06:49.692243 ens19 In  IP (tos 0x0, ttl 64, id 13451, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:06:49.692618 ens19 In  IP (tos 0x0, ttl 64, id 13452, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:06:49.692907 ens19 Out IP (tos 0x0, ttl 64, id 50207, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xb957!] UDP, length 16
+14:06:52.903161 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42996, offset 0, flags [DF], proto SCTP (132), length 92)
+    Open5GS.38412 > UE.49095: sctp
+        1) [HB REQ]
+14:06:52.904260 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 12, offset 0, flags [DF], proto SCTP (132), length 92)
+    UE.49095 > Open5GS.38412: sctp
+        1) [HB ACK]
+14:06:54.415188 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 13, offset 0, flags [DF], proto SCTP (132), length 40)
+    UE.49095 > Open5GS.38412: sctp
+        1) [SHUTDOWN]
+14:06:54.415326 ens19 Out IP (tos 0x2,ECT(0), ttl 64, id 42997, offset 0, flags [DF], proto SCTP (132), length 36)
+    Open5GS.38412 > UE.49095: sctp
+        1) [SHUTDOWN ACK]
+14:06:54.415607 ens19 In  IP (tos 0x2,ECT(0), ttl 64, id 14, offset 0, flags [DF], proto SCTP (132), length 36)
+    UE.49095 > Open5GS.38412: sctp
+        1) [SHUTDOWN COMPLETE]
+14:07:00.695279 ens19 Out IP (tos 0x0, ttl 64, id 51936, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0x8c6c!] UDP, length 16
+14:07:00.696047 ens19 In  IP (tos 0x0, ttl 64, id 14039, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:07:00.696048 ens19 In  IP (tos 0x0, ttl 64, id 14040, offset 0, flags [DF], proto UDP (17), length 44)
+    WokerK8s.8805 > Open5GS.8805: [udp sum ok] UDP, length 16
+14:07:00.696453 ens19 Out IP (tos 0x0, ttl 64, id 51937, offset 0, flags [DF], proto UDP (17), length 44)
+    Open5GS.8805 > WokerK8s.8805: [bad udp cksum 0x56af -> 0xb857!] UDP, length 16
+14:07:02.595686 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 68)
+    localhost.57534 > localhost.3868: sctp
+        1) [INIT] [init tag: 1628066881] [rwnd: 106496] [OS: 30] [MIS: 65535] [init TSN: 411701296]
+14:07:02.596297 lo    In  IP (tos 0x2,ECT(0), ttl 64, id 0, offset 0, flags [DF], proto SCTP (132), length 36)
+    localhost.3868 > localhost.57534: sctp
+        1) [ABORT]
+root@Open5GS:~# tshark -r open5gs.pcap
+Running as user "root" and group "root". This could be dangerous.
+    1   0.000000  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+    2   0.000789  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+    3   0.000838  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+    4   0.001176  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+    5  11.006646  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+    6  11.007490  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+    7  11.007490  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+    8  11.007899  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+    9  17.680350    127.0.0.4 → 127.0.0.9    SCTP 88 INIT
+   10  17.680382    127.0.0.9 → 127.0.0.4    SCTP 56 ABORT
+   11  22.014564  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   12  22.015427  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+   13  22.015428  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   14  22.015778  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+   15  28.870636  10.10.33.54 → 10.10.33.60  PFCP 78 PFCP Association Setup Request
+   16  28.870936    127.0.0.4 → 127.0.0.9    SCTP 88 INIT
+   17  28.870987    127.0.0.9 → 127.0.0.4    SCTP 56 ABORT
+   18  28.871802  10.10.33.60 → 10.10.33.54  PFCP 86 PFCP Association Setup Response
+   19  28.873229  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   20  28.874152  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+   21  28.875851  10.10.33.60 → 10.10.33.54  PFCP 81 PFCP Association Setup Request
+   22  28.877855  10.10.33.54 → 10.10.33.60  PFCP 83 PFCP Association Setup Response
+   23  28.878614  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   24  28.879591  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+   25  39.878556  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   26  39.879286  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+   27  39.880593  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   28  39.881712  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+   29  47.859581  10.10.33.40 → 10.10.33.54  SCTP 88 INIT
+   30  47.859716  10.10.33.54 → 10.10.33.40  SCTP 312 INIT_ACK
+   31  47.860088  10.10.33.40 → 10.10.33.54  SCTP 284 COOKIE_ECHO
+   32  47.860176  10.10.33.54 → 10.10.33.40  SCTP 56 COOKIE_ACK
+   33  47.861052  10.10.33.40 → 10.10.33.54  NGAP 140 NGSetupRequest
+   34  47.861091  10.10.33.54 → 10.10.33.40  SCTP 68 SACK (Ack=0, Arwnd=106427)
+   35  47.872917  10.10.33.54 → 10.10.33.40  NGAP 88 NGSetupFailure
+   36  47.873449  10.10.33.40 → 10.10.33.54  SCTP 68 SACK (Ack=0, Arwnd=106478)
+   37  50.880507  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   38  50.882070  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+   39  50.883520  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   40  50.883934  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+   41  54.588525  10.10.33.54 → 10.10.33.40  SCTP 112 HEARTBEAT
+   42  54.589088  10.10.33.40 → 10.10.33.54  SCTP 112 HEARTBEAT_ACK
+   43  59.554048    127.0.0.4 → 127.0.0.9    SCTP 88 INIT
+   44  59.554089    127.0.0.9 → 127.0.0.4    SCTP 56 ABORT
+   45  60.732515  10.10.33.54 → 10.10.33.40  SCTP 112 HEARTBEAT
+   46  60.732957  10.10.33.40 → 10.10.33.54  SCTP 112 HEARTBEAT_ACK
+   47  61.884676  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   48  61.885418  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+   49  61.886740  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   50  61.887148  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+   51  64.800574  10.10.33.40 → 10.10.33.54  SCTP 60 SHUTDOWN
+   52  64.800704  10.10.33.54 → 10.10.33.40  SCTP 56 SHUTDOWN_ACK
+   53  64.801292  10.10.33.40 → 10.10.33.54  SCTP 56 SHUTDOWN_COMPLETE
+   54  72.890347  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   55  72.891402  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+   56  72.891402  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   57  72.891890  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+   58  83.897628  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   59  83.898401  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+   60  83.898780  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   61  83.899030  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+   62  91.513015    127.0.0.4 → 127.0.0.9    SCTP 88 INIT
+   63  91.513059    127.0.0.9 → 127.0.0.4    SCTP 56 ABORT
+   64  94.905222  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   65  94.907180  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+   66  94.907181  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   67  94.907703  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+   68 105.916227  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   69 105.917140  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+   70 105.917140  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   71 105.918105  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+   72 116.923188  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   73 116.923664  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+   74 116.923782  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   75 116.924537  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+   76 120.195819  10.10.33.40 → 10.10.33.54  SCTP 88 INIT
+   77 120.195992  10.10.33.54 → 10.10.33.40  SCTP 312 INIT_ACK
+   78 120.196377  10.10.33.40 → 10.10.33.54  SCTP 284 COOKIE_ECHO
+   79 120.196471  10.10.33.54 → 10.10.33.40  SCTP 56 COOKIE_ACK
+   80 120.197481  10.10.33.40 → 10.10.33.54  NGAP 140 NGSetupRequest
+   81 120.197512  10.10.33.54 → 10.10.33.40  SCTP 68 SACK (Ack=0, Arwnd=106424)
+   82 120.211012  10.10.33.54 → 10.10.33.40  NGAP 128 NGSetupResponse
+   83 120.211392  10.10.33.40 → 10.10.33.54  SCTP 68 SACK (Ack=0, Arwnd=106439)
+   84 123.235098    127.0.0.4 → 127.0.0.9    SCTP 88 INIT
+   85 123.235138    127.0.0.9 → 127.0.0.4    SCTP 56 ABORT
+   86 126.381383  10.10.33.40 → 10.10.33.54  NGAP/NAS-5GS 144 InitialUEMessage, Registration request
+   87 126.389568  10.10.33.54 → 10.10.33.40  NGAP/NAS-5GS 152 SACK (Ack=1, Arwnd=106496) , DownlinkNASTransport, Authentication request
+   88 126.391542  10.10.33.40 → 10.10.33.54  NGAP/NAS-5GS 152 SACK (Ack=1, Arwnd=106496) , UplinkNASTransport, Authentication response
+   89 126.398176  10.10.33.54 → 10.10.33.40  NGAP/NAS-5GS 132 SACK (Ack=2, Arwnd=106496) , DownlinkNASTransport, Security mode command
+   90 126.400593  10.10.33.40 → 10.10.33.54  NGAP/NAS-5GS 196 SACK (Ack=2, Arwnd=106496) , UplinkNASTransport
+   91 126.422418  10.10.33.54 → 10.10.33.40  NGAP/NAS-5GS 240 SACK (Ack=3, Arwnd=106496) , InitialContextSetupRequest
+   92 126.423502  10.10.33.40 → 10.10.33.54  NGAP 104 SACK (Ack=3, Arwnd=106496) , InitialContextSetupResponse
+   93 126.624516  10.10.33.54 → 10.10.33.40  SCTP 68 SACK (Ack=4, Arwnd=106496)
+   94 126.625048  10.10.33.40 → 10.10.33.54  NGAP/NAS-5GS 248 UplinkNASTransport, UplinkNASTransport
+   95 126.625920  10.10.33.54 → 10.10.33.40  NGAP/NAS-5GS 160 SACK (Ack=6, Arwnd=106496) , DownlinkNASTransport
+   96 126.827807  10.10.33.40 → 10.10.33.54  SCTP 68 SACK (Ack=4, Arwnd=106496)
+   97 127.926045  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+   98 127.926100  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+   99 127.926355  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+  100 127.927437  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+  101 132.156540  10.10.33.54 → 10.10.33.40  SCTP 112 HEARTBEAT
+  102 132.157051  10.10.33.40 → 10.10.33.54  SCTP 112 HEARTBEAT_ACK
+  103 136.635509  10.10.33.54 → 10.10.33.40  NGAP/NAS-5GS 136 DownlinkNASTransport
+  104 136.839849  10.10.33.40 → 10.10.33.54  SCTP 68 SACK (Ack=5, Arwnd=106496)
+  105 137.387978  10.10.33.40 → 10.10.33.54  NGAP/NAS-5GS 172 UplinkNASTransport
+  106 137.588530  10.10.33.54 → 10.10.33.40  SCTP 68 SACK (Ack=7, Arwnd=106496)
+  107 138.928540  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+  108 138.929602  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+  109 138.929977  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+  110 138.930266  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+  111 142.140520  10.10.33.54 → 10.10.33.40  SCTP 112 HEARTBEAT
+  112 142.141619  10.10.33.40 → 10.10.33.54  SCTP 112 HEARTBEAT_ACK
+  113 143.652547  10.10.33.40 → 10.10.33.54  SCTP 60 SHUTDOWN
+  114 143.652685  10.10.33.54 → 10.10.33.40  SCTP 56 SHUTDOWN_ACK
+  115 143.652966  10.10.33.40 → 10.10.33.54  SCTP 56 SHUTDOWN_COMPLETE
+  116 149.932638  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Request
+  117 149.933406  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Response
+  118 149.933407  10.10.33.60 → 10.10.33.54  PFCP 64 PFCP Heartbeat Request
+  119 149.933812  10.10.33.54 → 10.10.33.60  PFCP 64 PFCP Heartbeat Response
+  120 151.833045    127.0.0.4 → 127.0.0.9    SCTP 88 INIT
+  121 151.833656    127.0.0.9 → 127.0.0.4    SCTP 56 ABORT
+root@Open5GS:~#

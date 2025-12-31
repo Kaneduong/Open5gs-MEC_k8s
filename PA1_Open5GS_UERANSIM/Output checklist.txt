@@ -1,0 +1,424 @@
+###VM Open5gs
+root@Open5GS:~# ps -ef | grep open5gs-
+root      284750       1  0 00:25 ?        00:00:00 /root/open5gs/install/bin/open5gs-upfd
+root      290745  288248  0 14:04 pts/7    00:00:01 /root/open5gs/install/bin/open5gs-nrfd
+root      290752  288248  0 14:04 pts/7    00:00:00 /root/open5gs/install/bin/open5gs-udmd
+root      290754  288248  0 14:04 pts/7    00:00:00 /root/open5gs/install/bin/open5gs-ausfd
+root      290761  288248  0 14:04 pts/7    00:00:00 /root/open5gs/install/bin/open5gs-pcfd
+root      290833  288248  0 14:15 pts/7    00:00:00 /root/open5gs/install/bin/open5gs-amfd
+root      290834  288248  0 14:15 pts/7    00:00:00 /root/open5gs/install/bin/open5gs-smfd
+root      290989  290977  0 15:49 pts/0    00:00:00 grep --color=auto open5gs-
+root@Open5GS:~# ss -lntp | egrep '7777|7778|7779|7780|7781|7782|7776'
+ss -lnup | grep 8805   # PFCP
+ss -lnp | grep 38412   # NGAP SCTP
+LISTEN 0      5        10.10.33.54:7779       0.0.0.0:*    users:(("open5gs-smfd",pid=290834,fd=12))
+LISTEN 0      5        10.10.33.54:7778       0.0.0.0:*    users:(("open5gs-amfd",pid=290833,fd=9))
+LISTEN 0      5        10.10.33.54:7777       0.0.0.0:*    users:(("open5gs-nrfd",pid=290745,fd=6))
+LISTEN 0      5        10.10.33.54:7776       0.0.0.0:*    users:(("open5gs-pcfd",pid=290761,fd=10))
+LISTEN 0      5        10.10.33.54:7781       0.0.0.0:*    users:(("open5gs-ausfd",pid=290754,fd=8))
+LISTEN 0      5        10.10.33.54:7780       0.0.0.0:*    users:(("open5gs-udmd",pid=290752,fd=8))
+UNCONN 0      0        10.10.33.54:8805      0.0.0.0:*    users:(("open5gs-smfd",pid=290834,fd=11))
+UNCONN 0      0          127.0.0.7:8805      0.0.0.0:*    users:(("open5gs-upfd",pid=284750,fd=7))
+sctp  LISTEN 0      5                                     10.10.33.54:38412            0.0.0.0:*    users:(("open5gs-amfd",pid=290833,fd=10))
+root@Open5GS:~# tail -n 50 ~/open5gs/install/var/log/open5gs/amf.log
+tail -n 50 ~/open5gs/install/var/log/open5gs/smf.log
+12/23 14:19:12.497: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1339)
+12/23 14:19:12.497: [gmm] INFO: [suci-0-999-70-0000-0-0-0000000001]    SUCI (../src/amf/gmm-handler.c:183)
+12/23 14:19:12.497: [sbi] INFO: [b1d366a6-dfcd-41f0-8b33-2f32776fbffb] Setup NF Instance [type:AUSF] (../lib/sbi/path.c:307)
+12/23 14:19:22.499: [gmm] ERROR: [suci-0-999-70-0000-0-0-0000000001] HTTP response error [504] (../src/amf/gmm-sm.c:1933)
+12/23 14:19:22.500: [amf] WARNING: [suci-0-999-70-0000-0-0-0000000001] Registration reject [90] (../src/amf/nas-path.c:213)
+12/23 14:19:22.500: [gmm] WARNING: [(null)] Failure in transaction; no context restoration. (../src/amf/gmm-sm.c:1941)
+12/23 14:19:22.500: [amf] ERROR: SBI transaction has already been removed [5] (../src/amf/amf-sm.c:755)
+12/23 14:19:22.501: [amf] INFO: UE Context Release [Action:3] (../src/amf/ngap-handler.c:1733)
+12/23 14:19:22.501: [amf] INFO:     RAN_UE_NGAP_ID[5] AMF_UE_NGAP_ID[5] (../src/amf/ngap-handler.c:1734)
+12/23 14:19:22.501: [amf] INFO:     SUCI[suci-0-999-70-0000-0-0-0000000001] (../src/amf/ngap-handler.c:1738)
+12/23 14:19:22.501: [amf] INFO: [Removed] Number of gNB-UEs is now 0 (../src/amf/context.c:2796)
+12/23 14:19:22.502: [amf] INFO: [Removed] Number of AMF-UEs is now 0 (../src/amf/context.c:1780)
+12/23 14:21:29.659: [amf] INFO: gNB-N2[10.10.33.40] connection refused!!! (../src/amf/amf-sm.c:954)
+12/23 14:21:29.659: [amf] INFO: [Removed] Number of gNBs is now 0 (../src/amf/context.c:1305)
+12/23 14:21:41.056: [amf] INFO: gNB-N2 accepted[10.10.33.40]:37664 in ng-path module (../src/amf/ngap-sctp.c:113)
+12/23 14:21:41.056: [amf] INFO: gNB-N2 accepted[10.10.33.40] in master_sm module (../src/amf/amf-sm.c:894)
+12/23 14:21:41.069: [amf] INFO: [Added] Number of gNBs is now 1 (../src/amf/context.c:1277)
+12/23 14:21:41.070: [amf] INFO: gNB-N2[10.10.33.40] max_num_of_ostreams : 10 (../src/amf/amf-sm.c:941)
+12/23 14:21:45.047: [amf] INFO: InitialUEMessage (../src/amf/ngap-handler.c:437)
+12/23 14:21:45.048: [amf] INFO: [Added] Number of gNB-UEs is now 1 (../src/amf/context.c:2789)
+12/23 14:21:45.048: [amf] INFO:     RAN_UE_NGAP_ID[1] AMF_UE_NGAP_ID[6] TAC[1] CellID[0x10] (../src/amf/ngap-handler.c:598)
+12/23 14:21:45.048: [amf] INFO: [suci-0-999-70-0000-0-0-0000000001] Unknown UE by SUCI (../src/amf/context.c:1906)
+12/23 14:21:45.048: [amf] INFO: [Added] Number of AMF-UEs is now 1 (../src/amf/context.c:1682)
+12/23 14:21:45.048: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1339)
+12/23 14:21:45.049: [gmm] INFO: [suci-0-999-70-0000-0-0-0000000001]    SUCI (../src/amf/gmm-handler.c:183)
+12/23 14:21:45.049: [sbi] INFO: [b1d366a6-dfcd-41f0-8b33-2f32776fbffb] Setup NF Instance [type:AUSF] (../lib/sbi/path.c:307)
+12/23 14:21:55.051: [amf] ERROR: [(null):suci-0-999-70-0000-0-0-0000000001] Cannot receive SBI message (../src/amf/amf-sm.c:784)
+12/23 14:21:55.051: [amf] WARNING: [suci-0-999-70-0000-0-0-0000000001] Registration reject [90] (../src/amf/nas-path.c:213)
+12/23 14:21:55.056: [amf] ERROR: SBI transaction has already been removed [6] (../src/amf/amf-sm.c:472)
+12/23 14:22:05.064: [gmm] WARNING: Registration request (../src/amf/gmm-sm.c:1853)
+12/23 14:22:05.064: [gmm] INFO: [suci-0-999-70-0000-0-0-0000000001]    SUCI (../src/amf/gmm-handler.c:183)
+12/23 14:22:05.065: [amf] WARNING: GUTI has already been allocated (../src/amf/context.c:1482)
+12/23 14:22:15.067: [amf] ERROR: [(null):suci-0-999-70-0000-0-0-0000000001] Cannot receive SBI message (../src/amf/amf-sm.c:784)
+12/23 14:22:15.068: [amf] WARNING: [suci-0-999-70-0000-0-0-0000000001] Registration reject [90] (../src/amf/nas-path.c:213)
+12/23 14:22:15.069: [amf] ERROR: SBI transaction has already been removed [7] (../src/amf/amf-sm.c:472)
+12/23 14:22:25.083: [gmm] WARNING: Registration request (../src/amf/gmm-sm.c:1853)
+12/23 14:22:25.083: [gmm] INFO: [suci-0-999-70-0000-0-0-0000000001]    SUCI (../src/amf/gmm-handler.c:183)
+12/23 14:22:25.083: [amf] WARNING: GUTI has already been allocated (../src/amf/context.c:1482)
+12/23 14:22:35.087: [amf] ERROR: [(null):suci-0-999-70-0000-0-0-0000000001] Cannot receive SBI message (../src/amf/amf-sm.c:784)
+12/23 14:22:35.088: [amf] WARNING: [suci-0-999-70-0000-0-0-0000000001] Registration reject [90] (../src/amf/nas-path.c:213)
+12/23 14:22:35.088: [amf] ERROR: SBI transaction has already been removed [8] (../src/amf/amf-sm.c:472)
+12/23 14:22:45.103: [gmm] WARNING: Registration request (../src/amf/gmm-sm.c:1853)
+12/23 14:22:45.103: [gmm] INFO: [suci-0-999-70-0000-0-0-0000000001]    SUCI (../src/amf/gmm-handler.c:183)
+12/23 14:22:45.103: [amf] WARNING: GUTI has already been allocated (../src/amf/context.c:1482)
+12/23 14:22:55.106: [amf] ERROR: [(null):suci-0-999-70-0000-0-0-0000000001] Cannot receive SBI message (../src/amf/amf-sm.c:784)
+12/23 14:22:55.107: [amf] WARNING: [suci-0-999-70-0000-0-0-0000000001] Registration reject [90] (../src/amf/nas-path.c:213)
+12/23 14:22:55.107: [amf] ERROR: SBI transaction has already been removed [9] (../src/amf/amf-sm.c:472)
+12/23 14:22:56.215: [amf] INFO: gNB-N2[10.10.33.40] connection refused!!! (../src/amf/amf-sm.c:954)
+12/23 14:22:56.215: [amf] INFO: [Removed] Number of gNB-UEs is now 0 (../src/amf/context.c:2796)
+12/23 14:22:56.216: [amf] INFO: [Removed] Number of gNBs is now 0 (../src/amf/context.c:1305)
+12/23 14:06:58.153: [smf] ERROR: [imsi-999700000000001:1] Cannot receive SBI message (../src/smf/smf-sm.c:1089)
+12/23 14:06:58.163: [smf] ERROR: SBI transaction has already been removed [2] (../src/smf/smf-sm.c:847)
+12/23 14:15:00.394: [sbi] INFO: [b1ce5b70-dfcd-41f0-a485-35cab94797b0] (NRF-notify) NF_DEREGISTERED event [type:AMF] (../lib/sbi/nnrf-handler.c:1172)
+12/23 14:15:00.406: [app] INFO: SIGTERM received (../src/main.c:54)
+12/23 14:15:00.406: [app] INFO: Open5GS daemon terminating... (../src/main.c:231)
+12/23 14:15:00.406: [sbi] INFO: [b1e680ba-dfcd-41f0-866b-4325bc25ce81] NF de-registered (../lib/sbi/nf-sm.c:324)
+12/23 14:15:00.408: [smf] INFO: PFCP de-associated [10.10.33.60]:8805 (../src/smf/pfcp-sm.c:204)
+12/23 14:15:00.528: [smf] INFO: Removed Session: UE IMSI:[imsi-999700000000001] DNN:[internet:1] IPv4:[] IPv6:[] (../src/smf/context.c:1701)
+12/23 14:15:00.528: [smf] INFO: [Removed] Number of SMF-Sessions is now 0 (../src/smf/context.c:3211)
+12/23 14:15:00.528: [smf] INFO: [Removed] Number of SMF-UEs is now 0 (../src/smf/context.c:1097)
+12/23 14:15:00.534: [app] INFO: SMF terminate...done (../src/smf/app.c:39)
+Open5GS daemon v2.7.6
+
+12/23 14:15:22.423: [app] INFO: Configuration: '/root/open5gs/install/etc/open5gs/smf.yaml' (../lib/app/ogs-init.c:144)
+12/23 14:15:22.423: [app] INFO: File Logging: '/root/open5gs/install/var/log/open5gs/smf.log' (../lib/app/ogs-init.c:147)
+12/23 14:15:22.529: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7777] (../lib/sbi/context.c:459)
+12/23 14:15:22.530: [metrics] INFO: metrics_server() [http://127.0.0.4]:9090 (../lib/metrics/prometheus/context.c:300)
+12/23 14:15:22.530: [smf] WARNING: No diameter configuration (../src/smf/fd-path.c:30)
+12/23 14:15:22.530: [gtp] INFO: gtp_server() [10.10.33.54]:2123 (../lib/gtp/path.c:30)
+12/23 14:15:22.530: [gtp] INFO: gtp_server() [10.10.33.54]:2152 (../lib/gtp/path.c:30)
+12/23 14:15:22.530: [pfcp] INFO: pfcp_server() [10.10.33.54]:8805 (../lib/pfcp/path.c:30)
+12/23 14:15:22.530: [sbi] INFO: NF Service [nsmf-pdusession] (../lib/sbi/context.c:1994)
+12/23 14:15:22.531: [sbi] INFO: nghttp2_server() [http://10.10.33.54]:7779 (../lib/sbi/nghttp2-server.c:439)
+12/23 14:15:22.531: [app] INFO: SMF initialize...done (../src/smf/app.c:31)
+12/23 14:15:22.532: [smf] INFO: PFCP associated [10.10.33.60]:8805 (../src/smf/pfcp-sm.c:188)
+12/23 14:15:22.533: [sbi] INFO: [2548021c-dfcf-41f0-9689-9daf42691eb6] NF registered [Heartbeat:10s] (../lib/sbi/nf-sm.c:295)
+12/23 14:15:22.534: [smf] WARNING: PFCP[REQ] has already been associated [10.10.33.60]:8805 (../src/smf/pfcp-sm.c:286)
+12/23 14:15:22.535: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7777] (../lib/sbi/nnrf-handler.c:955)
+12/23 14:15:22.535: [sbi] INFO: [254a60de-dfcf-41f0-a11a-0ffe0915da80] Subscription created until 2025-12-24T14:15:22.534191+07:00 [duration:86400000000,validity:86400.000000,patch:43200.000000] (../lib/sbi/nnrf-handler.c:874)
+12/23 14:15:22.536: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7777] (../lib/sbi/nnrf-handler.c:955)
+12/23 14:15:22.536: [sbi] INFO: [254a7268-dfcf-41f0-a11a-0ffe0915da80] Subscription created until 2025-12-24T14:15:22.534678+07:00 [duration:86400000000,validity:86400.000000,patch:43200.000000] (../lib/sbi/nnrf-handler.c:874)
+12/23 14:15:22.536: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7777] (../lib/sbi/nnrf-handler.c:955)
+12/23 14:15:22.536: [sbi] INFO: [254a7c5e-dfcf-41f0-a11a-0ffe0915da80] Subscription created until 2025-12-24T14:15:22.534869+07:00 [duration:86400000000,validity:86400.000000,patch:43200.000000] (../lib/sbi/nnrf-handler.c:874)
+12/23 14:15:22.536: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7777] (../lib/sbi/nnrf-handler.c:955)
+12/23 14:15:22.536: [sbi] INFO: [254a83b6-dfcf-41f0-a11a-0ffe0915da80] Subscription created until 2025-12-24T14:15:22.535094+07:00 [duration:86400000000,validity:86400.000000,patch:43200.000000] (../lib/sbi/nnrf-handler.c:874)
+12/23 14:15:22.536: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7777] (../lib/sbi/nnrf-handler.c:955)
+12/23 14:15:22.536: [sbi] INFO: [254a959a-dfcf-41f0-a11a-0ffe0915da80] Subscription created until 2025-12-24T14:15:22.535535+07:00 [duration:86400000000,validity:86400.000000,patch:43200.000000] (../lib/sbi/nnrf-handler.c:874)
+12/23 14:15:22.539: [sbi] INFO: [b1d3c70e-dfcd-41f0-9fe4-45b472e8471d] (NRF-profile-get) NF registered (../lib/sbi/nf-sm.c:81)
+12/23 14:15:22.539: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:80] (../lib/sbi/context.c:2374)
+12/23 14:15:22.539: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7780] (../lib/sbi/context.c:2113)
+12/23 14:15:22.539: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7780] (../lib/sbi/context.c:2113)
+12/23 14:15:22.539: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7780] (../lib/sbi/context.c:2113)
+12/23 14:15:22.540: [sbi] INFO: [b1dd3ce4-dfcd-41f0-8b48-23e088a1ecc6] (NRF-profile-get) NF registered (../lib/sbi/nf-sm.c:81)
+12/23 14:15:22.540: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:80] (../lib/sbi/context.c:2374)
+12/23 14:15:22.540: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7776] (../lib/sbi/context.c:2113)
+12/23 14:15:22.540: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7776] (../lib/sbi/context.c:2113)
+12/23 14:15:22.540: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7776] (../lib/sbi/context.c:2113)
+12/23 14:15:22.540: [sbi] INFO: [253a2692-dfcf-41f0-a939-59fa4fca07db] (NRF-profile-get) NF registered (../lib/sbi/nf-sm.c:81)
+12/23 14:15:22.540: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:80] (../lib/sbi/context.c:2374)
+12/23 14:15:22.540: [sbi] INFO: Setup NF EndPoint(addr) [10.10.33.54:7778] (../lib/sbi/context.c:2113)
+
+
+###VM2 Masterk8s
+root@MasterK8s:~# kubectl get nodes -o wide
+kubectl get pods -A -o wide
+NAME        STATUS   ROLES           AGE   VERSION    INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION       CONTAINER-RUNTIME
+masterk8s   Ready    control-plane   10d   v1.30.14   10.10.33.45     <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://1.7.28
+workerk8s   Ready    <none>          10d   v1.30.14   103.121.91.87   <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://1.7.28
+NAMESPACE     NAME                                       READY   STATUS    RESTARTS        AGE   IP               NODE        NOMINATED NODE   READINESS GATES
+default       multus-test-pod                            1/1     Running   242 (36m ago)   10d   192.168.30.132   workerk8s   <none>           <none>
+kube-system   calico-kube-controllers-78b7fdb74b-554nk   1/1     Running   0               10d   192.168.30.129   workerk8s   <none>           <none>
+kube-system   calico-node-m8vg8                          0/1     Running   0               10d   10.10.33.45      masterk8s   <none>           <none>
+kube-system   calico-node-rhdbt                          0/1     Running   0               10d   103.121.91.87    workerk8s   <none>           <none>
+kube-system   coredns-55cb58b774-2gpc8                   1/1     Running   0               10d   192.168.30.130   workerk8s   <none>           <none>
+kube-system   coredns-55cb58b774-hqzcw                   1/1     Running   0               10d   192.168.30.131   workerk8s   <none>           <none>
+kube-system   etcd-masterk8s                             1/1     Running   0               10d   10.10.33.45      masterk8s   <none>           <none>
+kube-system   kube-apiserver-masterk8s                   1/1     Running   0               10d   10.10.33.45      masterk8s   <none>           <none>
+kube-system   kube-controller-manager-masterk8s          1/1     Running   0               10d   10.10.33.45      masterk8s   <none>           <none>
+kube-system   kube-multus-ds-6fxjb                       1/1     Running   0               10d   10.10.33.45      masterk8s   <none>           <none>
+kube-system   kube-multus-ds-chwvg                       1/1     Running   0               10d   103.121.91.87    workerk8s   <none>           <none>
+kube-system   kube-proxy-4bdf7                           1/1     Running   0               10d   103.121.91.87    workerk8s   <none>           <none>
+kube-system   kube-proxy-xrpdq                           1/1     Running   0               10d   10.10.33.45      masterk8s   <none>           <none>
+kube-system   kube-scheduler-masterk8s                   1/1     Running   0               10d   10.10.33.45      masterk8s   <none>           <none>
+open5gs       upf-57445865cb-6xqmj                       1/1     Running   0               17h   103.121.91.87    workerk8s   <none>           <none>
+root@MasterK8s:~# kubectl get svc -A
+kubectl get net-attach-def -A   # nếu dùng Multus
+NAMESPACE     NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+default       kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP                  10d
+kube-system   kube-dns     ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   10d
+NAMESPACE   NAME       AGE
+default     net-test   10d
+root@MasterK8s:~#
+root@MasterK8s:~# ufw status
+Status: inactive
+
+
+###VM3 Workerk8s
+root@WorkerK8s:~# export KUBECONFIG=/root/admin.conf
+root@WorkerK8s:~# kubectl get pods -n open5gs -o wide
+kubectl logs -n open5gs deploy/upf | tail -n 50
+NAME                   READY   STATUS    RESTARTS   AGE   IP              NODE                                                                                                                                                                     NOMINATED NODE   READINESS GATES
+upf-57445865cb-6xqmj   1/1     Running   0          17h   103.121.91.87   worker                                                                                                                                                             k8s   <none>           <none>
+12/23 04:23:17.380: [upf] ERROR: PFCP restoration (../src/upf/pfcp-sm.c:178)
+12/23 04:23:17.380: [upf] ERROR: PFCP restoration (../src/upf/pfcp-sm.c:178)
+12/23 04:30:52.684: [upf] WARNING: PFCP[REQ] has already been associated [10.10.                                                                                                                                                             33.54]:8805 (../src/upf/pfcp-sm.c:256)
+12/23 04:30:52.684: [upf] WARNING: PFCP[REQ] has already been associated [10.10.                                                                                                                                                             33.54]:8805 (../src/upf/pfcp-sm.c:256)
+12/23 04:30:52.686: [pfcp] ERROR: Remote PFCP restarted [3975452597<3975453052]                                                                                                                                                              in Heartbeat REQ (../lib/pfcp/handler.c:39)
+12/23 04:30:52.687: [upf] INFO: PFCP de-associated [10.10.33.54]:8805 (../src/up                                                                                                                                                             f/pfcp-sm.c:184)
+12/23 04:30:52.686: [pfcp] ERROR: Remote PFCP restarted [3975452597<3975453052]                                                                                                                                                              in Heartbeat REQ (../lib/pfcp/handler.c:39)
+12/23 04:30:52.687: [upf] INFO: PFCP de-associated [10.10.33.54]:8805 (../src/up                                                                                                                                                             f/pfcp-sm.c:184)
+12/23 04:30:52.689: [upf] INFO: PFCP associated [10.10.33.54]:8805 (../src/upf/p                                                                                                                                                             fcp-sm.c:168)
+12/23 04:30:52.689: [upf] ERROR: PFCP restoration (../src/upf/pfcp-sm.c:178)
+12/23 04:30:52.689: [upf] INFO: PFCP associated [10.10.33.54]:8805 (../src/upf/p                                                                                                                                                             fcp-sm.c:168)
+12/23 04:30:52.689: [upf] ERROR: PFCP restoration (../src/upf/pfcp-sm.c:178)
+12/23 06:47:16.238: [upf] WARNING: PFCP[REQ] has already been associated [10.10.                                                                                                                                                             33.54]:8805 (../src/upf/pfcp-sm.c:256)
+12/23 06:47:16.238: [upf] WARNING: PFCP[REQ] has already been associated [10.10.                                                                                                                                                             33.54]:8805 (../src/upf/pfcp-sm.c:256)
+12/23 06:47:16.240: [pfcp] ERROR: Remote PFCP restarted [3975453052<3975461235]                                                                                                                                                              in Heartbeat REQ (../lib/pfcp/handler.c:39)
+12/23 06:47:16.240: [upf] INFO: PFCP de-associated [10.10.33.54]:8805 (../src/up                                                                                                                                                             f/pfcp-sm.c:184)
+12/23 06:47:16.240: [pfcp] ERROR: Remote PFCP restarted [3975453052<3975461235]                                                                                                                                                              in Heartbeat REQ (../lib/pfcp/handler.c:39)
+12/23 06:47:16.240: [upf] INFO: PFCP de-associated [10.10.33.54]:8805 (../src/up                                                                                                                                                             f/pfcp-sm.c:184)
+12/23 06:47:16.243: [upf] INFO: PFCP associated [10.10.33.54]:8805 (../src/upf/p                                                                                                                                                             fcp-sm.c:168)
+12/23 06:47:16.243: [upf] ERROR: PFCP restoration (../src/upf/pfcp-sm.c:178)
+12/23 06:47:16.243: [upf] INFO: PFCP associated [10.10.33.54]:8805 (../src/upf/p                                                                                                                                                             fcp-sm.c:168)
+12/23 06:47:16.243: [upf] ERROR: PFCP restoration (../src/upf/pfcp-sm.c:178)
+12/23 07:04:59.622: [upf] WARNING: PFCP[REQ] has already been associated [10.10.                                                                                                                                                             33.54]:8805 (../src/upf/pfcp-sm.c:256)
+12/23 07:04:59.622: [upf] WARNING: PFCP[REQ] has already been associated [10.10.                                                                                                                                                             33.54]:8805 (../src/upf/pfcp-sm.c:256)
+12/23 07:04:59.625: [pfcp] ERROR: Remote PFCP restarted [3975461235<3975462299]                                                                                                                                                              in Heartbeat REQ (../lib/pfcp/handler.c:39)
+12/23 07:04:59.625: [upf] INFO: PFCP de-associated [10.10.33.54]:8805 (../src/up                                                                                                                                                             f/pfcp-sm.c:184)
+12/23 07:04:59.625: [pfcp] ERROR: Remote PFCP restarted [3975461235<3975462299]                                                                                                                                                              in Heartbeat REQ (../lib/pfcp/handler.c:39)
+12/23 07:04:59.625: [upf] INFO: PFCP de-associated [10.10.33.54]:8805 (../src/up                                                                                                                                                             f/pfcp-sm.c:184)
+12/23 07:04:59.629: [upf] INFO: PFCP associated [10.10.33.54]:8805 (../src/upf/p                                                                                                                                                             fcp-sm.c:168)
+12/23 07:04:59.629: [upf] ERROR: PFCP restoration (../src/upf/pfcp-sm.c:178)
+12/23 07:04:59.629: [upf] INFO: PFCP associated [10.10.33.54]:8805 (../src/upf/p                                                                                                                                                             fcp-sm.c:168)
+12/23 07:04:59.629: [upf] ERROR: PFCP restoration (../src/upf/pfcp-sm.c:178)
+12/23 07:15:12.420: [pfcp] WARNING: [5133] LOCAL  No Reponse. Give up! for step                                                                                                                                                              1 type 1 peer [10.10.33.54]:8805 (../lib/pfcp/xact.c:602)
+12/23 07:15:12.421: [upf] WARNING: No Heartbeat from SMF [10.10.33.54]:8805 (../                                                                                                                                                             src/upf/pfcp-sm.c:309)
+12/23 07:15:12.421: [upf] INFO: PFCP de-associated [10.10.33.54]:8805 (../src/up                                                                                                                                                             f/pfcp-sm.c:184)
+12/23 07:15:12.420: [pfcp] WARNING: [5133] LOCAL  No Reponse. Give up! for step                                                                                                                                                              1 type 1 peer [10.10.33.54]:8805 (../lib/pfcp/xact.c:602)
+12/23 07:15:12.420: [upf] WARNING: No Heartbeat from SMF [10.10.33.54]:8805 (../                                                                                                                                                             src/upf/pfcp-sm.c:309)
+12/23 07:15:12.421: [upf] INFO: PFCP de-associated [10.10.33.54]:8805 (../src/up                                                                                                                                                             f/pfcp-sm.c:184)
+12/23 07:15:19.927: [pfcp] WARNING: [5134] LOCAL  No Reponse. Give up! for step                                                                                                                                                              1 type 5 peer [10.10.33.54]:8805 (../lib/pfcp/xact.c:602)
+12/23 07:15:19.927: [pfcp] WARNING: [5134] LOCAL  No Reponse. Give up! for step                                                                                                                                                              1 type 5 peer [10.10.33.54]:8805 (../lib/pfcp/xact.c:602)
+12/23 07:15:22.515: [upf] INFO: PFCP associated [10.10.33.54]:8805 (../src/upf/p                                                                                                                                                             fcp-sm.c:168)
+12/23 07:15:22.515: [upf] INFO: PFCP associated [10.10.33.54]:8805 (../src/upf/p                                                                                                                                                             fcp-sm.c:168)
+12/23 07:15:22.517: [pfcp] ERROR: Remote PFCP restarted [3975462299<3975462922]                                                                                                                                                              in Heartbeat REQ (../lib/pfcp/handler.c:39)
+12/23 07:15:22.517: [pfcp] ERROR: Remote PFCP restarted [3975462299<3975462922]                                                                                                                                                              in Heartbeat REQ (../lib/pfcp/handler.c:39)
+12/23 07:15:22.517: [upf] INFO: PFCP de-associated [10.10.33.54]:8805 (../src/up                                                                                                                                                             f/pfcp-sm.c:184)
+12/23 07:15:22.517: [upf] INFO: PFCP de-associated [10.10.33.54]:8805 (../src/up                                                                                                                                                             f/pfcp-sm.c:184)
+12/23 07:15:22.519: [upf] INFO: PFCP associated [10.10.33.54]:8805 (../src/upf/p                                                                                                                                                             fcp-sm.c:168)
+12/23 07:15:22.519: [upf] ERROR: PFCP restoration (../src/upf/pfcp-sm.c:178)
+12/23 07:15:22.519: [upf] INFO: PFCP associated [10.10.33.54]:8805 (../src/upf/p                                                                                                                                                             fcp-sm.c:168)
+12/23 07:15:22.519: [upf] ERROR: PFCP restoration (../src/upf/pfcp-sm.c:178)
+root@WorkerK8s:~# kubectl exec -it -n open5gs deploy/upf -- cat /etc/open5gs/upf                                                                                                                                                             .yaml
+#logger:
+#  file:
+#    path: /var/log/open5gs/upf.log
+logger:
+  file:
+    path: /dev/stdout
+  level: info   # fatal|error|warn|info(default)|debug|trace
+
+global:
+  max:
+    ue: 1024
+    peer: 64
+
+upf:
+  pfcp:
+    server:
+      - address: 10.10.33.60
+#      - address: 10.10.33.60
+    client:
+      smf:
+        - address: 10.10.33.54   # IP của SMF trên VM1
+  gtpu:
+    server:
+      - address: 10.10.33.60
+#      - address: 10.10.33.60
+  session:
+    - subnet: 10.45.0.0/16
+      gateway: 10.45.0.1
+    - subnet: 2001:db8:cafe::/48
+      gateway: 2001:db8:cafe::1
+  metrics:
+    server:
+      - address: 0.0.0.0
+#      - address: 10.10.33.60
+        port: 9090
+root@WorkerK8s:~#
+root@WorkerK8s:~# ip addr show ogstun
+39: ogstun: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 500
+    link/none
+    inet 10.45.0.1/16 scope global ogstun
+       valid_lft forever preferred_lft forever
+    inet6 fe80::c3f9:47c3:8c6e:1bb8/64 scope link stable-privacy
+       valid_lft forever preferred_lft forever
+
+root@WorkerK8s:~# ufw status
+Status: inactive
+
+###kết luận Copilot
+VM1 – Open5GS Core (10.10.33.54)
+Các tiến trình NF (NRF, AMF, SMF, UDM, AUSF, PCF) đều đang chạy.
+
+Các cổng SBI (7777–7782), NGAP (38412 SCTP), PFCP (8805 UDP) đều lắng nghe đúng trên IP 10.10.33.54.
+
+Log AMF/SMF: có Registration Request từ UE, nhưng báo lỗi Cannot receive SBI message, Registration reject [90], create_sm_context failed [504]. 👉 Điều này cho thấy AMF ↔ SMF SBI chưa ổn định, hoặc gNB/N2 bị rớt giữa chừng. Nhưng về mặt “NF đã khởi động và lắng nghe” thì ổn.
+
+📌 VM2 – K8s Master (10.10.33.45)
+Cluster có 2 node: masterk8s (10.10.33.45) và workerk8s (103.121.91.87). Cả hai đều Ready.
+
+Pod hệ thống (calico, coredns, etcd, apiserver…) đều Running.
+
+UPF pod trong namespace open5gs đang Running trên node workerk8s.
+
+Multus đã cài, có net-attach-def net-test. 👉 Cluster ổn định, UPF pod đã chạy.
+
+📌 VM3 – K8s Worker (10.10.33.60)
+UPF pod Running.
+
+Log UPF: PFCP association với SMF (10.10.33.54:8805) có, nhưng nhiều lần báo “PFCP restoration”, “Remote PFCP restarted”, “No Heartbeat from SMF”. 👉 Nghĩa là PFCP có lúc mất kết nối rồi khôi phục lại. Không phải lỗi cấu hình, nhưng cần kiểm tra ổn định mạng giữa VM1 ↔ VM3.
+
+File upf.yaml: đúng, PFCP server 10.10.33.60, client SMF 10.10.33.54, GTP-U server 10.10.33.60, subnet UE 10.45.0.0/16.
+
+Interface ogstun: đã có IP 10.45.0.1/16. 👉 UPF ổn, nhưng PFCP heartbeat chưa ổn định.
+
+📌 Kết luận hiện tại
+NF Core và UPF đều chạy, cluster ổn định.
+
+Điểm chưa ổn: AMF ↔ SMF SBI và AMF ↔ gNB N2. Đây là nguyên nhân UE bị reject.
+
+Prometheus/Grafana, MEC App chưa cài.
+
+
+###
+📌 Mô hình hiện tại bạn đang triển khai
+VM1 (10.10.33.54): Open5GS Core (NRF, AMF, SMF, UDM, AUSF, UDR, PCF) + Prometheus + Grafana.
+
+VM2 (10.10.33.45): K8s Master.
+
+VM3 (10.10.33.60): K8s Worker + UPF (chạy trong Pod) + MEC App.
+
+VM4 (10.10.33.40): UERANSIM (gNB + UE).
+
+👉 Đây là mô hình chuẩn: RAN (UERANSIM) ↔ Core (Open5GS) ↔ UPF ↔ MEC App.
+
+📌 Vấn đề
+UERANSIM (UE/gNB) không hoạt động ổn định, dẫn đến không thể tạo PDU session.
+
+Bạn cần phương án thay thế UE để vẫn mô phỏng được cho 2 luận văn thạc sĩ:
+
+Nghiên cứu chuyển tải và lập lịch tài nguyên trong MEC.
+
+Nghiên cứu di chuyển dịch vụ trong MEC.
+
+📌 Phương án thay thế UE
+1. Synthetic UE trên UPF host (VM3)
+Tạo namespace mạng giả lập UE, gán IP từ subnet mà UPF quản lý (ví dụ 10.45.0.2/16).
+
+Dùng curl, iperf3 trong namespace đó để phát sinh traffic qua UPF → MEC App.
+
+UPF coi như có UE thật, bạn vẫn đo được throughput, latency, resource usage.
+
+Ưu điểm: vẫn giữ nguyên đường đi qua UPF, phù hợp cho nghiên cứu scheduling.
+
+2. Traffic generator Pod trong K8s
+Deploy một Pod “loadgen” (ví dụ chạy iperf3 hoặc ab/wrk) trong namespace MEC.
+
+Pod này gửi traffic liên tục tới MEC App.
+
+Bạn điều chỉnh resource requests/limits, scheduling policy, hoặc migration Pod/VM để nghiên cứu.
+
+Ưu điểm: đơn giản, không cần RAN, tập trung vào MEC scheduling/migration.
+
+3. PFCP session emulation
+Viết script hoặc dùng tool gửi PFCP Session Establishment trực tiếp tới UPF.
+
+Sau đó inject traffic vào interface ogstun.
+
+Cho phép bạn nghiên cứu UPF/MEC mà không cần NAS/NGAP từ UE.
+
+📌 Mapping với 2 luận văn
+Luận văn 1 (Scheduling):
+
+Dùng synthetic UE hoặc loadgen Pod để tạo nhiều luồng traffic.
+
+Thu thập metrics từ Prometheus/Grafana.
+
+Áp dụng thuật toán DRL (DQN/SARSA/PPO) để quyết định phân bổ tài nguyên, steering traffic.
+
+Luận văn 2 (Migration):
+
+Chạy MEC App trong Pod hoặc VM (KubeVirt).
+
+Dùng CRIU (container) hoặc virtctl migrate (VM) để di chuyển dịch vụ.
+
+Trong lúc migration, loadgen/synthetic UE vẫn gửi traffic → đo downtime, latency spike.
+
+✅ Kết luận
+Không cần UE thật: bạn vẫn mô phỏng được bằng cách tạo traffic giả (synthetic UE hoặc loadgen Pod).
+
+Scheduling: tập trung vào đo tài nguyên khi có nhiều traffic.
+
+Migration: tập trung vào continuity khi di chuyển Pod/VM.
+
+Hai phương án thay thế UE
+1. Synthetic UE namespace trên VM3 (WorkerK8s + UPF)
+Mục tiêu: giả lập UE thật, traffic đi qua UPF → ogstun → MEC App.
+
+Ứng dụng:
+
+Luận văn 1 (Scheduling): tạo nhiều namespace UE, sinh traffic khác nhau, đo throughput/latency qua UPF.
+
+Luận văn 2 (Migration): trong khi UE giả vẫn gửi traffic, bạn di chuyển MEC App Pod/VM → đo downtime, packet loss.
+
+Thông số/biểu đồ:
+
+Nếu chưa cài Prometheus/Grafana, bạn vẫn có thể đo bằng iperf3, tc, curl để lấy số liệu thô (throughput, RTT, packet loss).
+
+Khi cài Prometheus/Grafana, bạn sẽ có biểu đồ CPU/RAM/Network của UPF và MEC App.
+
+Thuật toán: bạn có thể áp dụng DRL (DQN, PPO…) để quyết định scheduling/migration dựa trên số liệu thu thập.
+
+2. Load generator Pod trong K8s
+Mục tiêu: tạo traffic nội bộ trong cluster tới MEC App, không cần UPF.
+
+Ứng dụng:
+
+Luận văn 1 (Scheduling): scale nhiều Pod loadgen để tạo tải, áp dụng thuật toán scheduling trên MEC App.
+
+Luận văn 2 (Migration): di chuyển MEC App Pod/VM trong khi loadgen vẫn gửi traffic → đo downtime.
+
+Thông số/biểu đồ:
+
+K8s + Prometheus/Grafana sẽ cho bạn metrics chi tiết (CPU, RAM, network I/O, pod status).
+
+Dễ vẽ biểu đồ và tích hợp với thuật toán scheduling.
+
+Thuật toán: thuận lợi để thử nghiệm DRL vì dữ liệu metrics có sẵn qua Prometheus API.
+
+
+
+
+Tiêu chí	NS-3	Synthetic UE Namespace	Loadgen Pod
+Khả năng mô phỏng mạng	Mô phỏng mạng đầy đủ (RAN, Core Network)	Mô phỏng hành vi UE, lưu lượng mạng	Mô phỏng tải, lưu lượng mạng
+Tính linh hoạt	Linh hoạt, mô phỏng sâu các giao thức và kịch bản phức tạp	Linh hoạt trong môi trường Kubernetes	Linh hoạt trong kiểm tra tải mạng
+Yêu cầu tài nguyên	Vừa phải, không yêu cầu phần cứng thực tế	Cần tài nguyên Kubernetes, nhưng không quá cao	Cần tài nguyên hệ thống mạnh mẽ
+Ứng dụng nghiên cứu	Mô phỏng mạng di động, MEC, DRL	Mô phỏng lưu lượng mạng, ứng dụng MEC	Kiểm tra hiệu suất hệ thống, tải mạng
+Ưu điểm	Mô phỏng chi tiết mạng di động, mở rộng	Dễ dàng triển khai và mở rộng	Kiểm tra tải dễ dàng, có thể mở rộng
+Nhược điểm	Cần kiến thức chuyên sâu, mô phỏng không hoàn toàn chính xác phần cứng	Không mô phỏng chi tiết mạng di động	Không mô phỏng chi tiết giao thức mạng di động
+
+
+
+Tiêu chí	NS-3	Synthetic UE namespace	Loadgen Pod
+Mục đích chính	Mô phỏng mạng toàn diện (RAN, Core, giao thức)	Giả lập UE thật qua UPF/ogstun trong môi trường thực	Sinh tải trực tiếp trong cluster K8s tới MEC App
+Độ chính xác	Cao, có thể mô phỏng chi tiết giao thức, kịch bản phức tạp	Trung bình, chỉ mô phỏng đường đi dữ liệu qua UPF, không có RAN	Thấp về 5G, nhưng cao về MEC workload và scheduling
+Độ phức tạp triển khai	Cao, cần học API, viết script C++/Python, compile	Vừa, chỉ cần Linux netns + iptables	Thấp, chỉ cần YAML Pod/Service trong K8s
+Thông số/biểu đồ	Xuất dữ liệu chi tiết (latency, throughput, packet loss, topology)	Có thể đo throughput/latency bằng iperf3, curl; cần Prometheus để có biểu đồ	Dễ dàng tích hợp Prometheus/Grafana, có sẵn metrics CPU/RAM/Network
+Khả năng áp dụng thuật toán	Rất tốt cho nghiên cứu lý thuyết, DRL, mô phỏng kịch bản lớn	Có thể áp dụng DRL nhưng phải tự thu thập số liệu	Rất thuận lợi cho DRL vì metrics có sẵn qua Prometheus API
+Phù hợp cho luận văn	Nếu muốn nhấn mạnh mô phỏng mạng 5G/RAN	Nếu muốn giữ đúng ngữ cảnh 5G nhưng không có UE thật	Nếu tập trung vào MEC scheduling/migration và dễ ra biểu đồ
