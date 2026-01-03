@@ -1,4 +1,511 @@
 ###########################################################################################################################
+### 04/01/2026
+Xóa sạch như line 181 cho worker8s, open5gs, join lại từ đầu
+sudo kubeadm reset -f || true
+sudo systemctl stop kubelet || true
+sudo systemctl stop containerd || true
+
+sudo rm -rf /etc/kubernetes /var/lib/kubelet /var/lib/etcd \
+  /etc/cni /opt/cni /var/lib/cni /var/run/kubernetes \
+  $HOME/.kube
+
+sudo systemctl start containerd
+###
+Kiến trúc khuyến nghị (chuẩn cho MEC + offload + migration)
+VM2 — masterk8s (CORE control-plane + quản trị)
+Kubernetes control-plane
+Deploy Open5GS control-plane NFs (AMF/NRF/UDM/UDR/AUSF/PCF/BSF/SCP, SMF)
+MongoDB + WebUI
+Monitoring: Prometheus + Grafana
+
+VM1 — open5gs (MEC site A)
+Kubernetes worker
+Deploy UPF1 (user-plane) “gần edge”
+Deploy MEC App A/B (workload nghiên cứu)
+
+VM3 — workerk8s (MEC site B)
+Kubernetes worker
+Deploy UPF2 “gần edge”
+Deploy MEC App A/B (workload nghiên cứu)
+
+VM4 — UE (RAN/UE emulator)
+Chạy UERANSIM gNB + UE (hoặc tách gNB/UE cũng được)
+Đây là “thiết bị/ran ngoài cluster” để bạn mô phỏng di động thực hơn
+
+Vì sao UPF nên ở MEC (VM1/VM3), không phải CORE (VM2)?
+Với 2 đề tài của bạn:
+Đề tài 1 (offload + scheduling tài nguyên MEC): workload MEC nằm ở edge, UPF ở edge giúp “độ trễ/đường đi” phản ánh MEC thật.
+Đề tài 2 (service migration MEC): bạn migrate pod/service giữa VM1 ↔ VM3 và quan sát latency, packet loss, time-to-recover; kết hợp “đổi anchor user-plane” qua UPF khác thì càng đúng bài. Open5GS có cơ chế chọn UPF gần gNB/eNB (nearby UPF selection) để phục vụ bài toán này. 
+GitHub
+
+Tóm lại: CORE control-plane ở VM2, UPF + MEC apps ở VM1/VM3, gNB/UE ở VM4.
+
+###
+Bước 1 — Cài Kubernetes runtime (containerd) + kubeadm/kubelet/kubectl (VM2/VM1/VM3)
+
+Bạn cài theo kubeadm guide (repo pkgs.k8s.io). 
+Kubernetes
++1
+
+Trên cả 3 VM:
+
+Disable swap:
+
+sudo swapoff -a
+sudo sed -i '/ swap / s/^/#/' /etc/fstab
+
+
+containerd systemd cgroup (cực quan trọng):
+
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml >/dev/null
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+sudo systemctl restart containerd
+sudo systemctl enable containerd
+
+
+Cài kubelet/kubeadm/kubectl theo docs Kubernetes. 
+Kubernetes
++1
+
+Checkpoint bạn gửi mình để mình check trước khi qua Bước 2:
+
+ip -br a
+ip r
+containerd --version
+kubeadm version
+kubelet --version
+
+Bước 2 — Init cluster trên VM2 (masterk8s)
+
+Trên VM2:
+
+sudo kubeadm init \
+  --apiserver-advertise-address=10.10.33.45 \
+  --pod-network-cidr=192.168.0.0/16
+
+
+Sau đó cấu hình kubectl:
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+Cho phép master chạy workload (vì bạn muốn CORE chạy trên VM2):
+
+kubectl taint nodes masterk8s node-role.kubernetes.io/control-plane- || true
+
+
+Cài CNI (Calico)
+Bạn dùng Calico như trước (ổn cho lab). (Nếu bạn muốn mình chốt manifest chuẩn theo phiên bản bạn cài, mình sẽ bám đúng version đó.)
+
+Checkpoint gửi mình:
+
+kubectl get nodes -o wide
+kubectl get pods -A
+
+Bước 3 — Join VM1/VM3 làm worker + ép node dùng IP private
+
+Trên VM1 (open5gs) và VM3 (workerk8s):
+
+Tạo file cấu hình kubelet để ép node-ip:
+
+sudo mkdir -p /etc/default
+echo 'KUBELET_EXTRA_ARGS=--node-ip=10.10.33.54' | sudo tee /etc/default/kubelet   # VM1
+# VM3 thì đổi thành 10.10.33.xx tương ứng
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+
+
+Trên VM2 lấy join command:
+
+kubeadm token create --print-join-command
+
+
+Copy lệnh đó chạy trên VM1/VM3.
+
+Checkpoint gửi mình:
+
+kubectl get nodes -o wide
+
+
+Mình sẽ nhìn INTERNAL-IP đã đúng 10.10.33.x chưa.
+
+Bước 4 — Cài Multus (bắt buộc cho open5gs-k8s dùng NetworkAttachmentDefinition)
+
+Repo open5gs-k8s của bạn tạo NAD n2network/n3network/n4network, nên cluster phải có Multus.
+
+Cài Multus theo daemonset “thick” (cách phổ biến/đơn giản). 
+docs.siderolabs.com
+
+Checkpoint:
+
+kubectl get pods -A | grep -i multus
+ls -l /etc/cni/net.d/
+
+Bước 5 — StorageClass mặc định (local-path) để MongoDB không Pending
+
+Bạn đã làm đúng lần trước: local-path-provisioner → set default.
+
+Checkpoint:
+
+kubectl get sc
+kubectl -n open5gs get pvc
+
+Bước 6 — Deploy Open5GS bằng open5gs-k8s và “đặt đúng chỗ” (CORE vs MEC)
+
+Trên VM2:
+
+git clone https://github.com/niloysh/open5gs-k8s.git
+cd open5gs-k8s
+kubectl create ns open5gs
+
+kubectl apply -k mongodb -n open5gs
+kubectl apply -k networks5g -n open5gs
+kubectl apply -k open5gs -n open5gs
+kubectl apply -k open5gs-webui -n open5gs
+
+
+Sau đó ép placement theo đúng mô hình MEC:
+
+Control-plane + Mongo + WebUI: ưu tiên VM2
+
+UPF1: VM1
+
+UPF2: VM3
+
+Cách nhanh nhất: label node rồi patch nodeSelector.
+
+kubectl label node open5gs     site=mec-a --overwrite
+kubectl label node workerk8s   site=mec-b --overwrite
+kubectl label node masterk8s   site=core  --overwrite
+
+
+Patch (ví dụ):
+
+# UPF1 -> mec-a
+kubectl -n open5gs patch deploy open5gs-upf1 --type=merge -p \
+'{"spec":{"template":{"spec":{"nodeSelector":{"site":"mec-a"}}}}}'
+
+# UPF2 -> mec-b
+kubectl -n open5gs patch deploy open5gs-upf2 --type=merge -p \
+'{"spec":{"template":{"spec":{"nodeSelector":{"site":"mec-b"}}}}}'
+
+
+Control-plane (AMF/NRF/…/Mongo/WebUI) bạn có thể patch tương tự về site=core.
+
+Checkpoint quan trọng (đừng dùng -w):
+
+kubectl -n open5gs get pod -o wide
+kubectl -n open5gs get svc -o wide
+kubectl -n open5gs logs deploy/open5gs-nrf -c wait-mongo --tail=50
+
+4) Về gNB và UE: nên đặt ở đâu?
+
+gNB/UE đặt ở VM4 là hợp lý nhất để mô phỏng “ngoài cluster”.
+
+Nếu muốn “dễ trước – khó sau”: chạy UERANSIM trong cluster trước cho chắc luồng core chạy ổn, rồi mới chuyển ra VM4.
+
+Còn câu “UPF điều khiển UE qua MEC”:
+
+UPF không điều khiển UE; UPF chỉ là data plane forwarding.
+
+“MEC điều khiển/ảnh hưởng UE” trong mô phỏng của bạn thường là:
+
+điều khiển đường đi lưu lượng (traffic steering) tới MEC app,
+
+đo latency/throughput, và
+
+di chuyển service (pod migration) để thấy tác động.
+
+Đổi UPF/đổi anchor user-plane giúp bạn mô phỏng “dịch vụ bám theo người dùng”. Open5GS có hướng chọn UPF gần gNB/eNB để làm kiểu này. 
+GitHub
+
+5) Prometheus + Grafana cài ở đâu?
+
+Cài trong cluster (namespace monitoring) và đặt nodeSelector về site=core (VM2) để ổn định.
+Open5GS có exporter/metrics tuỳ image/bản build; ít nhất bạn monitor được:
+
+node/cpu/mem/net của VM1/VM3 cho bài scheduling
+
+latency app, request rate, packet loss (tự instrument app MEC)
+
+thời gian migrate pod / downtime
+
+(Phần Open5GS metrics nếu bạn muốn mình bám đúng chart/manifest bạn dùng, mình sẽ chốt theo đúng phiên bản.)
+
+6) Ngay bây giờ làm gì tiếp?
+
+Bạn làm đến hết Bước 1 trước, rồi gửi mình đúng 5 lệnh checkpoint này (trên từng VM tương ứng):
+
+VM2/VM1/VM3:
+
+hostname
+ip -br a
+ip r
+containerd --version
+kubeadm version
+
+
+Mình sẽ nhìn:
+
+route có đi qua NIC private không,
+
+node-ip có nguy cơ lại nhảy public không,
+
+containerd/cgroup ok chưa,
+
+rồi mình cho bạn đi tiếp sang Bước 2 (kubeadm init).
+
+
+
+###########################################################################################################################
+### 03/01/2026
+### Làm tiếp - Line 155
+1) VM2: Deploy Open5GS bằng niloysh/open5gs-k8s (core + webui)
+
+root@MasterK8s:~# git clone https://github.com/niloysh/open5gs-k8s.git
+Cloning into 'open5gs-k8s'...
+remote: Enumerating objects: 1192, done.
+remote: Counting objects: 100% (180/180), done.
+remote: Compressing objects: 100% (58/58), done.
+remote: Total 1192 (delta 148), reused 125 (delta 122), pack-reused 1012 (from 2)
+Receiving objects: 100% (1192/1192), 7.17 MiB | 12.95 MiB/s, done.
+Resolving deltas: 100% (676/676), done.
+root@MasterK8s:~# cd open5gs-k8s/
+root@MasterK8s:~/open5gs-k8s# kubectl create namespace open5gs
+namespace/open5gs created
+root@MasterK8s:~/open5gs-k8s# kubectl apply -k mongodb -n open5gs
+service/mongodb created
+statefulset.apps/mongodb created
+root@MasterK8s:~/open5gs-k8s# kubectl apply -k networks5g -n open5gs
+networkattachmentdefinition.k8s.cni.cncf.io/n2network created
+networkattachmentdefinition.k8s.cni.cncf.io/n3network created
+networkattachmentdefinition.k8s.cni.cncf.io/n4network created
+root@MasterK8s:~/open5gs-k8s# kubectl apply -k open5gs -n open5gs
+configmap/amf-configmap created
+configmap/ausf-configmap created
+configmap/bsf-configmap created
+configmap/nrf-configmap created
+configmap/nssf-configmap created
+configmap/pcf-configmap created
+configmap/scp-configmap created
+configmap/smf1-configmap created
+configmap/smf2-configmap created
+configmap/udm-configmap created
+configmap/udr-configmap created
+configmap/upf1-configmap created
+configmap/upf2-configmap created
+service/amf-namf created
+service/ausf-nausf created
+service/bsf-nbsf created
+service/nrf-nnrf created
+service/nssf-nnssf created
+service/pcf-npcf created
+service/scp-nscp created
+service/smf1-nsmf created
+service/smf2-nsmf created
+service/udm-nudm created
+service/udr-nudr created
+deployment.apps/open5gs-amf created
+deployment.apps/open5gs-ausf created
+deployment.apps/open5gs-bsf created
+deployment.apps/open5gs-nrf created
+deployment.apps/open5gs-nssf created
+deployment.apps/open5gs-pcf created
+deployment.apps/open5gs-scp created
+deployment.apps/open5gs-smf1 created
+deployment.apps/open5gs-smf2 created
+deployment.apps/open5gs-udm created
+deployment.apps/open5gs-udr created
+deployment.apps/open5gs-upf1 created
+deployment.apps/open5gs-upf2 created
+root@MasterK8s:~/open5gs-k8s# kubectl apply -k open5gs-webui -n open5gs
+configmap/webui-configmap created
+service/webui-service created
+deployment.apps/open5gs-webui created
+root@MasterK8s:~/open5gs-k8s# kubectl -n open5gs get pod -o wide
+NAME                             READY   STATUS     RESTARTS   AGE   IP               NODE        NOMINATED NODE   READINESS GATES
+mongodb-0                        0/1     Pending    0          28s   <none>           <none>      <none>           <none>
+open5gs-amf-588cf9ddbd-zzcfw     0/1     Init:0/1   0          15s   <none>           open5gs     <none>           <none>
+open5gs-ausf-7f74474d7d-65plj    0/1     Init:0/1   0          15s   <none>           open5gs     <none>           <none>
+open5gs-bsf-cb6bc9f76-rzz2g      0/1     Init:0/1   0          15s   <none>           open5gs     <none>           <none>
+open5gs-nrf-d5cd6967f-cvrpl      0/1     Init:0/1   0          15s   192.168.30.190   workerk8s   <none>           <none>
+open5gs-nssf-6698bcfb99-xphmb    0/1     Init:0/1   0          15s   <none>           open5gs     <none>           <none>
+open5gs-pcf-8598ddd699-fvc52     0/1     Init:0/2   0          14s   <none>           open5gs     <none>           <none>
+open5gs-scp-5799c785df-bxbnl     0/1     Init:0/2   0          14s   192.168.30.191   workerk8s   <none>           <none>
+open5gs-smf1-5997b88d9f-tm7cs    0/1     Init:0/1   0          14s   <none>           workerk8s   <none>           <none>
+open5gs-smf2-5677ccf477-6pjsj    0/1     Init:0/1   0          14s   <none>           open5gs     <none>           <none>
+open5gs-udm-696fb9f9c6-2kn9m     0/1     Init:0/1   0          14s   192.168.30.133   workerk8s   <none>           <none>
+open5gs-udr-78b585b458-khffp     0/1     Init:0/1   0          14s   <none>           open5gs     <none>           <none>
+open5gs-upf1-654c56d748-glzcc    0/1     Init:0/1   0          14s   <none>           open5gs     <none>           <none>
+open5gs-upf2-7d5b85d4c9-lttgg    0/1     Init:0/1   0          13s   <none>           workerk8s   <none>           <none>
+open5gs-webui-7f7644657f-b4nbb   0/1     Init:0/1   0          6s    192.168.30.138   workerk8s   <none>           <none>
+root@MasterK8s:~/open5gs-k8s# kubectl -n open5gs get svc -o wide
+NAME            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                                      AGE   SELECTOR
+amf-namf        ClusterIP   10.107.128.237   <none>        80/TCP                                       21s   app=open5gs,nf=amf
+ausf-nausf      ClusterIP   10.105.76.37     <none>        80/TCP                                       21s   app=open5gs,nf=ausf
+bsf-nbsf        ClusterIP   10.100.81.145    <none>        80/TCP                                       20s   app=open5gs,nf=bsf
+mongodb         ClusterIP   10.102.168.179   <none>        27017/TCP                                    34s   app.kubernetes.io/name=mongodb
+nrf-nnrf        ClusterIP   10.96.188.33     <none>        80/TCP                                       20s   app=open5gs,nf=nrf
+nssf-nnssf      ClusterIP   10.110.160.158   <none>        80/TCP                                       20s   app=open5gs,nf=nssf
+pcf-npcf        ClusterIP   10.106.99.249    <none>        80/TCP,9090/TCP                              20s   app=open5gs,nf=pcf
+scp-nscp        ClusterIP   10.106.47.186    <none>        80/TCP                                       20s   app=open5gs,nf=scp
+smf1-nsmf       ClusterIP   10.96.54.147     <none>        80/TCP,2123/UDP,2152/UDP,3868/TCP,5868/TCP   20s   app=open5gs,name=smf1,nf=smf
+smf2-nsmf       ClusterIP   10.105.160.115   <none>        80/TCP,2123/UDP,2152/UDP,3868/TCP,5868/TCP   20s   app=open5gs,name=smf2,nf=smf
+udm-nudm        ClusterIP   10.106.180.115   <none>        80/TCP                                       20s   app=open5gs,nf=udm
+udr-nudr        ClusterIP   10.96.66.243     <none>        80/TCP                                       20s   app=open5gs,nf=udr
+webui-service   NodePort    10.108.159.133   <none>        9999:30300/TCP                               11s   app=open5gs,nf=webui
+root@MasterK8s:~/open5gs-k8s#
+
+### Kiểm tra đã cài đặt, deploy những gì
+sudo bash -c '
+set -e
+OUT=/root/masterk8s_audit_$(date +%F_%H%M%S).log
+exec > >(tee -a "$OUT") 2>&1
+
+echo "### HOST / TIME"
+hostnamectl
+date
+ip -4 addr | sed -n "1,120p"
+ip route
+
+echo
+echo "### SYSTEMD SERVICES"
+systemctl status containerd --no-pager || true
+systemctl status kubelet --no-pager || true
+systemctl status crio --no-pager || true
+systemctl status docker --no-pager || true
+
+echo
+echo "### K8S CLIENT/VERSIONS"
+kubectl version --short || true
+kubectl cluster-info || true
+
+echo
+echo "### NODES"
+kubectl get nodes -o wide || true
+echo "--- taints"
+kubectl get nodes -o jsonpath="{range .items[*]}{.metadata.name}{\"\t\"}{.spec.taints}{\"\n\"}{end}" 2>/dev/null || true
+
+echo
+echo "### NAMESPACES"
+kubectl get ns -o wide || true
+
+echo
+echo "### WORKLOADS (DEPLOY/STS/DS/JOB) ALL NS"
+kubectl get deploy,sts,ds,job -A -o wide || true
+
+echo
+echo "### PODS ALL NS"
+kubectl get pods -A -o wide || true
+
+echo
+echo "### SERVICES/INGRESS"
+kubectl get svc -A -o wide || true
+kubectl get ingress -A -o wide 2>/dev/null || true
+
+echo
+echo "### STORAGE"
+kubectl get sc || true
+kubectl get pv -o wide || true
+kubectl get pvc -A -o wide || true
+
+echo
+echo "### CNI / MULTUS / NAD"
+ls -l /etc/cni/net.d/ || true
+ls -l /opt/cni/bin/ | head -n 80 || true
+kubectl get crd | egrep -i "k8s.cni.cncf.io|multus|kubeedge|metallb|prometheus|monitor" || true
+kubectl get net-attach-def -A 2>/dev/null || true
+
+echo
+echo "### KUBE-SYSTEM ADDONS (CALICO/MULTUS/COREDNS)"
+kubectl -n kube-system get pods -o wide || true
+kubectl -n kube-system get ds -o wide | egrep -i "calico|multus|kube-proxy" || true
+kubectl -n kube-system get cm -o wide | egrep -i "coredns|calico|multus" || true
+
+echo
+echo "### HELM (if any)"
+command -v helm >/dev/null 2>&1 && helm list -A || echo "helm not installed"
+
+echo
+echo "### STATIC POD MANIFESTS"
+ls -l /etc/kubernetes/manifests || true
+
+echo
+echo "### DONE. Log saved at: $OUT"
+'
+### ==> tạo file log
+ls -1t /root/masterk8s_audit_*.log | head
+sed -n '1,200p' /root/masterk8s_audit_*.log
+
+Line 181 ### XÓA SẠCH
+A1) Trên masterk8s: drain & xóa node objects (nếu còn vào được kubectl)
+kubectl get nodes -o wide
+
+# nếu open5gs/workerk8s đang SchedulingDisabled cũng không sao, vẫn drain được:
+kubectl drain open5gs --ignore-daemonsets --delete-emptydir-data --force || true
+kubectl drain workerk8s --ignore-daemonsets --delete-emptydir-data --force || true
+
+kubectl delete node open5gs workerk8s || true
+#
+sudo systemctl disable --now kubelet || true
+sudo rm -rf /etc/cni/net.d /opt/cni/bin /var/lib/cni /var/lib/kubelet /etc/kubernetes $HOME/.kube
+sudo iptables -F && sudo iptables -t nat -F && sudo iptables -t mangle -F && sudo iptables -X
+sudo systemctl restart containerd
+
+A2) Trên TẤT CẢ node (masterk8s + open5gs + workerk8s): kubeadm reset + dọn rác sâu
+
+Chạy nguyên khối dưới đây trên mỗi VM:
+
+sudo systemctl stop kubelet || true
+sudo kubeadm reset -f || true
+
+# dọn thư mục kube/cni
+sudo rm -rf \
+  /etc/kubernetes \
+  /var/lib/etcd \
+  /var/lib/kubelet \
+  /var/lib/cni \
+  /etc/cni/net.d \
+  /opt/cni/bin \
+  /var/lib/calico \
+  /var/run/calico \
+  /run/calico \
+  /run/flannel \
+  $HOME/.kube
+
+# xóa các interface CNI hay gặp (nếu có)
+sudo ip link delete cni0 2>/dev/null || true
+sudo ip link delete flannel.1 2>/dev/null || true
+sudo ip link delete tunl0 2>/dev/null || true
+sudo ip link delete cali0 2>/dev/null || true
+
+# flush iptables (kube-proxy/calico thường để lại rules)
+sudo iptables -F || true
+sudo iptables -t nat -F || true
+sudo iptables -t mangle -F || true
+sudo iptables -X || true
+sudo iptables -t nat -X || true
+sudo iptables -t mangle -X || true
+sudo iptables -P FORWARD ACCEPT || true
+
+# nếu có ipvsadm
+sudo ipvsadm -C 2>/dev/null || true
+
+# restart container runtime
+sudo systemctl restart containerd || true
+
+A3) (Khuyến nghị) Gỡ luôn gói Kubernetes để “sạch tuyệt đối”
+
+Trên tất cả node:
+
+sudo apt-get purge -y kubeadm kubelet kubectl kubernetes-cni || true
+sudo apt-get autoremove -y || true
+sudo apt-get clean
+
+###########################################################################################################################
 ### 02/01/2026
 ###Lỗi: root@Open5GS:~# keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-name=                                                                                                                                                             edge2
 I0102 21:46:03.469924 2441205 join.go:73] 1. Check KubeEdge edgecore process sta                                                                                                                                                             tus
@@ -57,7 +564,7 @@ root@Open5GS:~# sudo keadm join --cloudcore-ipport=10.10.33.45:10000 --edgenode-
 ### Lỗi: Error: edge node join failed: timed out waiting for the condition
 ### Nguyên nhân: vừa join cluster k8s, vừa join cloudcore (kubeedge). Đây là 2 phương pháp khác nhau
 
-### Làm tiếp
+Line 155 ### Làm tiếp
 1) VM2: Deploy Open5GS bằng niloysh/open5gs-k8s (core + webui)
 
 Repo có quickstart và các script deploy-core.sh / deploy-all.sh, và hướng dẫn deploy MongoDB + NAD (Multus) + Open5GS + WebUI. 
@@ -934,6 +1441,7 @@ root@MasterK8s:~# kubectl get deployments -A
 NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
 kube-system   calico-kube-controllers   1/1     1            1           16d
 kube-system   coredns                   2/2     2            2           17d
+
 
 
 
