@@ -1,4 +1,548 @@
 ###########################################################################################################################
+### 05/01/2026
+
+UEPOD=$(kubectl -n open5gs get pod -l app=ueransim,component=ue,name=ue1 -o jsonpath='{.items[0].metadata.name}')
+kubectl -n open5gs exec -it "$UEPOD" -c ue -- sh -lc '
+echo "=== table rt_uesimtun0 ==="
+ip r show table rt_uesimtun0 || true
+echo
+echo "=== route get 8.8.8.8 from 10.41.0.2 ==="
+ip -4 route get 8.8.8.8 from 10.41.0.2 || true
+'
+
+Không phải “chỉ fix trên master rồi… không biết UE chạy hay không” đâu — masterk8s chỉ là nơi bạn gõ kubectl và nơi mình add VXLAN port, còn UE/gNB/UPF là pod chạy trên các node khác. Mình biết UE đã hoạt động vì bạn đã có bằng chứng end-to-end:
+
+UE đã chạy thật (không phải “ảo”)
+
+UE log đã có đủ chuỗi thành công:
+
+Initial Registration is successful
+
+PDU Session establishment is successful
+
+TUN uesimtun0 lên 10.41.0.2
+
+Bạn exec vào UE pod thấy uesimtun0 10.41.0.2/32
+
+UE ping 8.8.8.8 OK ✅
+→ đây là data plane đã đi qua UPF ra Internet (NAT/forwarding phía UPF), tức là core + user-plane đã chạy.
+
+Việc UE không ping được 10.41.0.1 không phải lỗi “core hỏng”. Với UERANSIM, route table rt_uesimtun0 thường là default dev uesimtun0 (không có gateway kiểu 10.41.0.1), nên ping gateway “giả định” có thể fail nhưng traffic vẫn ra ngoài được (vì route policy gửi gói ra interface tun).
+
+Mô hình bạn đang có (testbed để làm đề tài)
+
+Core 5G (Open5GS) chạy trên K8s (AMF/SMF/UPF/WebUI…)
+
+2 MEC site:
+
+MEC1 = node open5gs
+
+MEC2 = node workerk8s
+
+gNB chạy ở MEC1 và MEC2 (đã NG Setup OK)
+
+UE chạy ở node ue (pod UE1), đã:
+
+Register OK
+
+PDU session OK
+
+uesimtun0 = 10.41.0.2
+
+ping 8.8.8.8 OK ⇒ user-plane đã thông
+
+=> Đây là “đường 5G” để UE truy cập ứng dụng MEC.
+
+Đề tài 1: “Chuyển tải (offloading) và lập lịch tài nguyên trong mạng MEC”
+
+Bạn cần chứng minh: khi UE offload workload lên MEC, hệ thống chọn MEC nào / phân bổ tài nguyên thế nào để tối ưu (latency, throughput, CPU, energy…).
+
+Bạn sẽ làm gì trên testbed này?
+
+Deploy một dịch vụ MEC (ví dụ: inference, transcoding, compute dummy) thành 2 bản:
+
+mec-app chạy trên MEC1
+
+mec-app chạy trên MEC2
+(pin bằng nodeSelector/affinity)
+
+Sinh tải từ UE:
+
+Từ UE pod chạy: curl, wrk, iperf3, hoặc script gửi request tới mec-app
+
+Đo latency/throughput
+
+Lập lịch tài nguyên (đây là phần “đề tài”):
+
+So sánh các policy:
+
+Default scheduler
+
+NodeAffinity theo latency (UE attach MEC1 thì ưu tiên MEC1)
+
+HPA/VPA (scale theo tải)
+
+Priority/Preemption (UE premium được ưu tiên)
+
+(Nâng cao) viết “controller” đơn giản: đọc metrics → patch nodeAffinity/replicas
+
+Kết quả cần ra:
+
+Biểu đồ latency/CPU/utilization theo từng policy
+
+Kết luận policy nào tốt trong điều kiện tải/UE khác nhau
+
+✅ Mình khuyên bước tiếp theo cho đề tài 1: deploy 1 “mec-app” + đo latency từ UE tới MEC1 vs MEC2 (baseline).
+
+Đề tài 2: “Di chuyển dịch vụ trong mạng MEC”
+
+Bạn cần chứng minh: dịch vụ MEC có thể “move” giữa MEC1 ↔ MEC2 khi UE di chuyển / khi MEC quá tải, và đo downtime/ảnh hưởng QoE.
+
+Trên K8s, “service migration” thực tế thường là:
+
+migrate pod / deployment (rollout từ node MEC1 sang MEC2)
+
+giữ endpoint bằng Service (ClusterIP/Ingress) để UE không cần đổi URL
+
+Kịch bản demo rất sát đề tài:
+
+Ban đầu:
+
+mec-app chạy ở MEC1
+
+UE truy cập mec-app và bạn đo latency
+
+“Di chuyển dịch vụ”:
+
+Patch nodeSelector từ MEC1 → MEC2, rollout
+
+(Nếu app stateful) dùng PVC/DB/Redis để giữ state
+
+Đo:
+
+downtime (mất bao lâu request fail)
+
+latency trước/sau migration
+
+tỉ lệ lỗi trong lúc chuyển
+
+(Tuỳ chọn nâng cao, rất “MEC”):
+
+khi UE chuyển vùng từ gNB MEC1 sang gNB MEC2, bạn cho migration dịch vụ sang MEC2 để latency giảm
+
+✅ Mình khuyên bước tiếp theo cho đề tài 2: làm migration “app-level” trước (K8s rollout) vì dễ, đo downtime rõ ràng.
+
+Vậy nãy giờ mình làm gì? (tóm tắt lỗi & fix)
+
+UE join cluster + pin vào node ue ✅
+
+UE crash vì “gnb-service” không phải IP hợp lệ → sửa gnbSearchList sang ClusterIP của 2 gNB service ✅
+
+UE lỗi thiếu integrity/ciphering (do file bị patch sai) → restore đúng config ✅
+
+gNB không reach AMF trên N2/N3 vì N3 OVS bridge chưa “liên node” → tạo VXLAN port trên n3br để L2 N3 thông giữa nodes ✅
+
+Sau đó:
+
+gNB NG Setup OK
+
+UE Registration + PDU Session OK
+
+UE ra Internet OK ✅
+
+=> Testbed nền đã chạy.
+
+Bước tiếp theo nên làm gì để “đúng 2 đề tài”?
+
+Chọn 1 trong 2 hướng (mình đề xuất theo thứ tự):
+
+(A) Làm Đề tài 1 trước (nhanh ra kết quả)
+
+Deploy mec-app (HTTP server + endpoint /work giả lập CPU)
+
+Từ UE pod chạy load test vào MEC1/MEC2
+
+Bật Prometheus/Grafana (nếu repo có overlay metrics)
+
+Thử 2 policy schedule (pin MEC1 vs pin MEC2 vs autoscale)
+
+Report: latency/CPU/throughput
+
+(B) Sau đó làm Đề tài 2
+
+Cho UE gọi mec-app liên tục (loop curl)
+
+Migrate app MEC1 → MEC2 bằng patch nodeSelector + rollout
+
+Đo downtime + latency shift
+
+Nếu bạn muốn mình hướng dẫn tiếp ngay, mình sẽ đi theo A: dựng mec-app + đo từ UE, vì đó là “đề tài 1” ra số liệu nhanh nhất.
+
+Bạn chọn app loại nào để demo cho đề tài (gợi ý):
+
+“AI inference giả lập” (sleep + CPU burn)
+
+“Video processing giả lập”
+
+“HTTP echo + đo latency” (đơn giản nhất)
+
+###########################################################################################################################
+1) Mô hình đề tài đang làm (mục tiêu)
+
+Đề tài: Mô phỏng 5G Core + MEC đa site bằng Kubernetes, dùng Open5GS (5GC) và UERANSIM (gNB/UE), với mục tiêu:
+
+5GC chạy trên K8s (Open5GS).
+
+Có 2 site MEC:
+
+MEC1: node open5gs
+
+MEC2: node workerk8s
+
+gNB chạy ở MEC1 và MEC2 (2 gNB độc lập).
+
+UE mô phỏng “thiết bị thật” đặt trên VM riêng UE, nhưng VM UE join cluster để chạy pod UE và pin vào node UE.
+
+Liên kết N2/N3/N4 dùng Multus + OVS-CNI (OVS bridge n2br, n3br, n4br) với IP tĩnh cho các NF/pod.
+
+Hai MEC phải “nhìn thấy nhau” ở mạng N3/N4 → dùng VXLAN trên OVS để nối bridge giữa các node.
+
+2) Hạ tầng & thành phần đã cài (đang chạy)
+Cluster / Nodes
+
+masterk8s (control-plane + core)
+
+open5gs (role mec) — MEC1
+
+workerk8s (role mec) — MEC2
+
+ue (role ue) — node chạy UERANSIM UE
+
+Open5GS (trong namespace open5gs)
+
+AMF chạy OK, có N3 IP tĩnh 10.10.3.200 (interface n3 qua Multus)
+
+SMF1/SMF2 chạy OK (SMF1 DNN internet; SMF2 DNN streaming)
+
+UPF1 chạy tại MEC1: N3 10.10.3.1, N4 10.10.4.1
+
+UPF2 chạy tại MEC2: N3 10.10.3.2, N4 10.10.4.2
+
+WebUI login OK
+
+Subscriber tạo bằng WebUI khớp UE (IMSI/key/opc/DNN/slice)
+
+UERANSIM
+
+gNB MEC1: N3 10.10.3.231
+
+gNB MEC2: N3 10.10.3.232
+
+UE1 pod pinned node ue, tạo PDU session, được cấp IP 10.41.0.2 trên uesimtun0
+
+3) Các lỗi chính đã gặp và đã khắc phục
+(A) UE CrashLoop: “Bad Inet address: gnb-service”
+
+Nguyên nhân: gnbSearchList dùng hostname gnb-service nhưng UERANSIM cần IP (hoặc DNS không phù hợp trong config đó).
+
+Fix: đổi gnbSearchList sang ClusterIP của service gNB (mec1/mec2).
+
+(B) UE báo “Field 'integrity' is missing”
+
+Nguyên nhân: file ue1.yaml bị thiếu block integrity/ciphering.
+
+Fix: bổ sung integrity, ciphering, integrityMaxRate.
+
+(C) gNB không connect AMF (SCTP timeout), ping N3 không tới
+
+Nguyên nhân: N3 OVS bridge chưa được nối giữa các node → mỗi node là “island”.
+
+Fix: tạo VXLAN ports trên n3br để nối:
+
+masterk8s ↔ open5gs
+
+masterk8s ↔ workerk8s
+
+mở UDP 4789.
+
+Kết quả: gNB connect AMF thành công (NG Setup OK).
+
+4) Trạng thái hiện tại: đã hoàn thành đến đâu?
+
+✅ Hoàn thành (đã chạy end-to-end):
+
+Cluster 4 nodes hoạt động, UE node join + label/taint + pin pod.
+
+Open5GS core N2/N3/N4 sẵn sàng (AMF/SMF/UPF).
+
+gNB ở MEC1 và MEC2 đăng ký thành công với AMF (NG Setup success).
+
+UE1 đăng ký thành công + tạo PDU session thành công:
+
+UE log: “Initial Registration is successful”
+
+UE log: “PDU Session establishment is successful”
+
+UE interface: uesimtun0 = 10.41.0.2
+
+UE ping 8.8.8.8 OK ✅
+
+⚠️ Chưa làm / bước tiếp theo (nếu theo đề tài MEC đa site):
+
+Steering UE vào MEC1 hoặc MEC2 một cách “có chủ đích” (hiện đang có thể attach vào mec1/mec2 do gnbSearchList có cả 2).
+
+Local breakout theo site (ví dụ: UE vào MEC1 dùng UPF1, vào MEC2 dùng UPF2) / hoặc slice-based routing.
+
+Làm sạch warning PFCP recovery timestamp (không chặn demo, nhưng nếu muốn log sạch).
+
+5) Prompt chuẩn để lưu (copy/paste lần sau)
+
+Bạn copy nguyên khối này, lần sau mở chat mới dán vào là mình hiểu ngay:
+############################################################################################################
+Prompt chuẩn để lưu (copy/paste lần sau)
+############################################################################################################
+PROMPT LƯU LẠI (copy nguyên khối)
+
+Mình đang dựng testbed mô phỏng 5G + MEC trên Kubernetes để làm 2 đề tài:
+
+Đề tài 1: Nghiên cứu chuyển tải (offloading) và lập lịch tài nguyên trong mạng MEC (so sánh policy scheduling/autoscaling, đo latency/throughput/CPU…).
+
+Đề tài 2: Nghiên cứu di chuyển dịch vụ (service migration) trong mạng MEC (migrate app giữa MEC1↔MEC2 theo UE mobility/tải, đo downtime/latency shift).
+
+1) Hạ tầng VM + IP
+
+masterk8s: 10.10.33.45 (control-plane)
+
+open5gs: 10.10.33.54 (MEC1 node)
+
+workerk8s: 10.10.33.60 (MEC2 node)
+
+ue: 10.10.33.40 (UE node, join cluster)
+
+Repo dùng: niloysh/open5gs-k8s
+
+2) Trạng thái Kubernetes nodes
+
+Nodes: masterk8s, open5gs, workerk8s, ue
+
+Đã uncordon open5gs + workerk8s
+
+Node ue đã label + taint:
+
+label: node-role.kubernetes.io/ue=true
+
+taint: dedicated=ue:NoSchedule
+
+UE pods được pin vào node ue bằng nodeSelector + toleration.
+
+3) Open5GS core đã deploy (namespace: open5gs)
+
+Services: amf-namf, smf1-nsmf, smf2-nsmf, upf1, upf2, nrf-nnrf, webui-service…
+
+AMF có multus interface n3 = 10.10.3.200/24 (ngap_server listen 38412).
+
+SMF/UPF có multus:
+
+SMF1: n3=10.10.3.101, n4=10.10.4.101
+
+SMF2: n3=10.10.3.102, n4=10.10.4.102
+
+UPF1: n3=10.10.3.1, n4=10.10.4.1
+
+UPF2: n3=10.10.3.2, n4=10.10.4.2
+
+NAD dùng OVS-CNI:
+
+n3network bridge n3br static ip
+
+n4network bridge n4br static ip
+
+4) UERANSIM gNB/UE đã deploy
+
+gNB 2 bản:
+
+ueransim-gnb-mec1 chạy trên node open5gs, n3=10.10.3.231
+
+ueransim-gnb-mec2 chạy trên node workerk8s, n3=10.10.3.232
+
+UE 1 bản:
+
+ueransim-ue1 chạy trên node ue (k8s pod), tạo interface uesimtun0
+
+UE config:
+
+IMSI: 001010000000001 (supi imsi-001010000000001)
+
+KEY: 465B5CE8B199B49FAA5F0A2EE238A6BC
+
+OPC: E8ED289DEBA952E4283B54E88E6183CA
+
+Slice: SST=1, SD=000001
+
+DNN/APN: internet
+
+UE gnbSearchList đã sửa từ hostname -> IP:
+
+10.102.97.242 (ClusterIP gnb-service-mec1)
+
+10.100.233.99 (ClusterIP gnb-service-mec2)
+
+5) Sự cố đã gặp và đã fix
+
+UE crash: Bad Inet address: gnb-service
+
+Fix: đổi gnbSearchList sang 2 ClusterIP của gNB services.
+
+UE báo thiếu integrity/ciphering
+
+Fix: restore file ue1.yaml đúng định dạng, có đủ integrity, ciphering.
+
+gNB không connect AMF (SCTP timeout) do n3 layer2 chưa thông liên node
+
+Fix: tạo VXLAN ports trên OVS bridge n3br (key 103, dst_port 4789) giữa master và MEC nodes:
+
+vxlan-n3-open5gs (remote 10.10.33.54)
+
+vxlan-n3-workerk8s (remote 10.10.33.60)
+
+mở UDP 4789 trên master.
+
+Sau fix: ping n3 giữa gNB↔AMF OK, AMF log “gNB accepted” và gNB log “NG Setup successful”.
+
+PFCP giữa SMF/UPF có log “Invalid Recovery Time Stamp / Remote PFCP restarted … PFCP restoration”
+
+Nhưng PDU session vẫn lên được và UE ra Internet được (cần kiểm tra thêm nếu ảnh hưởng ổn định).
+
+6) Trạng thái hiện tại (đã xác nhận thành công)
+
+gNB mec1 & mec2:
+
+SCTP established tới AMF 10.10.3.200:38412
+
+NG Setup Response OK
+
+UE:
+
+Registration accept OK
+
+PDU session establishment accept OK
+
+uesimtun0 = 10.41.0.2
+
+ping 8.8.8.8 OK từ UE pod (đã chứng minh user-plane ra Internet)
+
+ping 10.41.0.1 fail (không chắc có gateway ICMP, nhưng Internet vẫn OK)
+
+7) Mục tiêu tiếp theo cho 2 đề tài (phần cần hướng dẫn tiếp)
+
+Mình muốn tiếp tục từ trạng thái “UE có 5G data + 2 MEC nodes” để làm 2 đề tài:
+
+Đề tài 1 (Offloading + Scheduling)
+
+Deploy 1 app MEC chạy trên MEC1 và MEC2 (2 bản hoặc 1 deployment có policy).
+
+UE gửi traffic đến app (curl/wrk/iperf).
+
+Đo latency/throughput/CPU/memory.
+
+Thử các policy:
+
+nodeSelector/affinity (pin app MEC1 vs MEC2)
+
+autoscaling (HPA)
+
+ưu tiên theo tải/latency (nâng cao: controller patch placement)
+
+Đề tài 2 (Service migration)
+
+UE gọi app liên tục.
+
+Migrate app từ MEC1 -> MEC2 (patch nodeSelector/affinity, rollout).
+
+Đo downtime, error rate, latency before/after.
+
+(Optional) mô phỏng UE mobility: đổi UE attach gNB mec1/mec2 rồi trigger migration.
+
+8) Khi quay lại, cần ChatGPT yêu cầu mình gửi output gì để tiếp tục?
+
+Hãy hướng dẫn từng bước ngắn gọn; khi cần xác nhận, yêu cầu mình gửi các output sau (tùy bước):
+
+kubectl get nodes -o wide
+
+kubectl -n open5gs get pod -o wide | egrep 'amf|smf|upf|ueransim'
+
+kubectl -n open5gs logs deploy/ueransim-ue1 -c ue --tail=120
+
+kubectl -n open5gs logs deploy/ueransim-gnb-mec1 -c gnb --tail=120
+
+kubectl -n open5gs logs deploy/ueransim-gnb-mec2 -c gnb --tail=120
+
+UE dataplane check:
+
+kubectl -n open5gs exec -it <uepod> -c ue -- ip -br a; ip r; ping -c 3 8.8.8.8
+
+Nếu làm app MEC:
+
+manifest app + kubectl get svc,deploy,pod -o wide
+
+kết quả curl/wrk từ UE
+
+metrics (nếu có): CPU/mem của nodes/pods
+
+Yêu cầu ChatGPT: dựa trên ngữ cảnh trên, hãy tiếp tục hướng dẫn triển khai mec-app baseline + đo latency từ UE tới MEC1 vs MEC2 trước, sau đó mới làm scheduling và migration.
+
+Gợi ý “bước tiếp theo” khi bạn quay lại (để ChatGPT bám theo)
+
+Khi bạn mở lại, cứ nói:
+“Tiếp theo làm đề tài 1 baseline: deploy mec-app trên MEC1 + MEC2 và đo latency từ UE.”
+Rồi ChatGPT sẽ dẫn theo prompt trên.
+
+Chúc bạn nghỉ ngơi đã — nền tảng 5G+MEC của bạn đã chạy được rồi, phần còn lại là “MEC orchestration/measurement” đúng trọng tâm đề tài.
+
+######
+# OR #
+######
+Mình đang làm đề tài mô phỏng 5G MEC đa site trên Kubernetes.
+
+Hạ tầng:
+- K8s 4 node: masterk8s (10.10.33.45), open5gs (10.10.33.54, MEC1), workerk8s (10.10.33.60, MEC2), ue (10.10.33.40).
+- UE VM đã join cluster, node label node-role.kubernetes.io/ue=true và taint dedicated=ue:NoSchedule để pin UE pod vào node ue.
+- Namespace: open5gs.
+- Repo dùng open5gs-k8s của niloysh, triển khai Open5GS + UERANSIM bằng kustomize.
+
+Networking:
+- Multus + ovs-cni NetworkAttachmentDefinition:
+  - n3network bridge n3br, static IP, MTU 1450
+  - n4network bridge n4br, static IP, MTU 1450
+- Đã nối các OVS bridge giữa node bằng VXLAN UDP 4789 trên n3br để gNB ở MEC nodes reach AMF trên master.
+
+Open5GS:
+- AMF có interface n3 IP 10.10.3.200, ngap_server SCTP 38412 OK.
+- SMF1 n3 10.10.3.101, n4 10.10.4.101; DNN internet.
+- SMF2 n3 10.10.3.102, n4 10.10.4.102; DNN streaming.
+- UPF1 (MEC1 open5gs): n3 10.10.3.1, n4 10.10.4.1.
+- UPF2 (MEC2 workerk8s): n3 10.10.3.2, n4 10.10.4.2.
+- WebUI login OK, đã tạo subscriber IMSI 001010000000001, key 465B..., OPC E8ED..., slice 1-000001, DNN internet, ipv4.
+
+UERANSIM:
+- gNB mec1 n3 IP 10.10.3.231, gNB mec2 n3 IP 10.10.3.232, both NG Setup success.
+- UE1 chạy pod trên node ue, uesimtun0 = 10.41.0.2.
+- UE Registration + PDU Session establishment success, ping 8.8.8.8 OK.
+- Đã từng fix lỗi: Bad Inet address gnb-service (đổi gnbSearchList sang ClusterIP gnb-service-mec1/mec2), và thiếu integrity/ciphering trong ue1.yaml.
+
+Mục tiêu tiếp theo:
+- Steering UE attach vào MEC1 hoặc MEC2 theo ý muốn (chọn gNB),
+- và/hoặc local breakout theo site (MEC1 dùng UPF1, MEC2 dùng UPF2), hoặc slice-based routing.
+Hãy hướng dẫn tiếp theo từng bước, mỗi bước dừng để mình gửi output xác nhận.
+
+
+
+
+############################################################################################################
+END
+############################################################################################################
+
+###########################################################################################################################
 ### 04/01/2026
 Xóa sạch như line 181 cho worker8s, open5gs, join lại từ đầu
 sudo kubeadm reset -f || true
@@ -257,8 +801,164 @@ node-ip có nguy cơ lại nhảy public không,
 containerd/cgroup ok chưa,
 
 rồi mình cho bạn đi tiếp sang Bước 2 (kubeadm init).
+###
+A) Bắt kubelet dùng IP private (ens19 = 10.10.33.45)
+
+Hiện tại VM có default route đi qua ens18 (IP public) nên kubelet rất hay tự chọn node IP theo default route → Node INTERNAL-IP sẽ thành public.
+
+Chạy trên masterk8s:
+
+sudo mkdir -p /etc/default
+
+echo 'KUBELET_EXTRA_ARGS=--node-ip=10.10.33.45' | sudo tee /etc/default/kubelet
+
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+
+# check nhanh kubelet đã nhận node-ip chưa
+ps -ef | grep kubelet | grep -- '--node-ip=10.10.33.45' || true
 
 
+Việc này không đổi default route, chỉ ép kubelet báo đúng IP private trong cluster.
+
+B) Xóa dấu vết CNI/Calico cũ còn sót (tunl0 + route proto bird)
+
+Bạn đang có:
+
+tunl0@NONE 192.168.35.128/32
+
+blackhole ... proto bird
+
+Đây là “dấu vết Calico cũ” còn trên host. Nên dọn sạch trước khi dựng cluster mới để tránh sandbox / CNI bị rối.
+
+Chạy:
+
+# 1) Xóa interface tunnel cũ (nếu còn)
+sudo ip link del tunl0 2>/dev/null || true
+
+# 2) Xóa route blackhole/bird cũ (xóa tất cả route proto bird cho sạch)
+sudo ip route | awk '/ proto bird /{print}' 
+sudo ip route | awk '/ proto bird /{print $1,$2,$3,$4,$5,$6}' >/dev/null 2>&1 || true
+
+# Cách an toàn hơn: flush route "proto bird"
+# (nếu lệnh dưới báo error thì bỏ qua, không sao)
+sudo ip route flush proto bird 2>/dev/null || true
+
+# check lại
+ip -br a | egrep 'tunl0' || echo "OK: tunl0 gone"
+ip r | egrep 'proto bird|blackhole' || echo "OK: no bird/blackhole route"
+
+************Kết quả: Masterk8s************
+Chuẩn ✅ cluster trên masterk8s đang sạch và khỏe:
+masterk8s Ready ✔️
+calico-node / calico-kube-controllers Running ✔️
+coredns Running ✔️
+=> Bước 1 (khởi tạo control-plane + CNI) đã xong.
+
+root@MasterK8s:~# kubectl get nodes -o wide
+kubectl -n kube-system get pods -o wide
+kubectl get pods -A | egrep 'calico|coredns|kube-proxy|etcd|apiserver'
+NAME        STATUS   ROLES           AGE   VERSION    INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION       CONTAINER-RUNTIME
+masterk8s   Ready    control-plane   10m   v1.30.14   10.10.33.45   <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://1.7.28
+NAME                                      READY   STATUS    RESTARTS   AGE     IP               NODE        NOMINATED NODE   READINESS GATES
+calico-kube-controllers-ddf655445-b9drz   1/1     Running   0          4m10s   192.168.35.130   masterk8s   <none>           <none>
+calico-node-4bcjd                         1/1     Running   0          4m10s   10.10.33.45      masterk8s   <none>           <none>
+coredns-55cb58b774-5k7gp                  1/1     Running   0          10m     192.168.35.131   masterk8s   <none>           <none>
+coredns-55cb58b774-xtr4s                  1/1     Running   0          10m     192.168.35.129   masterk8s   <none>           <none>
+etcd-masterk8s                            1/1     Running   1          10m     10.10.33.45      masterk8s   <none>           <none>
+kube-apiserver-masterk8s                  1/1     Running   1          10m     10.10.33.45      masterk8s   <none>           <none>
+kube-controller-manager-masterk8s         1/1     Running   1          10m     10.10.33.45      masterk8s   <none>           <none>
+kube-proxy-g4c84                          1/1     Running   0          10m     10.10.33.45      masterk8s   <none>           <none>
+kube-scheduler-masterk8s                  1/1     Running   1          10m     10.10.33.45      masterk8s   <none>           <none>
+kube-system   calico-kube-controllers-ddf655445-b9drz   1/1     Running   0          4m10s
+kube-system   calico-node-4bcjd                         1/1     Running   0          4m10s
+kube-system   coredns-55cb58b774-5k7gp                  1/1     Running   0          10m
+kube-system   coredns-55cb58b774-xtr4s                  1/1     Running   0          10m
+kube-system   etcd-masterk8s                            1/1     Running   1          10m
+kube-system   kube-apiserver-masterk8s                  1/1     Running   1          10m
+kube-system   kube-proxy-g4c84                          1/1     Running   0          10m
+root@MasterK8s:~#
+
+### Xóa sạch open5gs, workerk8s như Line 181
+# 1) Xoá routes "proto bird" (nếu có)
+ip -4 route | awk '/ proto bird /{print $0}' | while read -r r; do ip route del $r; done
+
+# 2) Xoá tunl0 nếu còn (Calico IP-in-IP)
+ip link show tunl0 >/dev/null 2>&1 && ip link del tunl0 || true
+
+# 3) Với workerk8s: xoá ogstun nếu còn từ UPF cũ
+ip link show ogstun >/dev/null 2>&1 && ip link del ogstun || true
+
+sudo kubeadm reset -f || true
+sudo systemctl stop kubelet containerd || true
+
+sudo rm -rf /etc/cni/net.d \
+  /var/lib/cni \
+  /var/lib/kubelet \
+  /etc/kubernetes \
+  /var/lib/etcd
+
+sudo ip link del cni0 2>/dev/null || true
+sudo ip link del flannel.1 2>/dev/null || true
+sudo ip link del tunl0 2>/dev/null || true
+sudo iptables -F && sudo iptables -t nat -F && sudo iptables -t mangle -F
+sudo iptables -X
+
+sudo mkdir -p /opt/cni/bin
+sudo cp -a /usr/lib/cni/* /opt/cni/bin/
+ls -la /opt/cni/bin | head -n 30
+
+sudo apt-get update
+sudo apt-get install -y --reinstall containernetworking-plugins kubernetes-cni
+sudo mkdir -p /opt/cni/bin
+sudo cp -a /usr/lib/cni/* /opt/cni/bin/
+
+###
+mô hình:
+
+Open5GS core chạy trên K8s (masterk8s).
+gNB chạy 2 nơi: MEC1 (node open5gs) và MEC2 (node workerk8s).
+UE chạy dạng pod nhưng pin vào node “ue” (VM UE đã join cluster).
+
+2) Lỗi gì đã gặp, và đã khắc phục gì
+(A) Lỗi Multus/CNI: “missing plugin static”
+Triệu chứng: Pod Open5GS bị FailedCreatePodSandbox… failed to find plugin "static" in path /opt/cni/bin
+Nguyên nhân: thiếu binary CNI static trong /opt/cni/bin
+Kết quả: bạn đã xử lý xong (sau đó Open5GS pods lên Running).
+Note: phần “tar static: Not found in archive” là do bạn tải sai gói/phiên bản hoặc file tgz đó không chứa static như bạn nghĩ. Nhưng cuối cùng cụm vẫn chạy được vì bạn đã có đủ plugin cần thiết để pod lên.
+
+(B) DNS “No answer” nhưng nc mongodb 27017 open
+Thực tế: DNS OK (dig trả A record đúng).
+“No answer” ban đầu là do cách nslookup query / search domain / record type bị lệch, không phải DNS chết.
+
+(C) WebUI login admin/1423 sai
+Nguyên nhân: repo yêu cầu phải tạo admin vào MongoDB trước.
+Fix: bạn đã chạy mongo-tools/add-admin-account.py → login OK.
+
+(D) UE CrashLoop “Bad Inet address: gnb-service”
+Nguyên nhân: file UE config gnbSearchList: - gnb-service nhưng bạn deploy 2 service: gnb-service-mec1, gnb-service-mec2 (không có service tên gnb-service).
+Fix: bạn patch gnbSearchList sang 2 ClusterIP của 2 gNB service → UE chạy được.
+
+(E) gNB không connect AMF (SCTP timeout) + ping N3 fail
+Nguyên nhân: n3network dùng OVS bridge n3br + IPAM static, nhưng n3br trên các node không “nối” được với nhau → mỗi node là một island.
+Fix: bạn đã add VXLAN ports vào n3br trên master để nối tới open5gs và workerk8s.
+Kết quả: ping N3 qua lại OK và AMF nhận 2 gNB:
+gNB-N2 accepted[10.10.3.231]
+gNB-N2 accepted[10.10.3.232]
+=> Tới đây: N2 OK, N3/N3-OVS OK, gNB OK.
+
+3) Hiện tại đang mắc lỗi gì (lỗi hiện tại)
+Bây giờ UE đã chạy và bắt đầu đăng ký, nhưng log UE cho thấy:
+UE gửi Initial Registration
+Sau đó:
+Authentication Request received
+Secured NAS message received while no security context
+Security Mode Command received
+rồi bị RRC Release received
+UE quay lại trạng thái deregistered / attempting registration
+Và bạn cũng từng thấy phía AMF:
+PDU session establishment reject
+=> Nói gọn: đang mắc ở tầng NAS security/auth hoặc mapping subscriber/config giữa UE ↔ core (chưa vào tới bước “register stable + establish PDU session”).
 
 ###########################################################################################################################
 ### 03/01/2026
@@ -1441,6 +2141,7 @@ root@MasterK8s:~# kubectl get deployments -A
 NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
 kube-system   calico-kube-controllers   1/1     1            1           16d
 kube-system   coredns                   2/2     2            2           17d
+
 
 
 
