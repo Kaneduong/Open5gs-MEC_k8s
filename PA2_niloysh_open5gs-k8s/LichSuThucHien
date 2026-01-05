@@ -1,5 +1,291 @@
+root@MasterK8s:~/open5gs-k8s# kubectl -n open5gs logs deploy/ueransim-gnb-mec2 -c gnb --since=30m --tail=300
+UERANSIM v3.2.6
+[2026-01-05 15:48:14.945] [sctp] [info] Trying to establish SCTP connection... (10.10.3.200:38412)
+[2026-01-05 15:48:14.957] [sctp] [info] SCTP connection established (10.10.3.200:38412)
+[2026-01-05 15:48:14.957] [sctp] [debug] SCTP association setup ascId[6]
+[2026-01-05 15:48:14.957] [ngap] [debug] Sending NG Setup Request
+[2026-01-05 15:48:14.974] [ngap] [debug] NG Setup Response received
+[2026-01-05 15:48:14.974] [ngap] [info] NG Setup procedure is successful
+[2026-01-05 15:48:16.364] [rrc] [debug] UE[1] new signal detected
+[2026-01-05 15:48:42.716] [rrc] [debug] UE[2] new signal detected
+[2026-01-05 15:48:42.724] [rrc] [info] RRC Setup for UE[2]
+[2026-01-05 15:48:42.726] [ngap] [debug] Initial NAS message received from UE[2]
+[2026-01-05 15:48:42.863] [ngap] [debug] Initial Context Setup Request received
+[2026-01-05 15:48:43.188] [ngap] [info] PDU session resource(s) setup for UE[2] count[1]
+[2026-01-05 15:49:14.996] [rls] [debug] UE[1] signal lost
+root@MasterK8s:~/open5gs-k8s# kubectl -n open5gs logs deploy/ueransim-gnb-mec2 -c gnb --since=2h --tail=500 \
+| egrep -i '\[rrc\]|\[ngap\]|\[nas\]|UE\['
+[2026-01-05 15:48:14.957] [ngap] [debug] Sending NG Setup Request
+[2026-01-05 15:48:14.974] [ngap] [debug] NG Setup Response received
+[2026-01-05 15:48:14.974] [ngap] [info] NG Setup procedure is successful
+[2026-01-05 15:48:16.364] [rrc] [debug] UE[1] new signal detected
+[2026-01-05 15:48:42.716] [rrc] [debug] UE[2] new signal detected
+[2026-01-05 15:48:42.724] [rrc] [info] RRC Setup for UE[2]
+[2026-01-05 15:48:42.726] [ngap] [debug] Initial NAS message received from UE[2]
+[2026-01-05 15:48:42.863] [ngap] [debug] Initial Context Setup Request received
+[2026-01-05 15:48:43.188] [ngap] [info] PDU session resource(s) setup for UE[2] count[1]
+[2026-01-05 15:49:14.996] [rls] [debug] UE[1] signal lost
+root@MasterK8s:~/open5gs-k8s# AMF_POD=$(kubectl -n open5gs get pod -l nf=amf -o jsonpath='{.items[0].metadata.name}')
 
+kubectl -n open5gs logs "$AMF_POD" --since=2h --tail=800 | egrep -i 'gNB|ngap|tac|tai|registration|dereg|imsi|supi|pdu|smf' || true
+Defaulted container "amf" out of: amf, wait-scp (init)
+01/05 15:34:00.617: [amf] INFO: ngap_server() [10.10.3.200]:38412 (../src/amf/ngap-sctp.c:61)
+01/05 15:44:51.111: [amf] INFO: gNB-N2 accepted[10.10.3.231]:43973 in ng-path module (../src/amf/ngap-sctp.c:113)
+01/05 15:44:51.112: [amf] INFO: gNB-N2 accepted[10.10.3.231] in master_sm module (../src/amf/amf-sm.c:741)
+01/05 15:44:51.134: [amf] INFO: [Added] Number of gNBs is now 1 (../src/amf/context.c:1231)
+01/05 15:44:51.135: [amf] INFO: gNB-N2[10.10.3.231] max_num_of_ostreams : 10 (../src/amf/amf-sm.c:780)
+01/05 15:44:54.485: [amf] INFO: InitialUEMessage (../src/amf/ngap-handler.c:401)
+01/05 15:44:54.485: [amf] INFO: [Added] Number of gNB-UEs is now 1 (../src/amf/context.c:2550)
+01/05 15:44:54.486: [amf] INFO: Unknown UE by 5G-S_TMSI[AMF_ID:0x20040,M_TMSI:0xb3] (../src/amf/ngap-handler.c:479)
+01/05 15:44:54.486: [amf] INFO:     RAN_UE_NGAP_ID[1] AMF_UE_NGAP_ID[1] TAC[1] CellID[0x10] (../src/amf/ngap-handler.c:562)
+01/05 15:44:54.491: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1165)
+01/05 15:44:54.848: [gmm] INFO: [imsi-001010000000001] Registration complete (../src/amf/gmm-sm.c:2146)
+01/05 15:44:54.848: [amf] INFO: [imsi-001010000000001] Configuration update command (../src/amf/nas-path.c:612)
+01/05 15:45:02.158: [amf] INFO: InitialUEMessage (../src/amf/ngap-handler.c:401)
+01/05 15:45:02.158: [amf] INFO: [Added] Number of gNB-UEs is now 2 (../src/amf/context.c:2550)
+01/05 15:45:02.158: [amf] INFO:     RAN_UE_NGAP_ID[2] AMF_UE_NGAP_ID[2] TAC[1] CellID[0x10] (../src/amf/ngap-handler.c:562)
+01/05 15:45:02.159: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1165)
+01/05 15:45:02.165: [amf] INFO: UE Context Release [Action:1] (../src/amf/ngap-handler.c:1698)
+01/05 15:45:02.165: [amf] INFO:     RAN_UE_NGAP_ID[1] AMF_UE_NGAP_ID[1] (../src/amf/ngap-handler.c:1699)
+01/05 15:45:02.165: [amf] INFO: [Removed] Number of gNB-UEs is now 1 (../src/amf/context.c:2557)
+01/05 15:45:02.502: [gmm] INFO: [imsi-001010000000001] Registration complete (../src/amf/gmm-sm.c:2146)
+01/05 15:45:02.517: [amf] INFO: [imsi-001010000000001] Configuration update command (../src/amf/nas-path.c:612)
+01/05 15:45:02.526: [gmm] INFO: UE SUPI[imsi-001010000000001] DNN[internet] S_NSSAI[SST:1 SD:0x1] smContextRef [NULL] (../src/amf/gmm-handler.c:1241)
+01/05 15:45:02.526: [gmm] INFO: No SMF Instance (../src/amf/gmm-handler.c:1278)
+01/05 15:45:02.624: [sbi] INFO: [SMF] (SCP-discover) NF registered [36cbba9e-e97d-41f0-aa8f-4b47a2a067fb:1] (../lib/sbi/path.c:211)
+01/05 15:45:02.776: [amf] INFO: [imsi-001010000000001:1:11][0:0:NULL] /nsmf-pdusession/v1/sm-contexts/{smContextRef}/modify (../src/amf/nsmf-handler.c:837)
+01/05 15:48:14.933: [amf] INFO: gNB-N2 accepted[10.10.3.232]:53538 in ng-path module (../src/amf/ngap-sctp.c:113)
+01/05 15:48:14.935: [amf] INFO: gNB-N2 accepted[10.10.3.232] in master_sm module (../src/amf/amf-sm.c:741)
+01/05 15:48:14.949: [amf] INFO: [Added] Number of gNBs is now 2 (../src/amf/context.c:1231)
+01/05 15:48:14.949: [amf] INFO: gNB-N2[10.10.3.232] max_num_of_ostreams : 10 (../src/amf/amf-sm.c:780)
+01/05 15:48:40.701: [amf] INFO: gNB-N2[10.10.3.231] connection refused!!! (../src/amf/amf-sm.c:793)
+01/05 15:48:40.702: [amf] INFO: [Removed] Number of gNBs is now 1 (../src/amf/context.c:1258)
+01/05 15:48:40.717: [amf] INFO: [Removed] Number of gNB-UEs is now 0 (../src/amf/context.c:2557)
+01/05 15:48:40.717: [amf] INFO: [imsi-001010000000001:1:51][0:0:NULL] /nsmf-pdusession/v1/sm-contexts/{smContextRef}/modify (../src/amf/nsmf-handler.c:837)
+01/05 15:48:42.704: [amf] INFO: InitialUEMessage (../src/amf/ngap-handler.c:401)
+01/05 15:48:42.704: [amf] INFO: [Added] Number of gNB-UEs is now 1 (../src/amf/context.c:2550)
+01/05 15:48:42.704: [amf] INFO:     RAN_UE_NGAP_ID[1] AMF_UE_NGAP_ID[3] TAC[2] CellID[0x11] (../src/amf/ngap-handler.c:562)
+01/05 15:48:42.705: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1165)
+01/05 15:48:42.756: [amf] INFO: [imsi-001010000000001:1] Release SM context [204] (../src/amf/amf-sm.c:491)
+01/05 15:48:42.756: [amf] INFO: [imsi-001010000000001:1] Release SM Context [state:31] (../src/amf/nsmf-handler.c:1027)
+01/05 15:48:43.044: [gmm] INFO: [imsi-001010000000001] Registration complete (../src/amf/gmm-sm.c:2146)
+01/05 15:48:43.044: [amf] INFO: [imsi-001010000000001] Configuration update command (../src/amf/nas-path.c:612)
+01/05 15:48:43.045: [gmm] INFO: UE SUPI[imsi-001010000000001] DNN[internet] S_NSSAI[SST:1 SD:0x1] smContextRef [NULL] (../src/amf/gmm-handler.c:1241)
+01/05 15:48:43.045: [gmm] INFO: No SMF Instance (../src/amf/gmm-handler.c:1278)
+01/05 15:48:43.124: [sbi] WARNING: [SMF] (SCP-discover) NF has already been added [36cbba9e-e97d-41f0-aa8f-4b47a2a067fb:1] (../lib/sbi/path.c:216)
+01/05 15:48:43.198: [amf] INFO: [imsi-001010000000001:1:11][0:0:NULL] /nsmf-pdusession/v1/sm-contexts/{smContextRef}/modify (../src/amf/nsmf-handler.c:837)
 
+kubectl -n open5gs exec -it "$AMF_POD" -c amf -- sh -lc '
+ls -lah /open5gs/install/var/log/open5gs/ || true
+echo "----- tail amf.log -----"
+tail -n 400 /open5gs/install/var/log/open5gs/amf.log | egrep -i "imsi|001010000000001|supi|tac|tai|registration|dereg|pdu|smf|ngap|handover|ue"
+'
+total 24K
+drwxr-xr-x 1 root root 4.0K Jan  5 15:34 .
+drwxr-xr-x 1 root root 4.0K Oct 22 07:20 ..
+-rw-r--r-- 1 root root 9.7K Jan  5 15:48 amf.log
+----- tail amf.log -----
+01/05 15:34:00.617: [amf] INFO: ngap_server() [10.10.3.200]:38412 (../src/amf/ngap-sctp.c:61)
+01/05 15:44:51.111: [amf] INFO: gNB-N2 accepted[10.10.3.231]:43973 in ng-path module (../src/amf/ngap-sctp.c:113)
+01/05 15:44:54.485: [amf] INFO: InitialUEMessage (../src/amf/ngap-handler.c:401)
+01/05 15:44:54.486: [amf] INFO: [Added] Number of gNB-UEs is now 1 (../src/amf/context.c:2550)
+01/05 15:44:54.486: [amf] INFO: Unknown UE by 5G-S_TMSI[AMF_ID:0x20040,M_TMSI:0xb3] (../src/amf/ngap-handler.c:479)
+01/05 15:44:54.486: [amf] INFO:     RAN_UE_NGAP_ID[1] AMF_UE_NGAP_ID[1] TAC[1] CellID[0x10] (../src/amf/ngap-handler.c:562)
+01/05 15:44:54.491: [amf] INFO: Unknown UE by 5G-S_TMSI[AMF_ID:0x20040,M_TMSI:0xc00000b3] (../src/amf/context.c:1853)
+01/05 15:44:54.491: [amf] INFO: [Added] Number of AMF-UEs is now 1 (../src/amf/context.c:1616)
+01/05 15:44:54.491: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1165)
+01/05 15:44:54.848: [gmm] INFO: [imsi-001010000000001] Registration complete (../src/amf/gmm-sm.c:2146)
+01/05 15:44:54.848: [amf] INFO: [imsi-001010000000001] Configuration update command (../src/amf/nas-path.c:612)
+01/05 15:45:02.158: [amf] INFO: InitialUEMessage (../src/amf/ngap-handler.c:401)
+01/05 15:45:02.158: [amf] INFO: [Added] Number of gNB-UEs is now 2 (../src/amf/context.c:2550)
+01/05 15:45:02.158: [amf] INFO:     RAN_UE_NGAP_ID[2] AMF_UE_NGAP_ID[2] TAC[1] CellID[0x10] (../src/amf/ngap-handler.c:562)
+01/05 15:45:02.159: [amf] INFO: [suci-0-001-01-0000-0-0-0000000001] known UE by SUCI (../src/amf/context.c:1833)
+01/05 15:45:02.159: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1165)
+01/05 15:45:02.165: [amf] INFO: UE Context Release [Action:1] (../src/amf/ngap-handler.c:1698)
+01/05 15:45:02.165: [amf] INFO:     RAN_UE_NGAP_ID[1] AMF_UE_NGAP_ID[1] (../src/amf/ngap-handler.c:1699)
+01/05 15:45:02.165: [amf] INFO: [Removed] Number of gNB-UEs is now 1 (../src/amf/context.c:2557)
+01/05 15:45:02.517: [gmm] INFO: [imsi-001010000000001] Registration complete (../src/amf/gmm-sm.c:2146)
+01/05 15:45:02.517: [amf] INFO: [imsi-001010000000001] Configuration update command (../src/amf/nas-path.c:612)
+01/05 15:45:02.526: [gmm] INFO: UE SUPI[imsi-001010000000001] DNN[internet] S_NSSAI[SST:1 SD:0x1] smContextRef [NULL] (../src/amf/gmm-handler.c:1241)
+01/05 15:45:02.526: [gmm] INFO: No SMF Instance (../src/amf/gmm-handler.c:1278)
+01/05 15:45:02.624: [sbi] INFO: [SMF] (SCP-discover) NF registered [36cbba9e-e97d-41f0-aa8f-4b47a2a067fb:1] (../lib/sbi/path.c:211)
+01/05 15:45:02.776: [amf] INFO: [imsi-001010000000001:1:11][0:0:NULL] /nsmf-pdusession/v1/sm-contexts/{smContextRef}/modify (../src/amf/nsmf-handler.c:837)
+01/05 15:48:14.935: [amf] INFO: gNB-N2 accepted[10.10.3.232]:53538 in ng-path module (../src/amf/ngap-sctp.c:113)
+01/05 15:48:40.717: [amf] INFO: [Removed] Number of gNB-UEs is now 0 (../src/amf/context.c:2557)
+01/05 15:48:40.717: [amf] INFO: [imsi-001010000000001:1:51][0:0:NULL] /nsmf-pdusession/v1/sm-contexts/{smContextRef}/modify (../src/amf/nsmf-handler.c:837)
+01/05 15:48:42.704: [amf] INFO: InitialUEMessage (../src/amf/ngap-handler.c:401)
+01/05 15:48:42.704: [amf] INFO: [Added] Number of gNB-UEs is now 1 (../src/amf/context.c:2550)
+01/05 15:48:42.704: [amf] INFO:     RAN_UE_NGAP_ID[1] AMF_UE_NGAP_ID[3] TAC[2] CellID[0x11] (../src/amf/ngap-handler.c:562)
+01/05 15:48:42.705: [amf] INFO: [suci-0-001-01-0000-0-0-0000000001] known UE by SUCI (../src/amf/context.c:1833)
+01/05 15:48:42.707: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1165)
+01/05 15:48:42.756: [amf] INFO: [imsi-001010000000001:1] Release SM context [204] (../src/amf/amf-sm.c:491)
+01/05 15:48:42.756: [amf] INFO: [imsi-001010000000001:1] Release SM Context [state:31] (../src/amf/nsmf-handler.c:1027)
+01/05 15:48:43.044: [gmm] INFO: [imsi-001010000000001] Registration complete (../src/amf/gmm-sm.c:2146)
+01/05 15:48:43.044: [amf] INFO: [imsi-001010000000001] Configuration update command (../src/amf/nas-path.c:612)
+01/05 15:48:43.045: [gmm] INFO: UE SUPI[imsi-001010000000001] DNN[internet] S_NSSAI[SST:1 SD:0x1] smContextRef [NULL] (../src/amf/gmm-handler.c:1241)
+01/05 15:48:43.045: [gmm] INFO: No SMF Instance (../src/amf/gmm-handler.c:1278)
+01/05 15:48:43.124: [sbi] WARNING: [SMF] (SCP-discover) NF has already been added [36cbba9e-e97d-41f0-aa8f-4b47a2a067fb:1] (../lib/sbi/path.c:216)
+01/05 15:48:43.198: [amf] INFO: [imsi-001010000000001:1:11][0:0:NULL] /nsmf-pdusession/v1/sm-contexts/{smContextRef}/modify (../src/amf/nsmf-handler.c:837)
+root@MasterK8s:~/open5gs-k8s#
+
+A) Kết luận nhanh: UE đã chuyển từ gNB1 → gNB2 (đã chứng minh được)
+1) Bằng chứng ở gNB mec2 (TAC=2)
+
+Log gNB mec2:
+
+UE[2] new signal detected
+
+RRC Setup for UE[2]
+
+Initial NAS message received from UE[2]
+
+Initial Context Setup Request received
+
+PDU session resource(s) setup ...
+
+=> Đây là UE attach/đăng ký + PDU xảy ra tại gNB mec2.
+
+2) Bằng chứng ở AMF: TAC thay đổi từ 1 → 2 (điểm quan trọng nhất để đưa vào luận văn)
+
+AMF log cho thấy rõ:
+
+Lúc UE ở mec1:
+
+TAC[1] CellID[0x10]
+
+Lúc UE sang mec2:
+
+TAC[2] CellID[0x11]
+
+Dòng “đinh” để trích dẫn:
+
+01/05 15:48:42.704 ... TAC[2] CellID[0x11]
+
+=> Đây là bằng chứng UE đã chuyển vùng (tracking area / cell) sang TAC=2, tức mec2.
+
+✅ Với 2 cụm log này, bạn hoàn toàn có thể viết phần “UE mobility / di chuyển giữa MEC zones” trong luận văn.
+
+B) Điểm sai / điểm “chưa đúng kỳ vọng” (và vì sao bạn vẫn ping internet OK)
+
+Trong AMF log bạn có 2 lần xuất hiện:
+
+UE SUPI... DNN[internet] ... smContextRef [NULL]
+
+No SMF Instance
+
+Điều này nghĩa là: AMF không lấy được SMF instance ngay tại thời điểm cần tạo/khôi phục SM context (PDU session control-plane).
+Nhưng bạn vẫn ping 8.8.8.8 OK vì:
+
+User-plane (UPF/NAT/routing) vẫn đang chạy và UE đã có uesimtun0 + routing rule.
+
+Có thể PDU session được tạo lại sau đó (và UE log bạn đưa trước đây đã có “PDU Session Establishment Accept”), chỉ là trong log tail này AMF ghi khoảnh khắc nó “chưa tìm được SMF” hoặc đang dùng SCP/NRF discovery chậm.
+
+Ngoài ra AMF còn ghi:
+
+Release SM context [204]
+=> Tức là AMF đã yêu cầu release context cũ, rồi tạo lại.
+
+Tóm lại: Mobility có, nhưng chưa “mượt” kiểu handover giữ nguyên session; hiện tại giống kiểu RLF → re-registration → re-establish session.
+
+C) Viết vào luận văn: biểu diễn UE di chuyển gNB1 → gNB2 như thế nào?
+
+Bạn có thể mô tả theo “chuỗi sự kiện” (đúng chuẩn 5G Core + RAN):
+
+1) Môi trường
+
+gNB mec1: TAC=1, CellID=0x10, NGAP IP 10.10.3.231
+
+gNB mec2: TAC=2, CellID=0x11, NGAP IP 10.10.3.232
+
+AMF: 10.10.3.200
+
+2) Sự kiện mobility (bằng chứng log)
+
+UE mất tín hiệu cell cũ → tìm cell mới (UE log có “Signal lost” + “Selected cell tac[2]”)
+
+gNB mec2 nhận Initial NAS message và làm Initial Context Setup
+
+AMF ghi nhận InitialUEMessage ... TAC[2] CellID[0x11]
+
+UE đăng ký lại thành công (Registration complete)
+
+PDU session được thiết lập lại / phục hồi (UE có TUN và ping internet OK)
+
+3) Hình minh hoạ đề xuất
+
+Trong luận văn bạn vẽ 1 hình timeline:
+
+t0: UE @ TAC1/cell0x10 (mec1)
+
+t1: RLF / signal lost
+
+t2: UE selects TAC2/cell0x11 (mec2)
+
+t3: InitialUEMessage@AMF (TAC2)
+
+t4: Registration complete + PDU session OK
+
+Bạn không cần “handover Xn” phức tạp; chỉ cần chứng minh “UE mobility between MEC zones” là đủ cho đề tài migration mức mô phỏng.
+
+D) Giờ cần làm gì tiếp để chứng minh “service migration” đúng nghĩa?
+
+Bạn hỏi: “làm sao chứng minh UE chuyển gNB thì dịch vụ cũng chuyển theo?”
+
+Cách đơn giản, đúng với đề tài MEC:
+
+Ý tưởng demo migration (dễ làm, luận văn rõ)
+
+Deploy 2 bản service giống nhau:
+
+edge-app-mec1 chạy trên node open5gs
+
+edge-app-mec2 chạy trên node workerk8s
+
+Mỗi app trả về “site=mec1” hoặc “site=mec2” (HTTP response).
+
+Khi UE ở TAC=1 → route UE tới service mec1
+Khi UE sang TAC=2 → route UE tới service mec2
+
+Bằng chứng:
+
+UE curl service → trước trả “mec1”, sau trả “mec2”
+
+Đồng thời log/pcap/latency thay đổi (nếu làm thêm)
+
+Điểm quan trọng: trong mô phỏng, “migration” có 2 kiểu:
+
+Service relocation: app thật sự di chuyển pod/node (K8s reschedule)
+
+Service selection: app ở cả 2 nơi, nhưng UE được “steer” tới site đúng (thường thực tế MEC hay làm kiểu này)
+
+Trong luận văn, bạn có thể trình bày cả 2 và chọn 1 cách triển khai.
+
+E) Fix để mobility “sạch” hơn (giảm No SMF Instance)
+
+Không bắt bạn làm ngay, nhưng đây là hướng tiếp theo nếu muốn log đẹp:
+
+1) Kiểm tra NRF/SCP discovery ổn chưa
+
+Bạn đang dùng SCP để discover SMF (log có (SCP-discover)).
+Nếu discovery chậm/khựng, AMF sẽ log “No SMF Instance”.
+
+Lệnh bạn cần gửi tiếp để mình chốt NF nào đang vấn đề:
+
+kubectl -n open5gs logs deploy/open5gs-nrf --since=30m --tail=300 | egrep -i 'smf|register|nfprofile|error' || true
+kubectl -n open5gs logs deploy/open5gs-scp --since=30m --tail=300 | egrep -i 'smf|discover|error|fail' || true
+
+F) Tóm lại: bạn đã “thấy UE di chuyển” rồi
+
+gNB mec2 nhận UE (RRC Setup + Initial NAS + Context Setup + PDU resource setup) ✅
+
+AMF ghi TAC chuyển từ 1 → 2 (CellID 0x10 → 0x11) ✅
+
+UE vẫn ping internet OK sau khi chọn tac[2] ✅
+
+Giờ bước tiếp theo hợp lý cho đề tài migration MEC là:
+dựng 2 edge service + cơ chế “steering” theo TAC, rồi đo thời gian chuyển/độ gián đoạn.
+
+Nếu bạn muốn, mình đưa luôn bộ YAML/app mẫu + cách để UE “curl” thấy “mec1→mec2” (không cần Prometheus/Grafana).
 ###########################################################################################################################
 ### 05/01/2026
 UEPOD=$(kubectl -n open5gs get pod -l app=ueransim,component=ue,name=ue1 -o jsonpath='{.items[0].metadata.name}')
@@ -2196,6 +2482,7 @@ root@MasterK8s:~# kubectl get deployments -A
 NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
 kube-system   calico-kube-controllers   1/1     1            1           16d
 kube-system   coredns                   2/2     2            2           17d
+
 
 
 
