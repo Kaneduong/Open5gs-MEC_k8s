@@ -205,3 +205,50 @@ PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
 3 packets transmitted, 3 received, 0% packet loss, time 2001ms
 rtt min/avg/max/mdev = 19.277/19.368/19.533/0.116 ms
 root@MasterK8s:~/open5gs-k8s#
+
+
+1) Bằng chứng UE đã “di chuyển” gNB1 → gNB2 (TAC1 → TAC2)
+Bạn có đủ 2 mốc log quan trọng:
+Ở MEC1:
+Selected cell ... tac[1] ...
+Registration + PDU session OK
+uesimtun0 lên 10.41.0.4
+Sau khi tắt gNB1 / bật gNB2:
+Signal lost for cell[1]...
+Selected cell ... tac[2] category[SUITABLE]
+uesimtun0 đổi sang 10.41.0.5
+ping 8.8.8.8 OK
+👉 Đổi TAC + đổi IP PDU (10.41.0.4 → 10.41.0.5) là bằng chứng cực mạnh: UE đã attach lại ở vùng khác và SMF/UPF cấp IP mới.
+
+3) Bước tiếp theo để “chứng minh chuyển gNB” trong luận văn (cần thêm 2 output)
+Hiện bạn đã có UE-side evidence. Để bài làm “đẹp và chắc”, thêm 2 evidence phía core/gNB:
+(A) gNB2 log có “Initial NAS / UE attach lại”
+Chạy:
+kubectl -n open5gs logs deploy/ueransim-gnb-mec2 -c gnb --since=10m --tail=250 | egrep -i 'UE\[|Initial NAS|RRC Setup|Registration|PDU|Context|tac|plmn' || true
+
+(B) AMF log có TAI/TAC/Registration của IMSI
+Chạy:
+AMF_POD=$(kubectl -n open5gs get pod -l nf=amf -o jsonpath='{.items[0].metadata.name}')
+kubectl -n open5gs logs "$AMF_POD" --since=10m --tail=600 | egrep -i 'imsi-001010000000001|tac|tai|registration|dereg|gmm|smf|pdu|ngap' || true
+
+Gửi 2 output này là mình sẽ chỉ đúng câu nào để trích vào luận văn (ví dụ “UE re-register in TAC=2”, “gNB2 receives Initial NAS”, …).
+
+4) Trả lời nhanh: “đã làm được migration đề tài 2 chưa?”
+Chưa (mới chứng minh UE mobility, chưa chứng minh service migration).
+Hiện bạn mới đạt:
+✅ UE chuyển vùng (TAC1 → TAC2)
+✅ PDU session OK và user-plane ra Internet
+Để thành “service migration MEC”, bạn cần thêm một dịch vụ edge chạy ở MEC1/MEC2 + cơ chế “di chuyển” hoặc “đổi đích” theo vị trí UE.
+
+5) Làm sao chứng minh “dịch vụ cũng di chuyển theo” (đề tài 2) — cách đơn giản nhất
+Không cần Prometheus/Grafana vẫn làm được demo luận văn.
+Cách dễ nhất (khuyến nghị): “2 edge service + traffic steering”
+Deploy edge-app-mec1 (nodeSelector mec1) và edge-app-mec2 (nodeSelector mec2)
+Ví dụ HTTP server trả về chữ: Hello from MEC1 / Hello from MEC2.
+Tạo 1 service name chung (ví dụ edge-service) nhưng selector thay đổi theo vị trí UE (hoặc update EndpointSlice).
+Khi UE ở TAC1 → route đến MEC1. Khi UE sang TAC2 → switch route sang MEC2.
+Chứng minh bằng:
+curl từ UE: trước trả “MEC1”, sau trả “MEC2”
+ping vẫn OK, session vẫn OK
+Nếu bạn muốn “đúng nghĩa migration” hơn:
+dùng live migration (VM/Container) hoặc state transfer (Redis/Postgres snapshot) giữa MEC1↔MEC2, nhưng phức tạp hơn.
