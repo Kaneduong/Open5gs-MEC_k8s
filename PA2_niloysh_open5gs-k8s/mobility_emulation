@@ -1,0 +1,207 @@
+##########################################################
+kịch bản handover dạng “mobility emulation” (mec1 → mec2)
+##########################################################
+A) Chuẩn bị: lấy tên các pod
+NS=open5gs
+UE_DEP=ueransim-ue1
+GNB1_DEP=ueransim-gnb-mec1
+GNB2_DEP=ueransim-gnb-mec2
+
+UEPOD=$(kubectl -n $NS get pod -l app=ueransim,component=ue,name=ue1 -o jsonpath='{.items[0].metadata.name}')
+GNB1POD=$(kubectl -n $NS get pod -l app=ueransim,component=gnb,site=mec1 -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+GNB2POD=$(kubectl -n $NS get pod -l app=ueransim,component=gnb,site=mec2 -o jsonpath='{.items[0].metadata.name}')
+AMF_POD=$(kubectl -n $NS get pod -l nf=amf -o jsonpath='{.items[0].metadata.name}')
+
+echo "UEPOD=$UEPOD"
+echo "GNB1POD=$GNB1POD"
+echo "GNB2POD=$GNB2POD"
+echo "AMF_POD=$AMF_POD"
+
+B) Phase 1 — “UE ở MEC1”
+1) Bật mec1, tắt mec2 (để UE chắc chắn chọn TAC=1)
+kubectl -n $NS scale deploy/$GNB1_DEP --replicas=1
+kubectl -n $NS scale deploy/$GNB2_DEP --replicas=0
+
+kubectl -n $NS rollout status deploy/$GNB1_DEP --timeout=120s
+kubectl -n $NS rollout restart deploy/$UE_DEP
+kubectl -n $NS rollout status deploy/$UE_DEP --timeout=180s
+
+2) Chụp log UE để thấy tac[1]
+kubectl -n $NS logs deploy/$UE_DEP -c ue --since=3m --tail=200 | egrep -i 'Selected cell|tac\[|Registration|PDU Session|establishment|successful|RRC|Signal' || true
+
+C) Phase 2 — “UE di chuyển sang MEC2”
+3) “Di chuyển”: tắt mec1, bật mec2
+kubectl -n $NS scale deploy/$GNB1_DEP --replicas=0
+kubectl -n $NS scale deploy/$GNB2_DEP --replicas=1
+
+kubectl -n $NS rollout status deploy/$GNB2_DEP --timeout=120s
+
+4) Restart UE để nó reselect cell sạch (đỡ phụ thuộc state cũ)
+kubectl -n $NS rollout restart deploy/$UE_DEP
+kubectl -n $NS rollout status deploy/$UE_DEP --timeout=180s
+
+5) Chụp log UE để thấy tac[2]
+kubectl -n $NS logs deploy/$UE_DEP -c ue --since=3m --tail=250 | egrep -i 'Selected cell|tac\[|Signal lost|New signal|Registration|PDU Session|establishment|successful' || true
+
+
+👉 Nếu đúng, bạn sẽ thấy dòng kiểu:
+
+Selected cell ... tac[2] ...
+
+D) Bằng chứng “UE chuyển gNB” (đưa vào luận văn)
+6) Log gNB2 có “Initial NAS message…” sau khi UE chuyển
+kubectl -n $NS logs deploy/$GNB2_DEP -c gnb --since=5m --tail=250 | egrep -i 'UE\[|Initial NAS|RRC Setup|Context|PDU|registration|setup|ngap' || true
+
+7) AMF log xác nhận UE attach lại (lọc theo IMSI)
+kubectl -n $NS logs "$AMF_POD" --since=10m --tail=500 | egrep -i 'imsi-001010000000001|tac|tai|registration|dereg|guti|pdu|smf|ngap|ue' || true
+
+E) Check nhanh: user-plane vẫn OK sau khi “chuyển”
+UEPOD=$(kubectl -n $NS get pod -l app=ueransim,component=ue,name=ue1 -o jsonpath='{.items[0].metadata.name}')
+kubectl -n $NS exec -it "$UEPOD" -c ue -- sh -lc 'ip -br a; ping -c 3 8.8.8.8 || true'
+
+
+####################################################################
+Output cho kịch bản handover dạng “mobility emulation” (mec1 → mec2)
+####################################################################
+root@MasterK8s:~/open5gs-k8s# NS=open5gs
+UE_DEP=ueransim-ue1
+GNB1_DEP=ueransim-gnb-mec1
+GNB2_DEP=ueransim-gnb-mec2
+
+UEPOD=$(kubectl -n $NS get pod -l app=ueransim,component=ue,name=ue1 -o jsonpath='{.items[0].metadata.name}')
+GNB1POD=$(kubectl -n $NS get pod -l app=ueransim,component=gnb,site=mec1 -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+GNB2POD=$(kubectl -n $NS get pod -l app=ueransim,component=gnb,site=mec2 -o jsonpath='{.items[0].metadata.name}')
+AMF_POD=$(kubectl -n $NS get pod -l nf=amf -o jsonpath='{.items[0].metadata.name}')
+
+echo "UEPOD=$UEPOD"
+echo "GNB1POD=$GNB1POD"
+echo "GNB2POD=$GNB2POD"
+echo "AMF_POD=$AMF_POD"
+UEPOD=ueransim-ue1-6868f8c8f8-2s8dm
+GNB1POD=
+GNB2POD=ueransim-gnb-mec2-57f6776545-6mdb9
+AMF_POD=open5gs-amf-6c8754854-p67d6
+root@MasterK8s:~/open5gs-k8s# kubectl -n $NS scale deploy/$GNB1_DEP --replicas=1
+kubectl -n $NS scale deploy/$GNB2_DEP --replicas=0
+
+kubectl -n $NS rollout status deploy/$GNB1_DEP --timeout=120s
+kubectl -n $NS rollout restart deploy/$UE_DEP
+kubectl -n $NS rollout status deploy/$UE_DEP --timeout=180s
+deployment.apps/ueransim-gnb-mec1 scaled
+deployment.apps/ueransim-gnb-mec2 scaled
+Waiting for deployment "ueransim-gnb-mec1" rollout to finish: 0 of 1 updated replicas are available...
+deployment "ueransim-gnb-mec1" successfully rolled out
+deployment.apps/ueransim-ue1 restarted
+Waiting for deployment "ueransim-ue1" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "ueransim-ue1" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "ueransim-ue1" rollout to finish: 1 old replicas are pending termination...
+deployment "ueransim-ue1" successfully rolled out
+root@MasterK8s:~/open5gs-k8s# kubectl -n $NS logs deploy/$UE_DEP -c ue --since=3m --tail=200 | egrep -i 'Selected cell|tac\[|Registration|PDU Session|establishment|successful|RRC|Signal' || true
+[2026-01-05 15:45:02.140] [rrc] [debug] New signal detected for cell[1], total [1] cells in coverage
+[2026-01-05 15:45:02.140] [rrc] [debug] New signal detected for cell[2], total [2] cells in coverage
+[2026-01-05 15:45:02.143] [rrc] [info] Selected cell plmn[001/01] tac[1] category[SUITABLE]
+[2026-01-05 15:45:02.144] [nas] [debug] Initial registration required due to [MM-DEREG-NORMAL-SERVICE]
+[2026-01-05 15:45:02.147] [nas] [debug] Sending Initial Registration
+[2026-01-05 15:45:02.148] [rrc] [debug] Sending RRC Setup Request
+[2026-01-05 15:45:02.153] [rrc] [info] RRC connection established
+[2026-01-05 15:45:02.153] [rrc] [info] UE switches to state [RRC-CONNECTED]
+[2026-01-05 15:45:02.303] [nas] [debug] Registration accept received
+[2026-01-05 15:45:02.303] [nas] [debug] Sending Registration Complete
+[2026-01-05 15:45:02.303] [nas] [info] Initial Registration is successful
+[2026-01-05 15:45:02.303] [nas] [debug] Sending PDU Session Establishment Request
+[2026-01-05 15:45:02.730] [nas] [debug] PDU Session Establishment Accept received
+[2026-01-05 15:45:02.730] [nas] [info] PDU Session establishment is successful PSI[1]
+[2026-01-05 15:45:02.797] [app] [info] Connection setup for PDU session[1] is successful, TUN interface[uesimtun0, 10.41.0.4] is up.
+[2026-01-05 15:45:19.749] [rrc] [debug] Signal lost for cell[2], total [1] cells in coverage
+root@MasterK8s:~/open5gs-k8s# kubectl -n $NS scale deploy/$GNB1_DEP --replicas=0
+kubectl -n $NS scale deploy/$GNB2_DEP --replicas=1
+
+kubectl -n $NS rollout status deploy/$GNB2_DEP --timeout=120s
+deployment.apps/ueransim-gnb-mec1 scaled
+deployment.apps/ueransim-gnb-mec2 scaled
+Waiting for deployment "ueransim-gnb-mec2" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "ueransim-gnb-mec2" rollout to finish: 0 of 1 updated replicas are available...
+deployment "ueransim-gnb-mec2" successfully rolled out
+root@MasterK8s:~/open5gs-k8s# kubectl -n $NS rollout restart deploy/$UE_DEP
+kubectl -n $NS rollout status deploy/$UE_DEP --timeout=180s
+deployment.apps/ueransim-ue1 restarted
+Waiting for deployment "ueransim-ue1" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "ueransim-ue1" rollout to finish: 1 old replicas are pending termination...
+deployment "ueransim-ue1" successfully rolled out
+root@MasterK8s:~/open5gs-k8s# kubectl -n $NS logs deploy/$UE_DEP -c ue --since=3m --tail=250 | egrep -i 'Selected cell|tac\[|Signal lost|New signal|Registration|PDU Session|establishment|successful' || true
+Found 2 pods, using pod/ueransim-ue1-65bc95c8b-cc8rr
+[2026-01-05 15:48:16.370] [rrc] [debug] New signal detected for cell[3], total [2] cells in coverage
+[2026-01-05 15:48:42.185] [rrc] [debug] Signal lost for cell[1], total [1] cells in coverage
+[2026-01-05 15:48:42.226] [rrc] [info] Selected cell plmn[001/01] tac[2] category[SUITABLE]
+root@MasterK8s:~/open5gs-k8s#
+root@MasterK8s:~/open5gs-k8s# kubectl -n $NS logs deploy/$GNB2_DEP -c gnb --since=5m --tail=250 | egrep -i 'UE\[|Initial NAS|RRC Setup|Context|PDU|registration|setup|ngap' || true
+[2026-01-05 15:48:14.957] [sctp] [debug] SCTP association setup ascId[6]
+[2026-01-05 15:48:14.957] [ngap] [debug] Sending NG Setup Request
+[2026-01-05 15:48:14.974] [ngap] [debug] NG Setup Response received
+[2026-01-05 15:48:14.974] [ngap] [info] NG Setup procedure is successful
+[2026-01-05 15:48:16.364] [rrc] [debug] UE[1] new signal detected
+[2026-01-05 15:48:42.716] [rrc] [debug] UE[2] new signal detected
+[2026-01-05 15:48:42.724] [rrc] [info] RRC Setup for UE[2]
+[2026-01-05 15:48:42.726] [ngap] [debug] Initial NAS message received from UE[2]
+[2026-01-05 15:48:42.863] [ngap] [debug] Initial Context Setup Request received
+[2026-01-05 15:48:43.188] [ngap] [info] PDU session resource(s) setup for UE[2] count[1]
+[2026-01-05 15:49:14.996] [rls] [debug] UE[1] signal lost
+root@MasterK8s:~/open5gs-k8s# kubectl -n $NS logs "$AMF_POD" --since=10m --tail=500 | egrep -i 'imsi-001010000000001|tac|tai|registration|dereg|guti|pdu|smf|ngap|ue' || true
+Defaulted container "amf" out of: amf, wait-scp (init)
+01/05 15:44:51.111: [amf] INFO: gNB-N2 accepted[10.10.3.231]:43973 in ng-path module (../src/amf/ngap-sctp.c:113)
+01/05 15:44:54.485: [amf] INFO: InitialUEMessage (../src/amf/ngap-handler.c:401)
+01/05 15:44:54.485: [amf] INFO: [Added] Number of gNB-UEs is now 1 (../src/amf/context.c:2550)
+01/05 15:44:54.486: [amf] INFO: Unknown UE by 5G-S_TMSI[AMF_ID:0x20040,M_TMSI:0xb3] (../src/amf/ngap-handler.c:479)
+01/05 15:44:54.486: [amf] INFO:     RAN_UE_NGAP_ID[1] AMF_UE_NGAP_ID[1] TAC[1] CellID[0x10] (../src/amf/ngap-handler.c:562)
+01/05 15:44:54.491: [amf] INFO: Unknown UE by 5G-S_TMSI[AMF_ID:0x20040,M_TMSI:0xc00000b3] (../src/amf/context.c:1853)
+01/05 15:44:54.491: [amf] INFO: [Added] Number of AMF-UEs is now 1 (../src/amf/context.c:1616)
+01/05 15:44:54.491: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1165)
+01/05 15:44:54.491: [gmm] INFO: [Unknown ID]    5G-S_GUTI[AMF_ID:0x20040,M_TMSI:0xc00000b3] (../src/amf/gmm-handler.c:179)
+01/05 15:44:54.848: [gmm] INFO: [imsi-001010000000001] Registration complete (../src/amf/gmm-sm.c:2146)
+01/05 15:44:54.848: [amf] INFO: [imsi-001010000000001] Configuration update command (../src/amf/nas-path.c:612)
+01/05 15:45:02.158: [amf] INFO: InitialUEMessage (../src/amf/ngap-handler.c:401)
+01/05 15:45:02.158: [amf] INFO: [Added] Number of gNB-UEs is now 2 (../src/amf/context.c:2550)
+01/05 15:45:02.158: [amf] INFO:     RAN_UE_NGAP_ID[2] AMF_UE_NGAP_ID[2] TAC[1] CellID[0x10] (../src/amf/ngap-handler.c:562)
+01/05 15:45:02.159: [amf] INFO: [suci-0-001-01-0000-0-0-0000000001] known UE by SUCI (../src/amf/context.c:1833)
+01/05 15:45:02.159: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1165)
+01/05 15:45:02.165: [amf] INFO: UE Context Release [Action:1] (../src/amf/ngap-handler.c:1698)
+01/05 15:45:02.165: [amf] INFO:     RAN_UE_NGAP_ID[1] AMF_UE_NGAP_ID[1] (../src/amf/ngap-handler.c:1699)
+01/05 15:45:02.165: [amf] INFO: [Removed] Number of gNB-UEs is now 1 (../src/amf/context.c:2557)
+01/05 15:45:02.502: [gmm] INFO: [imsi-001010000000001] Registration complete (../src/amf/gmm-sm.c:2146)
+01/05 15:45:02.517: [amf] INFO: [imsi-001010000000001] Configuration update command (../src/amf/nas-path.c:612)
+01/05 15:45:02.526: [gmm] INFO: UE SUPI[imsi-001010000000001] DNN[internet] S_NSSAI[SST:1 SD:0x1] smContextRef [NULL] (../src/amf/gmm-handler.c:1241)
+01/05 15:45:02.526: [gmm] INFO: No SMF Instance (../src/amf/gmm-handler.c:1278)
+01/05 15:45:02.624: [sbi] INFO: [SMF] (SCP-discover) NF registered [36cbba9e-e97d-41f0-aa8f-4b47a2a067fb:1] (../lib/sbi/path.c:211)
+01/05 15:45:02.776: [amf] INFO: [imsi-001010000000001:1:11][0:0:NULL] /nsmf-pdusession/v1/sm-contexts/{smContextRef}/modify (../src/amf/nsmf-handler.c:837)
+01/05 15:48:14.933: [amf] INFO: gNB-N2 accepted[10.10.3.232]:53538 in ng-path module (../src/amf/ngap-sctp.c:113)
+01/05 15:48:40.717: [amf] INFO: [Removed] Number of gNB-UEs is now 0 (../src/amf/context.c:2557)
+01/05 15:48:40.717: [amf] INFO: [imsi-001010000000001:1:51][0:0:NULL] /nsmf-pdusession/v1/sm-contexts/{smContextRef}/modify (../src/amf/nsmf-handler.c:837)
+01/05 15:48:42.704: [amf] INFO: InitialUEMessage (../src/amf/ngap-handler.c:401)
+01/05 15:48:42.704: [amf] INFO: [Added] Number of gNB-UEs is now 1 (../src/amf/context.c:2550)
+01/05 15:48:42.704: [amf] INFO:     RAN_UE_NGAP_ID[1] AMF_UE_NGAP_ID[3] TAC[2] CellID[0x11] (../src/amf/ngap-handler.c:562)
+01/05 15:48:42.705: [amf] INFO: [suci-0-001-01-0000-0-0-0000000001] known UE by SUCI (../src/amf/context.c:1833)
+01/05 15:48:42.705: [gmm] INFO: Registration request (../src/amf/gmm-sm.c:1165)
+01/05 15:48:42.756: [amf] INFO: [imsi-001010000000001:1] Release SM context [204] (../src/amf/amf-sm.c:491)
+01/05 15:48:42.756: [amf] INFO: [imsi-001010000000001:1] Release SM Context [state:31] (../src/amf/nsmf-handler.c:1027)
+01/05 15:48:43.044: [gmm] INFO: [imsi-001010000000001] Registration complete (../src/amf/gmm-sm.c:2146)
+01/05 15:48:43.044: [amf] INFO: [imsi-001010000000001] Configuration update command (../src/amf/nas-path.c:612)
+01/05 15:48:43.045: [gmm] INFO: UE SUPI[imsi-001010000000001] DNN[internet] S_NSSAI[SST:1 SD:0x1] smContextRef [NULL] (../src/amf/gmm-handler.c:1241)
+01/05 15:48:43.045: [gmm] INFO: No SMF Instance (../src/amf/gmm-handler.c:1278)
+01/05 15:48:43.124: [sbi] WARNING: [SMF] (SCP-discover) NF has already been added [36cbba9e-e97d-41f0-aa8f-4b47a2a067fb:1] (../lib/sbi/path.c:216)
+01/05 15:48:43.198: [amf] INFO: [imsi-001010000000001:1:11][0:0:NULL] /nsmf-pdusession/v1/sm-contexts/{smContextRef}/modify (../src/amf/nsmf-handler.c:837)
+root@MasterK8s:~/open5gs-k8s#
+root@MasterK8s:~/open5gs-k8s# UEPOD=$(kubectl -n $NS get pod -l app=ueransim,component=ue,name=ue1 -o jsonpath='{.items[0].metadata.name}')
+kubectl -n $NS exec -it "$UEPOD" -c ue -- sh -lc 'ip -br a; ping -c 3 8.8.8.8 || true'
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+tunl0@NONE       DOWN
+eth0@if17        UP             192.168.131.203/32 fe80::98ac:9dff:fe54:569a/64
+uesimtun0        UNKNOWN        10.41.0.5/32 fe80::7ba:c7b2:9cdf:298a/64
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=114 time=19.5 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=114 time=19.3 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=114 time=19.3 ms
+
+--- 8.8.8.8 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2001ms
+rtt min/avg/max/mdev = 19.277/19.368/19.533/0.116 ms
+root@MasterK8s:~/open5gs-k8s#
