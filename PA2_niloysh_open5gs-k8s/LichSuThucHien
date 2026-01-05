@@ -1,6 +1,7 @@
+
+
 ###########################################################################################################################
 ### 05/01/2026
-
 UEPOD=$(kubectl -n open5gs get pod -l app=ueransim,component=ue,name=ue1 -o jsonpath='{.items[0].metadata.name}')
 kubectl -n open5gs exec -it "$UEPOD" -c ue -- sh -lc '
 echo "=== table rt_uesimtun0 ==="
@@ -306,193 +307,108 @@ PROMPT LƯU LẠI (copy nguyên khối)
 Mình đang dựng testbed mô phỏng 5G + MEC trên Kubernetes để làm 2 đề tài:
 
 Đề tài 1: Nghiên cứu chuyển tải (offloading) và lập lịch tài nguyên trong mạng MEC (so sánh policy scheduling/autoscaling, đo latency/throughput/CPU…).
-
 Đề tài 2: Nghiên cứu di chuyển dịch vụ (service migration) trong mạng MEC (migrate app giữa MEC1↔MEC2 theo UE mobility/tải, đo downtime/latency shift).
 
 1) Hạ tầng VM + IP
-
 masterk8s: 10.10.33.45 (control-plane)
-
 open5gs: 10.10.33.54 (MEC1 node)
-
 workerk8s: 10.10.33.60 (MEC2 node)
-
 ue: 10.10.33.40 (UE node, join cluster)
-
 Repo dùng: niloysh/open5gs-k8s
 
 2) Trạng thái Kubernetes nodes
-
 Nodes: masterk8s, open5gs, workerk8s, ue
-
 Đã uncordon open5gs + workerk8s
-
 Node ue đã label + taint:
-
 label: node-role.kubernetes.io/ue=true
-
 taint: dedicated=ue:NoSchedule
-
 UE pods được pin vào node ue bằng nodeSelector + toleration.
 
 3) Open5GS core đã deploy (namespace: open5gs)
-
 Services: amf-namf, smf1-nsmf, smf2-nsmf, upf1, upf2, nrf-nnrf, webui-service…
-
 AMF có multus interface n3 = 10.10.3.200/24 (ngap_server listen 38412).
-
 SMF/UPF có multus:
-
 SMF1: n3=10.10.3.101, n4=10.10.4.101
-
 SMF2: n3=10.10.3.102, n4=10.10.4.102
-
 UPF1: n3=10.10.3.1, n4=10.10.4.1
-
 UPF2: n3=10.10.3.2, n4=10.10.4.2
-
 NAD dùng OVS-CNI:
-
 n3network bridge n3br static ip
-
 n4network bridge n4br static ip
 
 4) UERANSIM gNB/UE đã deploy
-
 gNB 2 bản:
-
 ueransim-gnb-mec1 chạy trên node open5gs, n3=10.10.3.231
-
 ueransim-gnb-mec2 chạy trên node workerk8s, n3=10.10.3.232
-
 UE 1 bản:
-
 ueransim-ue1 chạy trên node ue (k8s pod), tạo interface uesimtun0
-
 UE config:
-
 IMSI: 001010000000001 (supi imsi-001010000000001)
-
 KEY: 465B5CE8B199B49FAA5F0A2EE238A6BC
-
 OPC: E8ED289DEBA952E4283B54E88E6183CA
-
 Slice: SST=1, SD=000001
-
 DNN/APN: internet
-
 UE gnbSearchList đã sửa từ hostname -> IP:
-
 10.102.97.242 (ClusterIP gnb-service-mec1)
-
 10.100.233.99 (ClusterIP gnb-service-mec2)
 
 5) Sự cố đã gặp và đã fix
-
 UE crash: Bad Inet address: gnb-service
-
 Fix: đổi gnbSearchList sang 2 ClusterIP của gNB services.
-
 UE báo thiếu integrity/ciphering
-
 Fix: restore file ue1.yaml đúng định dạng, có đủ integrity, ciphering.
-
 gNB không connect AMF (SCTP timeout) do n3 layer2 chưa thông liên node
-
 Fix: tạo VXLAN ports trên OVS bridge n3br (key 103, dst_port 4789) giữa master và MEC nodes:
-
 vxlan-n3-open5gs (remote 10.10.33.54)
-
 vxlan-n3-workerk8s (remote 10.10.33.60)
-
 mở UDP 4789 trên master.
-
 Sau fix: ping n3 giữa gNB↔AMF OK, AMF log “gNB accepted” và gNB log “NG Setup successful”.
-
 PFCP giữa SMF/UPF có log “Invalid Recovery Time Stamp / Remote PFCP restarted … PFCP restoration”
-
 Nhưng PDU session vẫn lên được và UE ra Internet được (cần kiểm tra thêm nếu ảnh hưởng ổn định).
 
 6) Trạng thái hiện tại (đã xác nhận thành công)
-
 gNB mec1 & mec2:
-
 SCTP established tới AMF 10.10.3.200:38412
-
 NG Setup Response OK
-
 UE:
-
 Registration accept OK
-
 PDU session establishment accept OK
-
 uesimtun0 = 10.41.0.2
-
 ping 8.8.8.8 OK từ UE pod (đã chứng minh user-plane ra Internet)
-
 ping 10.41.0.1 fail (không chắc có gateway ICMP, nhưng Internet vẫn OK)
 
 7) Mục tiêu tiếp theo cho 2 đề tài (phần cần hướng dẫn tiếp)
-
 Mình muốn tiếp tục từ trạng thái “UE có 5G data + 2 MEC nodes” để làm 2 đề tài:
-
 Đề tài 1 (Offloading + Scheduling)
-
 Deploy 1 app MEC chạy trên MEC1 và MEC2 (2 bản hoặc 1 deployment có policy).
-
 UE gửi traffic đến app (curl/wrk/iperf).
-
 Đo latency/throughput/CPU/memory.
-
 Thử các policy:
-
 nodeSelector/affinity (pin app MEC1 vs MEC2)
-
 autoscaling (HPA)
-
 ưu tiên theo tải/latency (nâng cao: controller patch placement)
-
 Đề tài 2 (Service migration)
-
 UE gọi app liên tục.
-
 Migrate app từ MEC1 -> MEC2 (patch nodeSelector/affinity, rollout).
-
 Đo downtime, error rate, latency before/after.
-
 (Optional) mô phỏng UE mobility: đổi UE attach gNB mec1/mec2 rồi trigger migration.
 
 8) Khi quay lại, cần ChatGPT yêu cầu mình gửi output gì để tiếp tục?
-
 Hãy hướng dẫn từng bước ngắn gọn; khi cần xác nhận, yêu cầu mình gửi các output sau (tùy bước):
-
 kubectl get nodes -o wide
-
 kubectl -n open5gs get pod -o wide | egrep 'amf|smf|upf|ueransim'
-
 kubectl -n open5gs logs deploy/ueransim-ue1 -c ue --tail=120
-
 kubectl -n open5gs logs deploy/ueransim-gnb-mec1 -c gnb --tail=120
-
 kubectl -n open5gs logs deploy/ueransim-gnb-mec2 -c gnb --tail=120
-
 UE dataplane check:
-
 kubectl -n open5gs exec -it <uepod> -c ue -- ip -br a; ip r; ping -c 3 8.8.8.8
-
 Nếu làm app MEC:
-
 manifest app + kubectl get svc,deploy,pod -o wide
-
 kết quả curl/wrk từ UE
-
 metrics (nếu có): CPU/mem của nodes/pods
 
 Yêu cầu ChatGPT: dựa trên ngữ cảnh trên, hãy tiếp tục hướng dẫn triển khai mec-app baseline + đo latency từ UE tới MEC1 vs MEC2 trước, sau đó mới làm scheduling và migration.
-
 Gợi ý “bước tiếp theo” khi bạn quay lại (để ChatGPT bám theo)
-
 Khi bạn mở lại, cứ nói:
 “Tiếp theo làm đề tài 1 baseline: deploy mec-app trên MEC1 + MEC2 và đo latency từ UE.”
 Rồi ChatGPT sẽ dẫn theo prompt trên.
@@ -535,12 +451,151 @@ Mục tiêu tiếp theo:
 - và/hoặc local breakout theo site (MEC1 dùng UPF1, MEC2 dùng UPF2), hoặc slice-based routing.
 Hãy hướng dẫn tiếp theo từng bước, mỗi bước dừng để mình gửi output xác nhận.
 
-
-
-
 ############################################################################################################
 END
 ############################################################################################################
+1) Trong luận văn, “UE di chuyển” được biểu diễn như thế nào?
+Mô hình hóa (viết trong luận văn)
+
+Có 2 MEC site: MEC1 và MEC2
+
+Mỗi site có 1 gNB: gNB1@MEC1, gNB2@MEC2
+
+Hai gNB phát cùng PLMN (001/01) nhưng khác Tracking Area:
+
+gNB1: TAC=1
+
+gNB2: TAC=2
+
+UE chạy UERANSIM “radio link simulation”: UE có thể “thấy” cả 2 cell khi ở vùng phủ chồng; và khi “di chuyển” thì cell serving thay đổi.
+
+“Di chuyển” trong lab tương đương cái gì?
+
+Vì UERANSIM không có GPS/velocity thật, nên mobility event thường được mô phỏng bằng:
+
+Mất cell cũ / giảm chất lượng cell cũ (thực tế: UE đi xa, RSRP giảm)
+
+Trong lab: bạn tạo điều đó bằng scale down/kill gNB1, UE sẽ tự chọn cell còn lại (gNB2).
+
+=> Đây là cách mô phỏng “UE rời MEC1 sang MEC2” rõ ràng nhất, dễ viết luận văn.
+
+2) Bằng chứng đưa vào luận văn gồm những gì?
+
+Bạn chụp/đưa log + output theo 3 lớp:
+
+(A) Bằng chứng “radio/cell change”
+
+Trong log UE, bạn sẽ thấy kiểu dòng:
+
+“Selected cell … tac[1] …”
+sau đó khi gNB1 mất:
+
+UE “NO-CELL-AVAILABLE”, rồi “Selected cell … tac[2] …”
+=> Đây là bằng chứng UE camp/attach sang cell của MEC2.
+
+(B) Bằng chứng “control-plane mobility”
+
+Trong log AMF sẽ có các sự kiện liên quan gNB/UE context.
+Tối thiểu bạn đưa:
+
+thời điểm UE registered
+
+thời điểm UE re-registration / service request lại sau khi đổi cell (tùy cách)
+
+(C) Bằng chứng “service continuity / service migration”
+
+Tùy đề tài:
+
+Đề tài 1 (scheduling/offloading): UE vẫn ping/iperf OK sau khi đổi cell + số liệu latency/throughput thay đổi theo MEC1/MEC2.
+
+Đề tài 2 (service migration): chạy một service ở MEC1 (pod pinned), khi UE sang MEC2 thì service được migrate sang MEC2 (pod reschedule/restore state) và UE truy cập service “mượt” (downtime đo được).
+
+3) Bạn cần làm gì tiếp theo (để mobility demo rõ ràng)?
+Việc cần làm ngay: đổi TAC cho gNB mec2 thành 2
+
+Hiện tại:
+
+gNB mec1: tac=1 ✅
+
+gNB mec2: tac=1 ❌ → phải thành tac=2
+
+Cách đúng trong repo kustomize: sửa file nguồn trong repo, rồi kustomize build/apply, để configmap hash tự đổi.
+
+Bạn làm trên masterk8s:
+
+cd ~/open5gs-k8s
+
+# sửa file config gNB của mec2 (overlays của bạn có thể đặt ở msd/overlays/ueransim-gnb-nodeselector)
+# Nếu bạn đang dùng manifests tự tạo cho mec1/mec2 thì chỉ cần sửa đúng chỗ đang generate configmap mec2.
+grep -R "open5gs-gnb.yaml" -n ueransim msd | head
+
+
+Nhưng để khỏi dò lâu, cách “nhanh và chắc” theo đúng cái bạn đang có (configmap đã tồn tại) là patch trực tiếp configmap tạm thời cho demo:
+
+kubectl -n open5gs patch cm gnb-configmap-mec2-c4cb9hm479 \
+  --type merge \
+  -p '{"data":{"open5gs-gnb.yaml":"mcc: '\''001'\''\nmnc: '\''01'\''\n\nnci: '\''0x000000011'\''\nidLength: 32\ntac: 2\n\nlinkIp: 0.0.0.0\nngapIp: 10.10.3.232\ngtpIp: 10.10.3.232\n\namfConfigs:\n  - address: 10.10.3.200\n    port: 38412\n\nslices:\n  - sst: 1\n    sd: 000001\n  - sst: 2\n    sd: 000002\n\nignoreStreamIds: true\n"}}'
+
+
+Sau đó restart gNB2:
+
+kubectl -n open5gs rollout restart deploy/ueransim-gnb-mec2
+kubectl -n open5gs rollout status deploy/ueransim-gnb-mec2 --timeout=120s
+
+
+Rồi restart UE:
+
+kubectl -n open5gs rollout restart deploy/ueransim-ue1
+kubectl -n open5gs rollout status deploy/ueransim-ue1 --timeout=180s
+
+Tạo “mobility event” (mô phỏng UE đi khỏi MEC1)
+
+Scale down gNB1:
+
+kubectl -n open5gs scale deploy/ueransim-gnb-mec1 --replicas=0
+
+
+Rồi xem UE log (đây chính là screenshot/log bạn đưa vào luận văn):
+
+kubectl -n open5gs logs deploy/ueransim-ue1 -c ue --since=5m --tail=250
+
+
+Kỳ vọng bạn sẽ thấy UE rớt cell TAC=1 và chọn lại cell TAC=2.
+
+Sau khi xong demo, scale gNB1 lên lại:
+
+kubectl -n open5gs scale deploy/ueransim-gnb-mec1 --replicas=1
+
+4) Trả lời câu hỏi của bạn: “Viết luận văn sao cho thuyết phục?”
+
+Bạn có thể viết mục “Thiết kế thí nghiệm mobility” theo cấu trúc:
+
+Giả định & ánh xạ thực tế
+
+UE di chuyển giữa 2 vùng phủ MEC1/MEC2
+
+Trong mô phỏng, di chuyển được ánh xạ thành “cell serving thay đổi” khi cell cũ mất
+
+Kịch bản thực nghiệm
+
+Case 1: UE attach tại MEC1 (TAC=1)
+
+Case 2: UE “di chuyển” → MEC2 (TAC=2) bằng cách loại bỏ gNB1
+
+Thu thập log UE/AMF + đo RTT/throughput đến service
+
+Chỉ số đánh giá
+
+thời gian mất kết nối (downtime)
+
+thời gian attach/restore session
+
+RTT/throughput trước–sau
+
+với migration: service downtime và thời gian migrate
+
+
+
 
 ###########################################################################################################################
 ### 04/01/2026
@@ -2141,6 +2196,7 @@ root@MasterK8s:~# kubectl get deployments -A
 NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
 kube-system   calico-kube-controllers   1/1     1            1           16d
 kube-system   coredns                   2/2     2            2           17d
+
 
 
 
