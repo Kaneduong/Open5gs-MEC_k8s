@@ -1,0 +1,65 @@
+PROMPT (ĐỀ TÀI 1 – MEC Offloading & Scheduling)
+
+Mình đang mô phỏng 5G SA + MEC bằng Open5GS + UERANSIM trên Kubernetes để làm đề tài:
+“Nghiên cứu chuyển tải và lập lịch tài nguyên trong mạng MEC”.
+
+1) Mô hình hệ thống hiện tại
+K8s cluster có nhiều node:
+masterk8s (điều phối, có Open5GS control-plane)
+open5gs (site MEC1)
+workerk8s (site MEC2)
+ue (node chạy UE pod)
+Open5GS core: AMF chạy NGAP trên 10.10.3.200:38412 (multus interface n3).
+2 gNB UERANSIM (mô phỏng 2 vùng MEC):
+gNB mec1: ngapIp/gtpIp=10.10.3.231, tac=1, cellid=0x10
+gNB mec2: ngapIp/gtpIp=10.10.3.232, tac=2, cellid=0x11
+UE UERANSIM:
+SUPI imsi-001010000000001, DNN internet, slice sst=1 sd=000001
+Registration OK, PDU session OK
+uesimtun0 được cấp IP (ví dụ 10.41.0.x)
+Ping 8.8.8.8 OK từ UE pod → user-plane ra Internet hoạt động.
+Kết nối N3 giữa các node được fix bằng OVS bridge n3br + VXLAN (key=103, udp/4789) để đảm bảo gNB↔AMF ping được và SCTP NG Setup OK.
+Mobility test đã chứng minh UE chuyển TAC:
+UE log: “Selected cell tac[1] …” rồi sau đó “Selected cell tac[2] …”
+AMF log: nhận InitialUEMessage với TAC[1] CellID[0x10] và sau đó TAC[2] CellID[0x11]
+gNB mec2 log: nhận Initial NAS + Initial Context Setup + PDU session resources setup cho UE.
+
+2) Mục tiêu đề tài 1 (Offloading & Scheduling trong MEC)
+Mình muốn xây dựng mô hình offloading: UE gửi task (request) tới MEC, MEC quyết định:
+xử lý ở MEC1/MEC2 (edge) hoặc offload lên cloud (nếu có), và
+lập lịch tài nguyên compute/network tại MEC.
+Mình cần bạn hướng dẫn theo các phần:
+
+Mô hình hoá bài toán:
+Task model: kích thước input, số chu kỳ CPU/MI, deadline/latency budget, độ ưu tiên.
+MEC resource model: CPU cores, queue, service rate, giới hạn đồng thời.
+Network model: RTT UE→MEC, bandwidth giả lập, latency theo site (mec1 vs mec2).
+Objective: minimize latency/violation, maximize throughput, fairness, utilization, minimize drops.
+Thiết kế & triển khai 3 thuật toán lập lịch để so sánh:
+Round-robin
+Priority queue (theo priority/deadline)
+Latency-aware (chọn MEC site + thứ tự xử lý để giảm E2E latency; có thể dùng cost function)
+Sinh lưu lượng bằng UERANSIM:
+Từ UE pod tạo traffic HTTP/UDP (nhiều flow) hoặc nhiều UE pod (ue1, ue2, …).
+Control biến: request rate, packet size, burst, số UE, tỉ lệ task priority.
+Đo KPI (chưa có Prometheus/Grafana):
+End-to-end latency (client timestamp)
+Task completion time / response time distribution (p50/p95/p99)
+Throughput (req/s, Mbps)
+Packet loss / retries
+Queueing delay, queue length
+CPU/memory utilization tại MEC pods (kubectl top / cgroup stats)
+SLA violation rate (deadline miss)
+Phân tích & đánh giá:
+So sánh 3 thuật toán theo KPI ở nhiều mức tải (light/medium/heavy)
+Nhận xét trade-off: latency vs fairness vs utilization
+Kết luận thuật toán nào phù hợp điều kiện MEC (nhiều UE, mobility, bursty traffic)
+Đề xuất cải tiến (hybrid, admission control, dynamic weights)
+
+3) Hiện trạng / cần làm tiếp ngay
+Hiện core + gNB + UE đã hoạt động và có Internet từ UE pod.
+Chưa cài Prometheus/Grafana.
+Mình muốn bắt đầu theo hướng dựng 2 MEC service (mec1/mec2) + một scheduler/gateway (có thể là 1 microservice) để thực thi 3 thuật toán và đo KPI.
+Hãy đề xuất kiến trúc triển khai cụ thể trên K8s (pods/services, nodeSelector cho mec1/mec2), cách sinh traffic từ UE, cách log/thu thập số liệu, và kế hoạch thí nghiệm (matrix các test cases).
+
+👉 Hãy trả lời như một “roadmap thực thi + checklist command-level”, chia rõ từng bước triển khai và từng loại output cần thu để viết luận văn (hình/biểu đồ/bảng so sánh).
