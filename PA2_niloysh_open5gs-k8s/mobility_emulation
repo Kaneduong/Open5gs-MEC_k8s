@@ -1,3 +1,140 @@
+##############
+# 08/01/2026 #
+##############
+tóm tắt: kịch bản trước là tắt gNB1 và deploy lại UE để nhận gNB2
+Thay đổi thành: Tắt gNB1 và để tự UE chuyển gNB2
+###
+root@MasterK8s:~# NS=open5gs
+root@MasterK8s:~#
+root@MasterK8s:~#
+root@MasterK8s:~# Kiểm tra  2 gNB^C
+root@MasterK8s:~# kubectl scale deploy/ueransim-gnb-mec1 --replicas=1 -n $NS
+kubectl scale deploy/ueransim-gnb-mec2 --replicas=1 -n $NS
+kubectl get pods -n $NS -o wide | grep ueransim-gnb
+deployment.apps/ueransim-gnb-mec1 scaled
+deployment.apps/ueransim-gnb-mec2 scaled
+ueransim-gnb-mec1-5b48c8f7f7-dwsqp   1/1     Running   0          6m16s   192.168.43.208    open5gs     <none>
+ueransim-gnb-mec2-57f6776545-rftts   1/1     Running   0          6m16s   192.168.30.170    workerk8s   <none>
+root@MasterK8s:~#
+root@MasterK8s:~# kubectl rollout restart deploy/ueransim-ue1 -n $NS
+kubectl get pods -n $NS -o wide | grep ueransim-ue1
+deployment.apps/ueransim-ue1 restarted
+ueransim-ue1-8688bf4dc7-pnlk6        0/1     Init:0/1   0          0s      <none>            ue          <none>
+ueransim-ue1-b644fb4d7-gh4x7         1/1     Running    0          23m     192.168.131.204   ue          <none>
+root@MasterK8s:~# kubectl get pods -n $NS -o wide | grep ueransim-ue1
+ueransim-ue1-8688bf4dc7-pnlk6        1/1     Running       0          15s     192.168.131.205   ue          <non
+ueransim-ue1-b644fb4d7-gh4x7         1/1     Terminating   0          23m     192.168.131.204   ue          <non
+root@MasterK8s:~# Tạo UE^C
+root@MasterK8s:~#
+root@MasterK8s:~#
+root@MasterK8s:~# kubectl get pods -n $NS -o wide | grep ueransim-ue1
+ueransim-ue1-8688bf4dc7-pnlk6        1/1     Running       0          36s     192.168.131.205   ue          <non
+ueransim-ue1-b644fb4d7-gh4x7         1/1     Terminating   0          23m     192.168.131.204   ue          <non
+root@MasterK8s:~# UEPOD=$(kubectl get pods -o name -n $NS | grep ueransim-ue1 | head -n1)
+echo $UEPOD
+pod/ueransim-ue1-8688bf4dc7-pnlk6
+root@MasterK8s:~# kubectl get pods -n $NS -o wide | grep ueransim-ue1
+ueransim-ue1-8688bf4dc7-pnlk6        1/1     Running   0          2m9s    192.168.131.205   ue          <none>
+root@MasterK8s:~# Tiến hành tắt gnb mec1^C
+root@MasterK8s:~#
+root@MasterK8s:~#
+root@MasterK8s:~# kubectl scale deploy/ueransim-gnb-mec1 --replicas=0 -n $NS
+deployment.apps/ueransim-gnb-mec1 scaled
+root@MasterK8s:~# kubectl get pods -n $NS -o wide | grep ueransim-gnb
+ueransim-gnb-mec1-5b48c8f7f7-dwsqp   1/1     Terminating   0          16m     192.168.43.208    open5gs     <none>           <none>
+ueransim-gnb-mec2-57f6776545-rftts   1/1     Running       0          16m     192.168.30.170    workerk8s   <none>           <none>
+root@MasterK8s:~# kubectl get pods -n $NS -o wide | grep ueransim-gnb
+ueransim-gnb-mec2-57f6776545-rftts   1/1     Running   0          18m     192.168.30.170    workerk8s   <none>           <none>
+root@MasterK8s:~#
+
+
+root@MasterK8s:~# tab này xem log UE^C
+root@MasterK8s:~# kubectl logs $UEPOD -n $NS -c ue --follow
+error: error from server (NotFound): pods "ueransim-ue1-b644fb4d7-gh4x7" not found in namespace "open5gs"
+root@MasterK8s:~# UEPOD=$(kubectl get pods -o name -n $NS | grep ueransim-ue1 | head -n1)
+echo $UEPOD
+pod/ueransim-ue1-8688bf4dc7-pnlk6
+root@MasterK8s:~# kubectl logs $UEPOD -n $NS -c ue --follow
+UERANSIM v3.2.6
+[2026-01-08 12:48:31.424] [nas] [info] UE switches to state [MM-DEREGISTERED/PLMN-SEARCH]
+[2026-01-08 12:48:31.426] [rrc] [debug] New signal detected for cell[1], total [1] cells in coverage
+[2026-01-08 12:48:31.426] [rrc] [debug] New signal detected for cell[2], total [2] cells in coverage
+[2026-01-08 12:48:31.426] [nas] [info] Selected plmn[001/01]
+[2026-01-08 12:48:31.427] [rrc] [info] Selected cell plmn[001/01] tac[1] category[SUITABLE]
+[2026-01-08 12:48:31.427] [nas] [info] UE switches to state [MM-DEREGISTERED/PS]
+[2026-01-08 12:48:31.427] [nas] [info] UE switches to state [MM-DEREGISTERED/NORMAL-SERVICE]
+[2026-01-08 12:48:31.427] [nas] [debug] Initial registration required due to [MM-DEREG-NORMAL-SERVICE]
+[2026-01-08 12:48:31.429] [nas] [debug] UAC access attempt is allowed for identity[0], category[MO_sig]
+[2026-01-08 12:48:31.430] [nas] [debug] Sending Initial Registration
+[2026-01-08 12:48:31.430] [nas] [info] UE switches to state [MM-REGISTER-INITIATED]
+[2026-01-08 12:48:31.430] [rrc] [debug] Sending RRC Setup Request
+[2026-01-08 12:48:31.431] [rrc] [info] RRC connection established
+[2026-01-08 12:48:31.431] [rrc] [info] UE switches to state [RRC-CONNECTED]
+[2026-01-08 12:48:31.431] [nas] [info] UE switches to state [CM-CONNECTED]
+[2026-01-08 12:48:31.462] [nas] [debug] Authentication Request received
+[2026-01-08 12:48:31.479] [nas] [debug] Security Mode Command received
+[2026-01-08 12:48:31.479] [nas] [debug] Selected integrity[2] ciphering[0]
+[2026-01-08 12:48:31.520] [nas] [debug] Registration accept received
+[2026-01-08 12:48:31.520] [nas] [info] UE switches to state [MM-REGISTERED/NORMAL-SERVICE]
+[2026-01-08 12:48:31.520] [nas] [debug] Sending Registration Complete
+[2026-01-08 12:48:31.520] [nas] [info] Initial Registration is successful
+[2026-01-08 12:48:31.520] [nas] [debug] Sending PDU Session Establishment Request
+[2026-01-08 12:48:31.520] [nas] [debug] UAC access attempt is allowed for identity[0], category[MO_sig]
+[2026-01-08 12:48:31.724] [nas] [debug] Configuration Update Command received
+[2026-01-08 12:48:31.763] [nas] [debug] PDU Session Establishment Accept received
+[2026-01-08 12:48:31.763] [nas] [info] PDU Session establishment is successful PSI[1]
+[2026-01-08 12:48:31.796] [app] [info] Connection setup for PDU session[1] is successful, TUN interface[uesimtun0, 10.41.0.7] is up.
+[2026-01-08 12:58:38.697] [rrc] [debug] Signal lost for cell[1], total [1] cells in coverage
+[2026-01-08 12:58:38.697] [nas] [error] Radio link failure detected
+[2026-01-08 12:58:38.697] [nas] [info] UE switches to state [CM-IDLE]
+[2026-01-08 12:58:38.697] [nas] [info] UE switches to state [MM-REGISTERED/PS]
+[2026-01-08 12:58:38.697] [nas] [info] UE switches to state [MM-REGISTERED/PLMN-SEARCH]
+[2026-01-08 12:58:39.167] [rrc] [info] Selected cell plmn[001/01] tac[2] category[SUITABLE]
+[2026-01-08 12:58:39.167] [nas] [info] UE switches to state [MM-REGISTERED/PS]
+[2026-01-08 12:58:39.167] [nas] [info] UE switches to state [MM-REGISTERED/NORMAL-SERVICE]
+
+01[2026-01-08 13:04:10.690] [nas] [debug] Uplink data status changed PSI[1] pending[true]
+[2026-01-08 13:04:10.690] [nas] [debug] Service request required due to [IDLE-UPLINK-DATA-PENDING]
+[2026-01-08 13:04:10.691] [nas] [debug] UAC access attempt is allowed for identity[0], category[MO_data]
+[2026-01-08 13:04:10.691] [nas] [debug] Sending Service Request due to [IDLE-UPLINK-DATA-PENDING]
+[2026-01-08 13:04:10.691] [nas] [info] UE switches to state [MM-SERVICE-REQUEST-INITIATED]
+[2026-01-08 13:04:10.691] [rrc] [debug] Sending RRC Setup Request
+[2026-01-08 13:04:10.693] [rrc] [info] RRC connection established
+[2026-01-08 13:04:10.693] [rrc] [info] UE switches to state [RRC-CONNECTED]
+[2026-01-08 13:04:10.693] [nas] [info] UE switches to state [CM-CONNECTED]
+[2026-01-08 13:04:10.711] [nas] [info] Service Accept received
+[2026-01-08 13:04:10.711] [nas] [info] UE switches to state [MM-REGISTERED/PS]
+[2026-01-08 13:04:10.711] [nas] [info] UE switches to state [MM-REGISTERED/NORMAL-SERVICE]
+
+
+
+
+
+echo $GNB2POD
+error: flag needs an argument: 'n' in -n
+See 'kubectl get --help' for usage.
+
+root@MasterK8s:~# NS=open5gs
+GNB2POD=$(kubectl get pods -n $NS -o name | grep ueransim-gnb-mec2 | head -n1)
+echo $GNB2POD
+pod/ueransim-gnb-mec2-57f6776545-rftts
+root@MasterK8s:~# kubectl logs $GNB2POD -n $NS -c gnb --follow
+UERANSIM v3.2.6
+[2026-01-08 12:41:39.187] [sctp] [info] Trying to establish SCTP connection... (10.10.3.200:38412)
+[2026-01-08 12:41:39.194] [sctp] [info] SCTP connection established (10.10.3.200:38412)
+[2026-01-08 12:41:39.194] [sctp] [debug] SCTP association setup ascId[7]
+[2026-01-08 12:41:39.194] [ngap] [debug] Sending NG Setup Request
+[2026-01-08 12:41:39.207] [ngap] [debug] NG Setup Response received
+[2026-01-08 12:41:39.207] [ngap] [info] NG Setup procedure is successful
+[2026-01-08 12:41:41.104] [rrc] [debug] UE[1] new signal detected
+[2026-01-08 12:48:31.447] [rrc] [debug] UE[2] new signal detected
+[2026-01-08 12:49:04.047] [rls] [debug] UE[1] signal lost
+
+[2026-01-08 13:04:10.707] [rrc] [info] RRC Setup for UE[2]
+[2026-01-08 13:04:10.708] [ngap] [debug] Initial NAS message received from UE[2]
+[2026-01-08 13:04:10.721] [ngap] [debug] Initial Context Setup Request received
+
+
 ##########################################################
 kịch bản handover dạng “mobility emulation” (mec1 → mec2)
 ##########################################################
