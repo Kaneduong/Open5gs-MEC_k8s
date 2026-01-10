@@ -1,3 +1,98 @@
+##############
+# 10/01/2026 #
+##############
+Bạn là trợ lý kỹ thuật cho bài lab/luận văn 5G MEC offloading + scheduling trên Kubernetes. Hãy luôn bám đúng hiện trạng bên dưới (KHÔNG giả định khác), và đưa ra kế hoạch/manifest/thiết kế chi tiết để triển khai bước tiếp theo.
+
+=== HIỆN TRẠNG / CẤU HÌNH ĐÃ CÓ ===
+- Môi trường: Kubernetes cluster gồm 4 node:
+  1) masterk8s: control-plane + sẽ dùng làm “core/central/cloud compute” (nếu cần)
+  2) open5gs: worker chạy Open5GS core + đồng thời là site MEC1
+  3) workerk8s: worker là site MEC2
+  4) ue: node dành cho UERANSIM (UE/gNB), có taint để chỉ workload UE/trafficgen được schedule lên
+- Đã deploy thành công Open5GS + UERANSIM trên K8s:
+  - Core network (AMF/SMF/UPF…) chạy OK
+  - 2 gNB (mec1 và mec2) + 1 UE
+- User-plane OK:
+  - UE Registration OK
+  - PDU session OK
+  - Interface uesimtun0 có IP và ping Internet (8.8.8.8) OK
+- Kết nối N3 đã fix bằng OVS bridge + VXLAN (đảm bảo đường N3/UE user-plane qua các site hoạt động)
+- Mobility test OK:
+  - UE đổi TAC từ mec1 -> mec2 (handover/reattach theo kịch bản), AMF/gNB2 có dấu vết attach + PDU setup
+- Mục tiêu bài toán: dựng 2 MEC service (mec1/mec2) + 1 scheduler/gateway microservice để chạy 3 thuật toán:
+  1) Round-robin
+  2) Priority-Deadline
+  3) Latency-aware
+  và đo KPI: latency p50/p95/p99, throughput, queue delay/length, CPU/mem, SLA miss (deadline miss), theo các mức tải light/medium/heavy, có/không mobility.
+
+=== KIẾN TRÚC MONG MUỐN (TỐI GIẢN, THUYẾT PHỤC) ===
+- UE/Traffic Generator -> gọi 1 endpoint duy nhất: Gateway/Scheduler (L7)
+- Gateway quyết định route task tới:
+  - MEC1 app (chạy trên node open5gs)
+  - MEC2 app (chạy trên node workerk8s)
+  - Cloud/Central app (chạy trên node masterk8s) = mô phỏng offload “lên core”
+- Lưu ý: quyết định offloading nằm ở Gateway/Scheduler (application-layer), không nằm ở Open5GS core. Core chỉ đảm nhiệm kết nối 5G SA + user-plane.
+
+=== KHUYẾN NGHỊ / BƯỚC TIẾP THEO PHẢI LÀM (ƯU TIÊN) ===
+1) Chốt placement bằng label/affinity:
+   - Label node:
+     - open5gs: mec-site=mec1
+     - workerk8s: mec-site=mec2
+     - masterk8s: mec-site=cloud (hoặc cloud=true)
+     - ue: role=ue
+   - Tạo namespace “mec”
+   - Thiết kế toleration/nodeSelector để trafficgen/UE luôn nằm ở node ue
+2) Dựng 3 compute service đơn giản (mec1/mec2/cloud):
+   - Mỗi service có API nhận request gồm: request_id, task_size, cpu_ms(or mi), deadline_ms, priority
+   - mec1 Deployment nodeSelector mec-site=mec1
+   - mec2 Deployment nodeSelector mec-site=mec2
+   - cloud Deployment nodeSelector mec-site=cloud (masterk8s)
+   - Set resources requests/limits để tạo nghẽn có kiểm soát
+3) Dựng Gateway/Scheduler:
+   - Config ALG=rr|pq|latency
+   - Log JSON 1 dòng/req và đo:
+     - t1_recv, decision_site, queue_wait_ms, t2_send
+   - Thực hiện decision rule và 3 thuật toán:
+     - RR: luân phiên
+     - PQ: ưu tiên theo priority/deadline
+     - Latency-aware: cost = a*RTT(UE->site) + b*queue_wait(site) + c*exec_estimate(site)
+4) Traffic generator từ UE node:
+   - Pod trafficgen pinned vào node ue
+   - Chạy test light/medium/heavy; (tuỳ chọn) mô phỏng khác RTT bằng tc netem theo đích mec1/mec2/cloud
+5) KPI & thu thập dữ liệu (tối thiểu trước, Prometheus sau):
+   - E2E latency p50/p95/p99 (UE đo t0_send -> t3_recv)
+   - Throughput req/s
+   - Queue delay/length (gateway đo)
+   - CPU/mem: kubectl top / metrics
+   - SLA miss rate: % request hoàn thành sau deadline
+6) Ma trận thí nghiệm tối thiểu:
+   - Algorithm: RR | PQ | Latency-aware
+   - Load: L/M/H
+   - UE count: 1 / 5 / 20 (tùy năng lực)
+   - Mobility: static | đổi TAC mec1<->mec2
+   - Deadline mix: tight vs loose, priority ratio (vd 20/80)
+
+=== QUY TẮC OFFLOAD ĐỀ XUẤT (RÕ RÀNG ĐỂ CHỨNG MINH) ===
+- predicted_finish(site) = now + queue_wait_est(site) + exec_est(site)
+- Nếu predicted_finish(nearest_edge) > deadline => offload cloud
+- Nếu queue_len_edge > Q hoặc cpu_edge > C => offload cloud
+- Ngược lại => chọn nearest edge (mec1/mec2) theo RTT/TAC; trong latency-aware dùng cost nhỏ nhất.
+
+=== YÊU CẦU ĐẦU RA TỪ BẠN (CHATGPT) ===
+- Đừng hỏi lại các thông tin đã nêu. Nếu thiếu, hãy đưa giả định rõ ràng và hợp lý.
+- Hãy tạo:
+  1) Danh sách manifest Kubernetes (Deploy/Service/ConfigMap) cho mec1/mec2/cloud/gateway/trafficgen (có nodeSelector+tolerations)
+  2) Thiết kế API + format log JSON chuẩn hoá + cách tính KPI
+  3) Kịch bản chạy benchmark (lệnh chạy, tham số L/M/H, số req, concurrency)
+  4) Cách ghi kết quả ra CSV và gợi ý plot 4 biểu đồ chính: latency p95, throughput, SLA miss, CPU util theo tải
+- Ưu tiên giải pháp nhanh ra số liệu để viết báo cáo, sau đó mới tối ưu/Prometheus/Grafana.
+
+Bắt đầu từ bước 1: đề xuất cụ thể label/toleration/nodeSelector và skeleton manifest cho 3 compute service + gateway.
+
+##############
+# 01/01/2026 #
+##############
+
 PROMPT (ĐỀ TÀI 1 – MEC Offloading & Scheduling)
 
 Mình đang mô phỏng 5G SA + MEC bằng Open5GS + UERANSIM trên Kubernetes để làm đề tài:
