@@ -1,0 +1,74 @@
+3. Trong những năm gần đây, điện toán biên đa truy nhập (MEC) đã trở thành một hướng nghiên cứu trọng điểm nhằm giải quyết các hạn chế của điện toán đám mây truyền thống trong việc đáp ứng yêu cầu về độ trễ thấp và chất lượng dịch vụ cao
+
+Thay thế:
+"Trong bối cảnh mạng 5G và các ứng dụng thời gian thực ngày càng phát triển, MEC trở thành một giải pháp quan trọng để giải quyết những hạn chế của điện toán đám mây truyền thống, đặc biệt là vấn đề độ trễ thấp. Các tác vụ xử lý tại biên mạng giúp giảm bớt lượng dữ liệu cần truyền về đám mây trung tâm, từ đó giảm thiểu độ trễ và tối ưu hóa băng thông. Bằng cách xử lý ngay tại các điểm gần người dùng, MEC giúp cải thiện hiệu quả mạng và tăng cường QoS, nhất là cho các ứng dụng đòi hỏi độ trễ rất thấp."
+
+4. Các kỹ thuật học máy có khả năng thích ứng tốt với môi trường mạng động, song vẫn tồn tại hạn chế về chi phí tính toán và khả năng mở rộng
+
+Thay thế:
+"Trong các mạng động, kỹ thuật học máy (ML) và học sâu (DL) có thể tối ưu hóa việc chuyển tải tác vụ và phân bổ tài nguyên trong môi trường MEC. Các kỹ thuật này giúp hệ thống tự động thích ứng với sự thay đổi của mạng, đặc biệt là trong việc chuyển tải đa mục tiêu (chẳng hạn tối ưu độ trễ, năng lượng và QoS). Tuy nhiên, khi đối mặt với nhiều người dùng và các yêu cầu đa mục tiêu, các kỹ thuật này gặp phải thách thức về chi phí tính toán và khả năng mở rộng, làm tăng độ phức tạp và yêu cầu về tài nguyên tính toán."
+
+5. Round-robin, Priority Queue, Latency-aware
+
+Thay thế:
+
+Round-robin (RR):
+"Thuật toán Round-robin phân bổ đều các tác vụ đến các site MEC hoặc cloud theo một chu kỳ cố định. Mặc dù dễ triển khai và đảm bảo tính công bằng, nhưng thuật toán này không tối ưu cho các ứng dụng yêu cầu độ trễ thấp vì không tính đến các yếu tố như tình trạng tải của site hay ưu tiên của tác vụ."
+
+Priority Queue (PQ):
+"Thuật toán Priority Queue phân loại các tác vụ dựa trên ưu tiên và deadline. Các tác vụ có ưu tiên cao hoặc deadline gần sẽ được xử lý trước. Phương pháp này giúp đảm bảo các ứng dụng nhạy cảm với độ trễ như video call hoặc game được xử lý nhanh hơn, tuy nhiên, nếu không được quản lý đúng, có thể gây quá tải cho các site MEC."
+
+Latency-aware:
+"Thuật toán Latency-aware quyết định việc offloading dựa trên chi phí tổng hợp bao gồm độ trễ RTT (Round-Trip Time) giữa UE và MEC site, thời gian chờ trong hàng đợi tại các site và thời gian xử lý dự kiến. Thuật toán này giúp tối ưu hóa độ trễ bằng cách chọn MEC site có độ trễ thấp nhất, giúp giảm thiểu thời gian xử lý tác vụ và tối ưu hóa trải nghiệm người dùng."
+
+6. Các chỉ số KPI
+
+Thay thế:
+"Trong nghiên cứu này, các chỉ số KPI (Key Performance Indicators) sẽ được thu thập để đo lường hiệu suất của hệ thống:
+
+Độ trễ (Latency): Đo thời gian từ khi gửi yêu cầu từ UE đến khi nhận được kết quả từ MEC hoặc cloud.
+
+Thông lượng (Throughput): Số lượng yêu cầu được xử lý trong một đơn vị thời gian.
+
+Tỷ lệ SLA Miss: Tỷ lệ yêu cầu không hoàn thành trong thời gian hạn chót (deadline miss).
+
+Tài nguyên CPU/Bộ nhớ (CPU/Mem Usage): Đo lường mức sử dụng tài nguyên của các node MEC/cloud trong quá trình xử lý tác vụ."
+
+Tổng kết
+
+Những thay đổi trên giúp bạn làm rõ các khái niệm quan trọng và nâng cao tính mạch lạc trong luận văn của mình. Các thuật ngữ kỹ thuật và phương pháp nghiên cứu cũng được giải thích cụ thể hơn để người đọc có thể dễ dàng tiếp cận và hiểu được các nội dung trong bài.
+
+1. nên cụ thể QoS là gì? hoặc các chỉ số nào trong  QoS sẽ được dùng trong bài? không nên nói chung chung
+2. ngoài ý có sẵn, hoặc chỉnh sửa lại sao cho có ý "giải thích tác vụ xử lý tại biên là như thế nào cho dễ hiểu"
+
+Dưới đây là các đoạn văn thay thế để cụ thể hơn về QoS và tác vụ xử lý tại biên, giúp bạn làm rõ hơn các khái niệm trong luận văn mà không bị chung chung.
+
+1. Chất lượng dịch vụ (QoS) trong MEC
+
+Thay thế:
+"Chất lượng dịch vụ (QoS) trong mạng MEC liên quan đến các chỉ số đánh giá hiệu suất của mạng và ứng dụng khi chúng chạy trên các dịch vụ biên. QoS không chỉ đơn giản là việc có hay không có sự gián đoạn, mà là một tập hợp các yếu tố đánh giá chất lượng dịch vụ mà mạng có thể cung cấp cho các ứng dụng người dùng. Các chỉ số QoS quan trọng trong bài nghiên cứu này bao gồm:
+
+Độ trễ (Latency): Thời gian từ khi yêu cầu được gửi từ thiết bị người dùng (UE) cho đến khi nhận được phản hồi từ hệ thống. Đối với các ứng dụng nhạy cảm với độ trễ như trò chơi trực tuyến, AR/VR, độ trễ này cần phải rất thấp, thường dưới vài mili giây.
+
+Băng thông (Throughput): Lượng dữ liệu được truyền qua mạng trong một đơn vị thời gian (thường tính bằng bps - bits per second). Băng thông ảnh hưởng trực tiếp đến tốc độ truyền tải dữ liệu, đặc biệt quan trọng đối với các ứng dụng như video streaming.
+
+Tỷ lệ mất gói (Packet Loss): Tỷ lệ các gói dữ liệu bị mất trong quá trình truyền tải qua mạng. Mất gói có thể ảnh hưởng nghiêm trọng đến chất lượng dịch vụ, đặc biệt là với các ứng dụng yêu cầu độ tin cậy cao như cuộc gọi video.
+
+Tỷ lệ hoàn thành SLA (SLA Miss Rate): Tỷ lệ các yêu cầu không hoàn thành trong thời gian hạn chót (deadline miss). SLA là cam kết mà dịch vụ phải đáp ứng cho người dùng, và việc không hoàn thành đúng hạn có thể ảnh hưởng đến sự hài lòng của người dùng."
+
+Kết luận: Các chỉ số QoS này giúp đánh giá hiệu suất của hệ thống và ứng dụng, đặc biệt trong môi trường MEC, nơi các ứng dụng đòi hỏi độ trễ thấp và băng thông cao.
+
+2. Giải thích tác vụ xử lý tại biên trong MEC
+
+Thay thế:
+"Tác vụ xử lý tại biên (edge processing) trong MEC là quá trình di chuyển các tác vụ tính toán và lưu trữ dữ liệu từ các trung tâm dữ liệu ở xa (cloud) đến gần người dùng hơn, cụ thể là các máy chủ MEC tại biên mạng. Thay vì phải truyền tất cả dữ liệu từ thiết bị người dùng về các trung tâm dữ liệu ở xa, các tác vụ như phân tích dữ liệu, xử lý yêu cầu, và tính toán ứng dụng được thực hiện ngay tại các điểm biên mạng gần người dùng.
+
+Điều này mang lại nhiều lợi ích, bao gồm:
+
+Giảm độ trễ: Các tác vụ được xử lý gần với người dùng, giúp giảm thiểu thời gian truyền tải dữ liệu và do đó giảm độ trễ, đặc biệt quan trọng với các ứng dụng nhạy cảm với độ trễ như video streaming hoặc trò chơi trực tuyến.
+
+Giảm tải cho mạng trung tâm: Các yêu cầu tính toán không cần phải gửi về trung tâm dữ liệu, giúp giảm bớt tải cho các máy chủ và giảm băng thông mạng.
+
+Tối ưu hóa tài nguyên mạng: Các tính toán và phân tích được thực hiện gần với người dùng, giúp tối ưu hóa việc sử dụng tài nguyên mạng, tiết kiệm năng lượng và băng thông."
+
+Kết luận: Việc xử lý tác vụ tại biên giúp tối ưu hóa độ trễ và tài nguyên mạng, đồng thời mang lại trải nghiệm người dùng mượt mà hơn cho các ứng dụng thời gian thực. Đây là một trong những ưu điểm chính của MEC so với các mô hình truyền thống trong điện toán đám mây."
