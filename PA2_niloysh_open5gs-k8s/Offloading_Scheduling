@@ -1,4 +1,301 @@
 ##############
+# 13/01/2026 #
+##############
+Bước 1: Cấu hình Label và Toleration
+1.1 Label các Nodes
+
+Trước tiên, bạn sẽ cần gán label cho các nodes để đảm bảo rằng các dịch vụ sẽ được phân phối đúng node.
+
+kubectl label nodes open5gs mec-site=mec1
+kubectl label nodes workerk8s mec-site=mec2
+kubectl label nodes masterk8s mec-site=cloud
+kubectl label nodes ue role=ue
+
+
+Output Kiểm Tra:
+Để kiểm tra xem các label đã được áp dụng chính xác hay chưa, bạn có thể dùng lệnh sau:
+
+kubectl get nodes --show-labels
+
+
+Mỗi node sẽ có label tương ứng như mec-site=mec1, mec-site=mec2, v.v.
+
+Bước 2: Tạo Namespace “mec”
+
+Tạo một namespace để chứa tất cả các dịch vụ liên quan đến MEC.
+
+2.1 Tạo Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mec
+
+
+Output Kiểm Tra:
+
+kubectl get namespaces
+
+
+Namespace mec sẽ xuất hiện trong danh sách.
+
+Bước 3: Cấu hình Toleration và NodeSelector cho TrafficGen/UE
+
+Tạo cấu hình để đảm bảo TrafficGen/UE chỉ được chạy trên node ue.
+
+3.1 Pod TrafficGen với Toleration và NodeSelector
+apiVersion: v1
+kind: Pod
+metadata:
+  name: trafficgen
+  namespace: mec
+spec:
+  tolerations:
+  - key: "role"
+    operator: "Equal"
+    value: "ue"
+    effect: "NoSchedule"
+  nodeSelector:
+    role: "ue"
+  containers:
+    - name: trafficgen
+      image: your-trafficgen-image
+      resources:
+        requests:
+          memory: "500Mi"
+          cpu: "500m"
+        limits:
+          memory: "1Gi"
+          cpu: "1"
+
+
+Output Kiểm Tra:
+Kiểm tra xem pod đã được schedule đúng vào node ue:
+
+kubectl get pods -o wide
+
+
+Pod trafficgen sẽ được gán vào node ue.
+
+Bước 4: Tạo và Cấu hình Compute Services (mec1, mec2, cloud)
+4.1 Manifest cho MEC1, MEC2, Cloud
+
+Tạo các Deployment và Service cho các compute sites MEC1, MEC2 và Cloud.
+
+MEC1 Deployment:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mec1
+  namespace: mec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mec1
+  template:
+    metadata:
+      labels:
+        app: mec1
+    spec:
+      nodeSelector:
+        mec-site: mec1
+      containers:
+        - name: mec1
+          image: your-mec1-image
+          resources:
+            requests:
+              memory: "500Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+
+MEC2 Deployment:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mec2
+  namespace: mec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mec2
+  template:
+    metadata:
+      labels:
+        app: mec2
+    spec:
+      nodeSelector:
+        mec-site: mec2
+      containers:
+        - name: mec2
+          image: your-mec2-image
+          resources:
+            requests:
+              memory: "500Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+
+Cloud Deployment:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud
+  namespace: mec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloud
+  template:
+    metadata:
+      labels:
+        app: cloud
+    spec:
+      nodeSelector:
+        mec-site: cloud
+      containers:
+        - name: cloud
+          image: your-cloud-image
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1"
+            limits:
+              memory: "2Gi"
+              cpu: "2"
+
+
+Output Kiểm Tra:
+Kiểm tra pod đã được deploy và schedule vào đúng node:
+
+kubectl get pods -o wide
+
+
+Các pod của mec1, mec2, và cloud sẽ xuất hiện trên các node open5gs, workerk8s và masterk8s tương ứng.
+
+Bước 5: Cấu hình Gateway/Scheduler
+
+Cấu hình dịch vụ Gateway/Scheduler để quyết định offloading với 3 thuật toán:
+
+5.1 Gateway/Scheduler Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-scheduler
+  namespace: mec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-scheduler
+  template:
+    metadata:
+      labels:
+        app: gateway-scheduler
+    spec:
+      containers:
+        - name: gateway-scheduler
+          image: your-gateway-image
+          env:
+            - name: ALG
+              value: "rr"  # có thể là rr | pq | latency
+          resources:
+            requests:
+              memory: "500Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+
+
+Output Kiểm Tra:
+Kiểm tra pod của Gateway/Scheduler đã chạy chưa:
+
+kubectl get pods -o wide
+
+
+Pod gateway-scheduler sẽ xuất hiện.
+
+Bước 6: Kiểm tra API và Format Log
+
+API của Gateway/Scheduler cần phải nhận yêu cầu với các tham số như request_id, task_size, cpu_ms, deadline_ms, priority và tính toán việc offloading tới các site MEC hoặc Cloud.
+
+6.1 API Format (JSON)
+{
+  "request_id": "12345",
+  "task_size": 1024,
+  "cpu_ms": 100,
+  "deadline_ms": 200,
+  "priority": 1
+}
+
+6.2 Log Format (JSON)
+{
+  "request_id": "12345",
+  "t1_recv": 1611243156,
+  "decision_site": "mec1",
+  "queue_wait_ms": 10,
+  "t2_send": 1611243170
+}
+
+
+Output Kiểm Tra:
+Khi API được gọi, log sẽ được ghi lại và có thể kiểm tra thông qua kubectl logs.
+
+kubectl logs <gateway-scheduler-pod>
+
+
+Kiểm tra các logs để xác minh rằng quá trình xử lý yêu cầu và quyết định offloading đang diễn ra đúng cách.
+
+Bước 7: KPI và Thu thập Dữ liệu
+
+KPI cần được thu thập trong suốt các thử nghiệm. Đây là một số cách để đo lường:
+
+7.1 Thu thập KPI bằng kubectl
+
+Latency: Bạn có thể đo t0_send và t3_recv trong log để tính toán latency E2E.
+
+Throughput: Đếm số yêu cầu (req/s) gửi đi từ UE đến Gateway/Scheduler.
+
+CPU/Memory: Sử dụng kubectl top để lấy dữ liệu tài nguyên.
+
+kubectl top pod -n mec
+
+7.2 Thu thập SLA Miss Rate
+
+Đo lường các yêu cầu không hoàn thành trong thời gian hạn chót (deadline miss).
+
+Bước 8: Kịch bản Benchmark
+8.1 Chạy Thử Nghiệm
+
+Bạn có thể bắt đầu chạy thử nghiệm với các tham số:
+
+Load: Light, Medium, Heavy.
+
+UE Count: 1, 5, 20.
+
+Mobility: Static, hoặc thay đổi TAC.
+
+8.2 Lệnh Chạy Benchmark
+
+Giả sử bạn đang chạy thử nghiệm với trafficgen trên node ue:
+
+kubectl run trafficgen --image=your-trafficgen-image --namespace=mec
+
+
+Tùy chỉnh số lượng và độ phức tạp của traffic.
+
+Tổng kết:
+
+Các bước trên cung cấp cấu hình chi tiết cho Label, NodeSelector, Tolerations, Compute Services, Gateway/Scheduler, và KPI.
+
+Sau khi triển khai và kiểm tra, bạn sẽ có được các logs, KPI như latency, throughput, SLA miss, và CPU/mem usage để đánh giá hoạt động của hệ thống.
+
+##############
 # 10/01/2026 #
 ##############
 Bạn là trợ lý kỹ thuật cho bài lab/luận văn 5G MEC offloading + scheduling trên Kubernetes. Hãy luôn bám đúng hiện trạng bên dưới (KHÔNG giả định khác), và đưa ra kế hoạch/manifest/thiết kế chi tiết để triển khai bước tiếp theo.
