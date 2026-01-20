@@ -1,6 +1,444 @@
 ##############
 # 20/01/2026 #
 ##############
+
+### Lịch sử 2 ###
+BƯỚC 4: Deploy Compute Services (mec1/mec2/cloud) – chạy đúng node
+4.0 Thực hiện ở đâu?
+
+Trên masterk8s (10.10.33.45), trong thư mục manifests:
+
+cd ~/mec-lab/manifests
+
+4.1 Tạo file manifest
+
+Tạo file: 10-compute-sites.yaml
+
+cat > 10-compute-sites.yaml <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mec1
+  namespace: mec
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mec1 }
+  template:
+    metadata:
+      labels: { app: mec1 }
+    spec:
+      nodeSelector:
+        mec-site: mec1
+      containers:
+      - name: mec1
+        image: nginx:stable
+        resources:
+          requests: { cpu: "500m", memory: "500Mi" }
+          limits:   { cpu: "1",    memory: "1Gi" }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mec2
+  namespace: mec
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mec2 }
+  template:
+    metadata:
+      labels: { app: mec2 }
+    spec:
+      nodeSelector:
+        mec-site: mec2
+      containers:
+      - name: mec2
+        image: nginx:stable
+        resources:
+          requests: { cpu: "500m", memory: "500Mi" }
+          limits:   { cpu: "1",    memory: "1Gi" }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud
+  namespace: mec
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: cloud }
+  template:
+    metadata:
+      labels: { app: cloud }
+    spec:
+      nodeSelector:
+        mec-site: cloud
+      containers:
+      - name: cloud
+        image: nginx:stable
+        resources:
+          requests: { cpu: "1", memory: "1Gi" }
+          limits:   { cpu: "2", memory: "2Gi" }
+EOF
+
+4.2 Apply + kiểm tra
+kubectl apply -f 10-compute-sites.yaml
+kubectl get pods -n mec -o wide
+
+Output đúng kỳ vọng (quan trọng)
+
+Anh phải thấy 3 pod Running và cột NODE đúng:
+
+mec1-... chạy trên open5gs
+
+mec2-... chạy trên workerk8s
+
+cloud-... chạy trên masterk8s
+
+👉 Anh paste output kubectl get pods -n mec -o wide sau bước này.
+
+BƯỚC 5: Deploy Gateway/Scheduler + Service (để trafficgen gọi)
+
+Ở bước này, mục tiêu trước mắt: có 1 endpoint ổn định trong cluster (DNS + service).
+Vì anh chưa gửi image gateway thật, ta làm theo 2 tầng:
+
+Tầng A (test plumbing): deploy gateway “echo server” để test POST/JSON và log.
+
+Tầng B (production): thay bằng gateway thật sau.
+
+5.1 Gateway tạm thời: dùng http-echo (cực nhẹ, test nhanh)
+
+Tạo file: 20-gateway-scheduler.yaml
+
+cat > 20-gateway-scheduler.yaml <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-scheduler
+  namespace: mec
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: gateway-scheduler }
+  template:
+    metadata:
+      labels: { app: gateway-scheduler }
+    spec:
+      containers:
+      - name: gateway
+        image: hashicorp/http-echo:1.0.0
+        args:
+          - "-listen=:8080"
+          - "-text=OK"
+        env:
+          - name: ALG
+            value: "rr"
+        ports:
+          - containerPort: 8080
+        resources:
+          requests: { cpu: "200m", memory: "128Mi" }
+          limits:   { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-scheduler
+  namespace: mec
+spec:
+  selector:
+    app: gateway-scheduler
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+EOF
+
+
+Apply + check:
+
+kubectl apply -f 20-gateway-scheduler.yaml
+kubectl get pods -n mec -o wide | grep gateway-scheduler
+kubectl get svc -n mec -o wide | grep gateway-scheduler
+
+Output đúng kỳ vọng
+
+Pod gateway-scheduler Running
+
+Service gateway-scheduler có ClusterIP
+
+👉 Paste 2 outputs trên.
+
+BƯỚC 6: Test connectivity từ node UE (trafficgen-test) → gateway service
+
+Anh đã có pod trafficgen-test chạy trên node ue. Ta dùng luôn pod đó để test DNS + HTTP.
+
+6.1 Exec vào trafficgen-test và curl
+kubectl exec -n mec -it trafficgen-test -- sh -lc \
+'nslookup gateway-scheduler.mec.svc.cluster.local && \
+ curl -sS -m 3 http://gateway-scheduler.mec.svc.cluster.local:8080'
+
+Output đúng kỳ vọng
+
+nslookup trả về IP (ClusterIP)
+
+curl trả về OK
+
+👉 Paste output lệnh này.
+
+BƯỚC 7: Chuẩn bị TrafficGen thật để tạo cpu_i, deadline_i, priority_i (nhưng làm theo kiểu an toàn)
+
+Hiện gateway tạm chỉ trả “OK” nên chưa xử lý JSON.
+Để đúng mục tiêu luận văn, ta cần gateway có endpoint nhận JSON + ghi log.
+
+Vì vậy bước kế tiếp tôi sẽ dựng gateway-scheduler bản tối thiểu (Python FastAPI), chạy trong K8s, có:
+
+/api/task nhận JSON (cpu_ms/deadline_ms/priority)
+
+“decision” giả lập (rr/pd/latency)
+
+log JSON 1 dòng/task
+
+Nhưng trước khi tôi đưa manifest, tôi cần anh xác nhận 1 điểm để khỏi làm sai:
+
+Anh muốn gateway chạy dưới dạng:
+
+Deployment 1 pod (đủ cho thí nghiệm ban đầu), hay
+
+Deployment 2-3 pod (để test scale)?
+
+Nếu anh không trả lời, tôi sẽ mặc định 1 pod để đi nhanh.
+
+Anh gửi output để tôi xác nhận (theo thứ tự)
+
+kubectl get pods -n mec -o wide (sau Bước 4)
+
+kubectl get pods -n mec -o wide | grep gateway-scheduler
+
+kubectl get svc -n mec -o wide | grep gateway-scheduler
+
+Output kubectl exec ... nslookup ... curl ...
+
+Sau khi anh gửi, tôi sẽ:
+
+Chốt PASS/FAIL
+
+Nếu PASS: gửi ngay Bước 8 (gateway FastAPI + logging + metrics + script parse/vẽ biểu đồ).
+
+### Output 1 ###
+1) Kết quả kiểm tra: PASS/FAIL
+✅ A. kubectl get nodes -o wide — PASS
+Đủ 4 node và IP đúng như kiến trúc:
+masterk8s: 10.10.33.45
+open5gs: 10.10.33.54
+ue: 10.10.33.40
+workerk8s: 10.10.33.60
+
+✅ B. Labels — PASS
+Anh đã gán đúng:
+masterk8s có mec-site=cloud
+open5gs có mec-site=mec1
+workerk8s có mec-site=mec2
+ue có cả 2 label:
+node-role.kubernetes.io/ue=true (label nền tảng anh dùng)
+role=ue (label theo template file)
+=> Đây là tình huống lý tưởng, không xung đột.
+
+✅ C. Taint UE — PASS
+ue có taint:
+dedicated=ue:NoSchedule
+Chuẩn để “pin workload” trafficgen/UE.
+
+✅ D. Trafficgen pinned đúng node — PASS
+trafficgen-test đang:
+Running
+Node = ue
+IP Pod: 192.168.131.206
+=> NodeSelector + toleration của anh đúng tuyệt đối.
+
+### Lịch sử 1 ###
+BƯỚC 0 (BẮT BUỘC): Chạy ở đâu? kiểm tra context trước
+
+✅ Thực hiện các lệnh kubectl ... trên máy có kubeconfig (khuyến nghị: masterk8s 10.10.33.45).
+
+Trên masterk8s chạy:
+
+kubectl cluster-info
+kubectl get nodes -o wide
+
+Output kỳ vọng
+
+Thấy đủ 4 node: masterk8s open5gs workerk8s ue
+
+Cột INTERNAL-IP đúng: 10.10.33.45 / 54 / 60 / 40
+
+👉 Anh paste output kubectl get nodes -o wide (chỉ cần 1 lần, để tôi bám IP của anh).
+
+BƯỚC 1: Cấu hình Label và Toleration
+1.1 Gán label “mec-site” cho 3 node compute + label UE (theo file)
+
+Chạy đúng các lệnh sau (thêm --overwrite để tránh lỗi đã tồn tại):
+
+kubectl label nodes open5gs mec-site=mec1 --overwrite
+kubectl label nodes workerk8s mec-site=mec2 --overwrite
+kubectl label nodes masterk8s mec-site=cloud --overwrite
+kubectl label nodes ue role=ue --overwrite
+
+Output kỳ vọng
+
+Mỗi lệnh sẽ trả về dạng:
+
+node/open5gs labeled
+
+node/workerk8s labeled
+
+node/masterk8s labeled
+
+node/ue labeled
+
+Lưu ý quan trọng:
+Anh đã có label node-role.kubernetes.io/ue=true. Việc thêm role=ue không xung đột, chỉ là thêm 1 label nữa cho đúng “template” trong file.
+
+1.2 Kiểm tra label đã apply đúng chưa
+
+Chạy:
+
+kubectl get nodes --show-labels
+
+Output đúng (kỳ vọng)
+
+Anh phải nhìn thấy:
+
+Node open5gs có mec-site=mec1
+
+Node workerk8s có mec-site=mec2
+
+Node masterk8s có mec-site=cloud
+
+Node ue có role=ue và node-role.kubernetes.io/ue=true
+
+👉 Anh paste output kubectl get nodes --show-labels.
+
+1.3 Toleration/taint cho node UE (để pin UE/TrafficGen)
+
+Vì hệ anh đang dùng taint dedicated=ue:NoSchedule, ta cần xác minh taint này còn tồn tại.
+
+Chạy:
+
+kubectl describe node ue | sed -n '/Taints:/,/Conditions:/p'
+
+Output đúng (kỳ vọng)
+
+Trong phần Taints: phải thấy dòng tương tự:
+
+dedicated=ue:NoSchedule
+
+👉 Anh paste output phần này.
+
+Nếu không thấy taint, tôi sẽ đưa lệnh taint lại chuẩn theo hệ anh.
+
+BƯỚC 2: Tạo Namespace “mec”
+
+Anh có 2 cách: YAML (chuẩn luận văn/lab) hoặc kubectl create (nhanh). Tôi khuyến nghị YAML để quản lý phiên bản.
+
+2.1 Tạo file YAML trên masterk8s
+
+Trên masterk8s:
+
+mkdir -p ~/mec-lab/manifests
+cd ~/mec-lab/manifests
+
+
+Tạo file 00-namespace-mec.yaml với nội dung:
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mec
+
+
+Apply:
+
+kubectl apply -f 00-namespace-mec.yaml
+
+Output kỳ vọng
+
+namespace/mec created (hoặc configured nếu đã có)
+
+2.2 Kiểm tra namespace
+
+Chạy:
+
+kubectl get namespaces | grep -E '^mec\b'
+
+Output đúng
+
+mec Active ...
+
+👉 Anh paste output 2 lệnh:
+
+kubectl apply -f 00-namespace-mec.yaml
+
+kubectl get namespaces | grep -E '^mec\b'
+
+BƯỚC 3: Cấu hình Toleration + NodeSelector cho TrafficGen/UE
+
+Vì hệ của anh có:
+
+label UE node: node-role.kubernetes.io/ue=true (anh đã set)
+
+taint UE node: dedicated=ue:NoSchedule
+
+=> Pod TrafficGen phải có:
+
+nodeSelector: node-role.kubernetes.io/ue: "true"
+
+toleration đúng key/value/effect của taint
+
+3.1 Manifest Pod TrafficGen (test pinning + DNS)
+
+Tạo file 30-trafficgen-test.yaml:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: trafficgen-test
+  namespace: mec
+spec:
+  nodeSelector:
+    node-role.kubernetes.io/ue: "true"
+  tolerations:
+  - key: "dedicated"
+    operator: "Equal"
+    value: "ue"
+    effect: "NoSchedule"
+  containers:
+  - name: curl
+    image: curlimages/curl:8.5.0
+    command: ["sh","-lc"]
+    args:
+      - |
+        echo "trafficgen-test running on node:" &&
+        hostname &&
+        sleep 3600
+
+
+Apply và kiểm tra pod chạy đúng node ue:
+
+kubectl apply -f 30-trafficgen-test.yaml
+kubectl get pod -n mec -o wide | grep trafficgen-test
+
+Output đúng (kỳ vọng)
+
+Pod trafficgen-test trạng thái Running
+
+Cột NODE = ue (IP node 10.10.33.40)
+
+👉 Anh paste output kubectl get pod -n mec -o wide | grep trafficgen-test.
+
+
+### Gợi ý lý thuyết ###
 Sau khi đã cấu hình K8s + MEC + Scheduler như trong file, làm sao tạo workload (cpu_i, deadline_i, priority_i), cho hệ thống chạy thật, thu kết quả, vẽ biểu đồ / dashboard?
 Tôi trả lời theo đúng hiện trạng file anh gửi, không giả định thêm 
 
