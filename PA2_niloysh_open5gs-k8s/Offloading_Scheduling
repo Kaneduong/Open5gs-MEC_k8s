@@ -2,6 +2,1366 @@
 # 20/01/2026 #
 ##############
 
+### Output 8 ###
+root@MasterK8s:~/mec-lab/manifests# python3 ~/mec-lab/analyze_case.py \
+  --input ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl \
+  --case pd_heavy_allpods
+cat ~/mec-lab/results/pd_heavy_allpods/summary.csv
+=== KPI SUMMARY ===
+case: pd_heavy_allpods
+alg: pd
+n_requests: 1354
+duration_s_est: 301
+throughput_rps_est: 4.498338870431894
+latency_p50_ms: 135.5
+latency_p95_ms: 259.0
+latency_p99_ms: 267.0
+sla_miss_rate: 0.4150664697193501
+avg_queue_wait_ms: 49.91728212703102
+avg_exec_ms: 95.94534711964549
+Wrote: /root/mec-lab/results/pd_heavy_allpods
+case,alg,n_requests,duration_s_est,throughput_rps_est,latency_p50_ms,latency_p95_ms,latency_p99_ms,sla_miss_rate,avg_queue_wait_ms,avg_exec_ms
+pd_heavy_allpods,pd,1354,301,4.498338870431894,135.5,259.0,267.0,0.4150664697193501,49.91728212703102,95.94534711964549
+root@MasterK8s:~/mec-lab/manifests#
+
+root@MasterK8s:~/mec-lab/manifests# python3 ~/mec-lab/analyze_case.py \
+  --input ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl \
+  --case pd_heavy_allpods
+cat ~/mec-lab/results/pd_heavy_allpods/summary.csv
+=== KPI SUMMARY ===
+case: pd_heavy_allpods
+alg: pd
+n_requests: 1354
+duration_s_est: 301
+throughput_rps_est: 4.498338870431894
+latency_p50_ms: 135.5
+latency_p95_ms: 259.0
+latency_p99_ms: 267.0
+sla_miss_rate: 0.4150664697193501
+avg_queue_wait_ms: 49.91728212703102
+avg_exec_ms: 95.94534711964549
+Wrote: /root/mec-lab/results/pd_heavy_allpods
+case,alg,n_requests,duration_s_est,throughput_rps_est,latency_p50_ms,latency_p95_ms,latency_p99_ms,sla_miss_rate,avg_queue_wait_ms,avg_exec_ms
+pd_heavy_allpods,pd,1354,301,4.498338870431894,135.5,259.0,267.0,0.4150664697193501,49.91728212703102,95.94534711964549
+root@MasterK8s:~/mec-lab/manifests#
+root@MasterK8s:~/mec-lab/manifests#
+root@MasterK8s:~/mec-lab/manifests# kubectl set env -n mec deploy/gateway-scheduler ALG=rr
+kubectl rollout status -n mec deploy/gateway-scheduler
+deployment.apps/gateway-scheduler env updated
+Waiting for deployment "gateway-scheduler" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+deployment "gateway-scheduler" successfully rolled out
+root@MasterK8s:~/mec-lab/manifests#
+root@MasterK8s:~/mec-lab/manifests#
+root@MasterK8s:~/mec-lab/manifests# kubectl set env -n mec deploy/trafficgen LOAD=heavy DURATION_S=120 SEED=3
+kubectl rollout status -n mec deploy/trafficgen
+kubectl logs -n mec deploy/trafficgen --follow
+deployment.apps/trafficgen env updated
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+deployment "trafficgen" successfully rolled out
+Found 2 pods, using pod/trafficgen-5879f68b57-phrxc
+Collecting requests
+  Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+Collecting charset_normalizer<4,>=2 (from requests)
+  Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+Collecting idna<4,>=2.5 (from requests)
+  Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+Collecting urllib3<3,>=1.21.1 (from requests)
+  Downloading urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+Collecting certifi>=2017.4.17 (from requests)
+  Downloading certifi-2026.1.4-py3-none-any.whl.metadata (2.5 kB)
+Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 64.7/64.7 kB 3.5 MB/s eta 0:00:00
+Downloading certifi-2026.1.4-py3-none-any.whl (152 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 152.9/152.9 kB 2.9 MB/s eta 0:00:00
+Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 151.6/151.6 kB 15.2 MB/s eta 0:00:00
+Downloading idna-3.11-py3-none-any.whl (71 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 71.0/71.0 kB 46.2 MB/s eta 0:00:00
+Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 131.6/131.6 kB 18.5 MB/s eta 0:00:00
+Installing collected packages: urllib3, idna, charset_normalizer, certifi, requests
+Successfully installed certifi-2026.1.4 charset_normalizer-3.4.4 idna-3.11 requests-2.32.5 urllib3-2.6.3
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 24.0 -> 25.3
+[notice] To update, run: pip install --upgrade pip
+{"sent": 50, "ok": 50, "load": "heavy"}
+{"sent": 100, "ok": 100, "load": "heavy"}
+{"sent": 150, "ok": 150, "load": "heavy"}
+{"sent": 200, "ok": 200, "load": "heavy"}
+{"sent": 250, "ok": 250, "load": "heavy"}
+{"sent": 300, "ok": 300, "load": "heavy"}
+{"sent": 350, "ok": 350, "load": "heavy"}
+{"sent": 400, "ok": 400, "load": "heavy"}
+{"sent": 450, "ok": 450, "load": "heavy"}
+{"sent": 500, "ok": 500, "load": "heavy"}
+{"sent": 550, "ok": 550, "load": "heavy"}
+{"sent": 600, "ok": 600, "load": "heavy"}
+{"sent": 650, "ok": 650, "load": "heavy"}
+{"sent": 700, "ok": 700, "load": "heavy"}
+{"sent": 750, "ok": 750, "load": "heavy"}
+{"done": true, "sent": 758, "ok": 758, "load": "heavy", "duration_s": 120}
+root@MasterK8s:~/mec-lab/manifests#
+
+root@MasterK8s:~/mec-lab/manifests# for p in $(kubectl get pods -n mec -l app=gateway-scheduler -o name); do
+  out=~/mec-lab/logs/$(echo $p | tr '/' '_' ).log
+  kubectl logs -n mec $p --since=5m > $out
+done
+cat ~/mec-lab/logs/pod_gateway-scheduler-*.log > ~/mec-lab/logs/gateway_allpods_raw.log
+grep '^{' ~/mec-lab/logs/gateway_allpods_raw.log > ~/mec-lab/logs/gateway_allpods_rr_heavy.jsonl
+wc -l ~/mec-lab/logs/gateway_allpods_rr_heavy.jsonl
+2454 /root/mec-lab/logs/gateway_allpods_rr_heavy.jsonl
+
+root@MasterK8s:~/mec-lab/manifests# python3 ~/mec-lab/analyze_case.py --input ~/mec-lab/logs/gateway_allpods_rr_heavy.jsonl --case rr_heavy_allpods
+=== KPI SUMMARY ===
+case: rr_heavy_allpods
+alg: pd
+n_requests: 2454
+duration_s_est: 1035
+throughput_rps_est: 2.371014492753623
+latency_p50_ms: 124.5
+latency_p95_ms: 257.0
+latency_p99_ms: 266.0
+sla_miss_rate: 0.3895680521597392
+avg_queue_wait_ms: 47.466585167074165
+avg_exec_ms: 94.27057864710676
+Wrote: /root/mec-lab/results/rr_heavy_allpods
+
+
+
+### Lịch sử 8 ###
+Bước 3 — Phân tích case pd_heavy_allpods
+3.1 Nếu anh chưa có analyze_case.py thì tạo lại (1 lần)
+
+Chạy:
+
+ls -la ~/mec-lab/analyze_case.py
+
+
+Nếu file tồn tại → bỏ qua bước tạo.
+
+Nếu không tồn tại → tạo nhanh:
+
+cat > ~/mec-lab/analyze_case.py <<'EOF'
+import argparse, json
+from pathlib import Path
+import pandas as pd
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--input", required=True)
+ap.add_argument("--case", required=True)
+args = ap.parse_args()
+
+inp = Path(args.input)
+outdir = Path(__file__).parent / "results" / args.case
+outdir.mkdir(parents=True, exist_ok=True)
+
+rows = []
+for line in inp.read_text(encoding="utf-8").splitlines():
+    line = line.strip()
+    if not line.startswith("{"):
+        continue
+    try:
+        rows.append(json.loads(line))
+    except json.JSONDecodeError:
+        pass
+
+df = pd.DataFrame(rows)
+df["ts"] = pd.to_numeric(df["ts"], errors="coerce")
+df = df.dropna(subset=["ts"])
+df["ts"] = df["ts"].astype(int)
+
+duration_s = max(1, df["ts"].max() - df["ts"].min() + 1)
+summary = {
+  "case": args.case,
+  "alg": df["alg"].mode().iloc[0],
+  "n_requests": len(df),
+  "duration_s_est": duration_s,
+  "throughput_rps_est": len(df)/duration_s,
+  "latency_p50_ms": float(df["e2e_latency_ms"].quantile(0.50)),
+  "latency_p95_ms": float(df["e2e_latency_ms"].quantile(0.95)),
+  "latency_p99_ms": float(df["e2e_latency_ms"].quantile(0.99)),
+  "sla_miss_rate": float(df["sla_miss"].mean()),
+  "avg_queue_wait_ms": float(df["queue_wait_ms"].mean()),
+  "avg_exec_ms": float(df["exec_ms"].mean()),
+}
+pd.DataFrame([summary]).to_csv(outdir / "summary.csv", index=False)
+df.to_csv(outdir / "raw.csv", index=False)
+
+print("=== KPI SUMMARY ===")
+for k,v in summary.items():
+    print(f"{k}: {v}")
+print(f"Wrote: {outdir}")
+EOF
+
+3.2 Chạy phân tích
+python3 ~/mec-lab/analyze_case.py \
+  --input ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl \
+  --case pd_heavy_allpods
+cat ~/mec-lab/results/pd_heavy_allpods/summary.csv
+
+
+👉 Gửi tôi output của summary.csv để tôi chốt KPI và so sánh.
+
+Bước 4 — Chạy thêm 2 case heavy (RR và latency) theo cùng quy trình
+Case A: rr_heavy_allpods
+
+Set ALG:
+
+kubectl set env -n mec deploy/gateway-scheduler ALG=rr
+kubectl rollout status -n mec deploy/gateway-scheduler
+
+
+Chạy trafficgen 120s:
+
+kubectl set env -n mec deploy/trafficgen LOAD=heavy DURATION_S=120 SEED=3
+kubectl rollout status -n mec deploy/trafficgen
+kubectl logs -n mec deploy/trafficgen --follow
+
+
+Thấy "done": true → Ctrl+C.
+
+Gom log 3 pods (giống y hệt, chỉ đổi tên file):
+
+for p in $(kubectl get pods -n mec -l app=gateway-scheduler -o name); do
+  out=~/mec-lab/logs/$(echo $p | tr '/' '_' ).log
+  kubectl logs -n mec $p --since=5m > $out
+done
+cat ~/mec-lab/logs/pod_gateway-scheduler-*.log > ~/mec-lab/logs/gateway_allpods_raw.log
+grep '^{' ~/mec-lab/logs/gateway_allpods_raw.log > ~/mec-lab/logs/gateway_allpods_rr_heavy.jsonl
+wc -l ~/mec-lab/logs/gateway_allpods_rr_heavy.jsonl
+
+
+Analyze:
+
+python3 ~/mec-lab/analyze_case.py --input ~/mec-lab/logs/gateway_allpods_rr_heavy.jsonl --case rr_heavy_allpods
+
+Case B: latency_heavy_allpods
+Làm y hệt, chỉ đổi:
+ALG=latency
+file: gateway_allpods_latency_heavy.jsonl
+case: latency_heavy_allpods
+
+# B1) Set thuật toán gateway = latency
+kubectl set env -n mec deploy/gateway-scheduler ALG=latency
+kubectl rollout status -n mec deploy/gateway-scheduler
+
+# B2) Chạy trafficgen heavy 120s (đổi SEED để khác case trước)
+kubectl set env -n mec deploy/trafficgen LOAD=heavy DURATION_S=120 SEED=4
+kubectl rollout status -n mec deploy/trafficgen
+
+# B3) Follow log đến khi thấy "done": true, rồi Ctrl+C
+kubectl logs -n mec deploy/trafficgen --follow
+
+# B4) Export log 3 pods gateway (5 phút gần nhất) + merge + lọc JSON
+rm -f ~/mec-lab/logs/pod_gateway-scheduler-*.log
+for p in $(kubectl get pods -n mec -l app=gateway-scheduler -o name); do
+  out=~/mec-lab/logs/$(echo $p | tr '/' '_' ).log
+  kubectl logs -n mec $p --since=5m > $out
+done
+
+cat ~/mec-lab/logs/pod_gateway-scheduler-*.log > ~/mec-lab/logs/gateway_allpods_raw.log
+grep '^{' ~/mec-lab/logs/gateway_allpods_raw.log > ~/mec-lab/logs/gateway_allpods_latency_heavy.jsonl
+
+# B5) Quick check dataset
+wc -l ~/mec-lab/logs/gateway_allpods_latency_heavy.jsonl
+tail -n 2 ~/mec-lab/logs/gateway_allpods_latency_heavy.jsonl
+
+# B6) Analyze + in summary
+python3 ~/mec-lab/analyze_case.py \
+  --input ~/mec-lab/logs/gateway_allpods_latency_heavy.jsonl \
+  --case latency_heavy_allpods
+
+cat ~/mec-lab/results/latency_heavy_allpods/summary.csv
+
+
+Anh gửi đúng 1 thứ để tôi xác nhận và hướng dẫn tiếp (không dài)
+
+Sau khi chạy Bước 3.2, gửi nội dung:
+
+cat ~/mec-lab/results/pd_heavy_allpods/summary.csv
+
+
+Tôi sẽ xác nhận PASS và chuẩn bị “bảng so sánh 3 thuật toán heavy (3 replicas)” theo format đưa vào luận văn.
+
+
+### Output 7 ###
+root@MasterK8s:~/mec-lab/manifests# kubectl get pods -n mec -l app=gateway-scheduler -o name
+pod/gateway-scheduler-5ff998d99-4qv4s
+pod/gateway-scheduler-5ff998d99-dgf4k
+pod/gateway-scheduler-5ff998d99-kj84z
+root@MasterK8s:~/mec-lab/manifests#
+root@MasterK8s:~/mec-lab/manifests# rm -f ~/mec-lab/logs/gw_pod_*.log ~/mec-lab/logs/gateway_allpods_raw.log ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl
+
+for p in $(kubectl get pods -n mec -l app=gateway-scheduler -o name); do
+  out=~/mec-lab/logs/$(echo $p | tr '/' '_' ).log
+  kubectl logs -n mec $p --since=5m > $out
+done
+
+wc -l ~/mec-lab/logs/pod_gateway-scheduler-*.log
+   872 /root/mec-lab/logs/pod_gateway-scheduler-5ff998d99-4qv4s.log
+   966 /root/mec-lab/logs/pod_gateway-scheduler-5ff998d99-dgf4k.log
+   870 /root/mec-lab/logs/pod_gateway-scheduler-5ff998d99-kj84z.log
+  2708 total
+root@MasterK8s:~/mec-lab/manifests#
+root@MasterK8s:~/mec-lab/manifests# cat ~/mec-lab/logs/pod_gateway-scheduler-*.log > ~/mec-lab/logs/gateway_allpods_raw.log
+grep '^{' ~/mec-lab/logs/gateway_allpods_raw.log > ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl
+
+wc -l ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl
+tail -n 2 ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl
+1354 /root/mec-lab/logs/gateway_allpods_pd_heavy.jsonl
+{"ts": 1768895001, "pod": "gateway-scheduler-5ff998d99-kj84z", "alg": "pd", "request_id": "e4ee6659-9d18-4826-a3f6-5f56a46a9c87", "cpu_ms": 50, "deadline_ms": 120, "priority": 1, "task_size": 1024, "decision_site": "cloud", "queue_wait_ms": 44, "exec_ms": 50, "e2e_latency_ms": 94, "sla_miss": false}
+{"ts": 1768895002, "pod": "gateway-scheduler-5ff998d99-kj84z", "alg": "pd", "request_id": "e7dd3c79-712d-41d3-9675-e419ba051b77", "cpu_ms": 200, "deadline_ms": 80, "priority": 3, "task_size": 1024, "decision_site": "cloud", "queue_wait_ms": 45, "exec_ms": 200, "e2e_latency_ms": 245, "sla_miss": true}
+root@MasterK8s:~/mec-lab/manifests#
+
+✅ PASS. Đây chính là dataset “allpods/3 replicas” đúng chuẩn.
+3 pods gateway đều có log đáng kể (872 / 966 / 870 dòng).
+File JSONL hợp lệ: 1354 dòng JSON.
+Có cả sla_miss: true/false, đủ để tính KPI tail latency + miss rate.
+Giờ bước tiếp theo (ngắn, không nhiễu): phân tích KPI cho allpods và chạy thêm 2 case heavy còn lại (rr, latency) để có bảng so sánh 3 thuật toán.
+
+### Lịch sử 7 ###
+2) Ý nghĩa KPI anh vừa có (đúng ngôn ngữ luận văn)
+
+Anh đang ở case: ALG=pd, LOAD=heavy
+
+KPI Summary (anh có)
+
+n_requests = 1540
+Số tác vụ (tasks) đã được xử lý và log hợp lệ.
+
+duration_s_est = 872
+Thời lượng ước tính dựa trên timestamp log.
+Lưu ý: Con số này không nhất thiết bằng 180s vì:
+
+log đang lấy --since=15m và gateway có thể ghi rải rác theo thời gian;
+
+và/hoặc chỉ log từ 1 pod gateway (tôi sẽ chỉnh ở mục 4 để gom đủ 3 pods).
+
+throughput_rps_est = 1.766 req/s
+Thông lượng ước tính từ log.
+
+latency_p50 = 137 ms
+50% tác vụ có E2E latency ≤ 137ms.
+
+latency_p95 = 255 ms, p99 = 263 ms
+Độ trễ đuôi (tail latency). Đây là phần hội đồng hay hỏi nhất.
+
+sla_miss_rate = 0.386 (~38.6%)
+Tỷ lệ vi phạm deadline. Đây là chỉ số then chốt để so sánh RR vs PD vs Latency-aware.
+
+avg_queue_wait = 49.35 ms
+Độ trễ do hàng đợi (một phần của E2E latency), giúp giải thích “bottleneck”.
+
+avg_exec = 94.75 ms
+Trung bình “cpu_ms” mà anh mô phỏng.
+
+👉 Với các số này, anh có thể viết 2–3 đoạn phân tích ngay:
+
+PD có thể ưu tiên deadline/priority nhưng ở heavy load vẫn gây SLA miss cao do queue buildup.
+
+Tail latency (p95/p99) quan trọng hơn average.
+
+3) Điều quan trọng cần sửa để “test scale 3 pods” đúng nghĩa
+
+Hiện tại khi export log, kubectl báo:
+
+Found 3 pods, using pod/...
+
+Tức là anh đang lấy log của 1 pod gateway, không phải cả 3.
+
+Muốn luận văn “scale-out 3 replicas” chặt chẽ, anh cần gom log cả 3 pods.
+
+Cách đúng (gom theo label)
+
+Chạy:
+
+kubectl logs -n mec -l app=gateway-scheduler --since=15m --prefix=true > ~/mec-lab/logs/gateway_allpods_raw.log
+grep '^{' ~/mec-lab/logs/gateway_allpods_raw.log > ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl
+wc -l ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl
+tail -n 2 ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl
+
+
+Kỳ vọng: số dòng sẽ tăng đáng kể so với 1540 (vì 3 pods cùng xử lý).
+
+👉 Nếu anh muốn, tôi sẽ cập nhật analyze_logs.py để đọc file gateway_allpods_*.jsonl và tự gắn nhãn “replicas=3”.
+
+4) Bây giờ làm gì để hoàn chỉnh luận văn?
+
+Anh đã có 1 case “pd + heavy”. Luận văn cần bảng so sánh tối thiểu:
+
+ALG	LOAD	throughput	p95	p99	SLA miss
+rr	light	…	…	…	…
+rr	medium	…	…	…	…
+rr	heavy	…	…	…	…
+pd	light	…	…	…	…
+pd	medium	…	…	…	…
+pd	heavy	(đã có)	(đã có)	(đã có)	(đã có)
+latency	light	…	…	…	…
+latency	medium	…	…	…	…
+latency	heavy	…	…	…	…
+5) Tôi đưa luôn “Runbook 9-case” để anh chạy liên tục (không hỏi lại)
+5.1 Thống nhất tên file log & kết quả theo case
+
+Quy ước:
+
+log JSONL: ~/mec-lab/logs/gateway_<alg>_<load>.jsonl
+
+kết quả: ~/mec-lab/results/<alg>_<load>/...
+
+5.2 Lệnh chạy 1 case (copy/paste, chỉ đổi alg/load)
+(A) Set thuật toán
+kubectl set env -n mec deploy/gateway-scheduler ALG=rr
+kubectl rollout status -n mec deploy/gateway-scheduler
+
+(B) Set load + chạy trafficgen 180s
+kubectl set env -n mec deploy/trafficgen LOAD=medium DURATION_S=180 SEED=1
+kubectl rollout status -n mec deploy/trafficgen
+kubectl logs -n mec deploy/trafficgen --tail=5
+
+(C) Export log (gom cả 3 pods) + lọc JSON
+kubectl logs -n mec -l app=gateway-scheduler --since=10m --prefix=true > ~/mec-lab/logs/gateway_raw.log
+grep '^{' ~/mec-lab/logs/gateway_raw.log > ~/mec-lab/logs/gateway_rr_medium.jsonl
+wc -l ~/mec-lab/logs/gateway_rr_medium.jsonl
+
+(D) Phân tích (tôi sẽ cập nhật script để nhận input theo tham số)
+
+Ngay dưới đây tôi gửi phiên bản analyze_logs.py nhận input file để anh chạy từng case.
+
+6) Cập nhật script phân tích: chạy được cho mọi case (không phải sửa code)
+
+Tạo file mới: ~/mec-lab/analyze_case.py
+
+cat > ~/mec-lab/analyze_case.py <<'EOF'
+import argparse, json
+from pathlib import Path
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", required=True, help="path to jsonl log file")
+    ap.add_argument("--case", required=True, help="case name e.g. rr_medium")
+    args = ap.parse_args()
+
+    inp = Path(args.input)
+    outdir = Path(__file__).parent / "results" / args.case
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    rows = []
+    with inp.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line.startswith("{"):
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+
+    if not rows:
+        raise SystemExit(f"No JSON rows found in {inp}")
+
+    df = pd.DataFrame(rows)
+
+    required = ["ts","alg","request_id","cpu_ms","deadline_ms","priority","decision_site","queue_wait_ms","exec_ms","e2e_latency_ms","sla_miss"]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise SystemExit(f"Missing columns: {missing}")
+
+    df["ts"] = pd.to_numeric(df["ts"], errors="coerce")
+    df = df.dropna(subset=["ts"])
+    df["ts"] = df["ts"].astype(int)
+
+    duration_s = max(1, df["ts"].max() - df["ts"].min() + 1)
+    throughput_rps = len(df) / duration_s
+
+    summary = pd.DataFrame([{
+        "case": args.case,
+        "alg": df["alg"].mode().iloc[0],
+        "n_requests": len(df),
+        "duration_s_est": duration_s,
+        "throughput_rps_est": throughput_rps,
+        "latency_p50_ms": df["e2e_latency_ms"].quantile(0.50),
+        "latency_p95_ms": df["e2e_latency_ms"].quantile(0.95),
+        "latency_p99_ms": df["e2e_latency_ms"].quantile(0.99),
+        "sla_miss_rate": df["sla_miss"].mean(),
+        "avg_queue_wait_ms": df["queue_wait_ms"].mean(),
+        "avg_exec_ms": df["exec_ms"].mean(),
+    }])
+
+    df.to_csv(outdir / "raw.csv", index=False)
+    summary.to_csv(outdir / "summary.csv", index=False)
+
+    print("\n=== KPI SUMMARY ===")
+    print(summary.to_string(index=False))
+
+    # Plot 1: latency CDF
+    lat = df["e2e_latency_ms"].sort_values().reset_index(drop=True)
+    y = (lat.index + 1) / len(lat)
+    plt.figure()
+    plt.plot(lat, y)
+    plt.xlabel("E2E latency (ms)")
+    plt.ylabel("CDF")
+    plt.title(f"E2E Latency CDF ({args.case})")
+    plt.grid(True)
+    plt.savefig(outdir / "latency_cdf.png", dpi=200)
+
+    # Plot 2: SLA miss rate over time (10s bins)
+    df2 = df.sort_values("ts").copy()
+    df2["sla_miss_int"] = df2["sla_miss"].astype(int)
+    df2["tbin"] = (df2["ts"] // 10) * 10
+    miss_rate_by_bin = df2.groupby("tbin")["sla_miss_int"].mean().reset_index()
+    plt.figure()
+    plt.plot(miss_rate_by_bin["tbin"], miss_rate_by_bin["sla_miss_int"])
+    plt.xlabel("Time bin (epoch seconds, 10s bins)")
+    plt.ylabel("SLA miss rate")
+    plt.title(f"SLA Miss Rate over Time ({args.case})")
+    plt.grid(True)
+    plt.savefig(outdir / "sla_miss.png", dpi=200)
+
+    # Plot 3: decision site share
+    site_share = df["decision_site"].value_counts(normalize=True).sort_index()
+    plt.figure()
+    plt.bar(site_share.index, site_share.values)
+    plt.xlabel("Decision site")
+    plt.ylabel("Share")
+    plt.title(f"Offloading Share by Site ({args.case})")
+    plt.grid(True, axis="y")
+    plt.savefig(outdir / "site_share.png", dpi=200)
+
+    # Plot 4: queue wait vs cpu
+    plt.figure()
+    plt.scatter(df["cpu_ms"], df["queue_wait_ms"], s=8)
+    plt.xlabel("cpu_ms (task demand)")
+    plt.ylabel("queue_wait_ms")
+    plt.title(f"Queue Wait vs CPU Demand ({args.case})")
+    plt.grid(True)
+    plt.savefig(outdir / "queue_vs_cpu.png", dpi=200)
+
+    print(f"\nWrote results to: {outdir}")
+
+if __name__ == "__main__":
+    main()
+EOF
+
+
+Chạy thử cho case anh vừa có (pd_heavy):
+
+python3 ~/mec-lab/analyze_case.py --input ~/mec-lab/logs/gateway_pd_heavy.jsonl --case pd_heavy
+ls -la ~/mec-lab/results/pd_heavy
+
+7) Anh nên làm tiếp ngay bây giờ
+
+Chuyển sang gom log cả 3 pods (Mục 3) để “scale test” đúng nghĩa.
+
+Chạy script analyze_case.py để tạo structure kết quả theo case.
+
+Chạy thêm 2 case nữa trước để kiểm chứng:
+
+rr_heavy
+
+latency_heavy
+
+Anh chọn hướng:
+
+Nếu anh muốn đi nhanh: tôi sẽ đưa script bash chạy tự động 9 case và xuất ra 1 file summary_all.csv để copy vào luận văn.
+
+Nếu anh muốn đi chắc: ta chạy thêm 1 case rr_heavy trước, tôi check KPI rồi mới batch.
+
+Chỉ cần anh trả lời: “Đi nhanh chạy 9 case” hoặc “Chạy rr_heavy trước”.
+
+
+### Output 6 ###
+root@MasterK8s:~/mec-lab/manifests# mkdir -p ~/mec-lab/logs
+root@MasterK8s:~/mec-lab/manifests# kubectl logs -n mec deploy/gateway-scheduler --since=15m > ~/mec-lab/logs/gateway_raw.log
+Found 3 pods, using pod/gateway-scheduler-5ff998d99-4qv4s
+root@MasterK8s:~/mec-lab/manifests# grep '^{' ~/mec-lab/logs/gateway_raw.log > ~/mec-lab/logs/gateway_pd_heavy.jsonl
+root@MasterK8s:~/mec-lab/manifests# wc -l ~/mec-lab/logs/gateway_pd_heavy.jsonl
+tail -n 2 ~/mec-lab/logs/gateway_pd_heavy.jsonl
+1540 /root/mec-lab/logs/gateway_pd_heavy.jsonl
+{"ts": 1768892996, "pod": "gateway-scheduler-5ff998d99-4qv4s", "alg": "pd", "request_id": "d75101d1-5602-4596-b2cd-123a753965d5", "cpu_ms": 50, "deadline_ms": 80, "priority": 2, "task_size": 2048, "decision_site": "mec2", "queue_wait_ms": 43, "exec_ms": 50, "e2e_latency_ms": 93, "sla_miss": true}
+{"ts": 1768892997, "pod": "gateway-scheduler-5ff998d99-4qv4s", "alg": "pd", "request_id": "6dd0abaf-9778-43e4-979f-850c6ebee4dc", "cpu_ms": 100, "deadline_ms": 80, "priority": 3, "task_size": 1024, "decision_site": "mec2", "queue_wait_ms": 40, "exec_ms": 100, "e2e_latency_ms": 140, "sla_miss": true}
+root@MasterK8s:~/mec-lab/manifests#
+
+root@MasterK8s:~/mec-lab/manifests# python3 ~/mec-lab/analyze_logs.py
+=== KPI SUMMARY ===
+       case alg  n_requests  duration_s_est  throughput_rps_est  latency_p50_ms  latency_p95_ms  latency_p99_ms  sla_miss_rate  avg_queue_wait_ms  avg_exec_ms
+pd_pd_heavy  pd        1540             872            1.766055           137.0           255.0           263.0       0.386364          49.351299    94.753247
+
+Wrote results to: /root/mec-lab/results
+root@MasterK8s:~/mec-lab/manifests#
+
+root@MasterK8s:~/mec-lab/manifests# ls -la ~/mec-lab/results
+total 476
+drwxr-xr-x 2 root root   4096 Jan 20 14:17 .
+drwxr-xr-x 5 root root   4096 Jan 20 14:17 ..
+-rw-r--r-- 1 root root  48840 Jan 20 14:17 latency_cdf_pd_heavy.png
+-rw-r--r-- 1 root root  69745 Jan 20 14:17 queue_vs_cpu_pd_heavy.png
+-rw-r--r-- 1 root root 184743 Jan 20 14:17 raw_gateway_pd_heavy.csv
+-rw-r--r-- 1 root root  43631 Jan 20 14:17 site_share_pd_heavy.png
+-rw-r--r-- 1 root root 115610 Jan 20 14:17 sla_miss_pd_heavy.png
+-rw-r--r-- 1 root root    259 Jan 20 14:17 summary_pd_heavy.csv
+
+1) Check output: PASS/FAIL
+✅ A) Export log JSONL sạch — PASS
+gateway_pd_heavy.jsonl có 1540 dòng JSON (đủ lớn) ✅
+tail -n 2 là JSON hợp lệ ✅
+Có sla_miss: true ✅ (quan trọng: chứng minh mô hình có vi phạm deadline, không “đẹp giả”).
+
+✅ B) Script phân tích chạy OK — PASS
+Anh đã tạo được:
+KPI summary ✅
+CSV raw + summary ✅
+4 hình PNG ✅
+
+✅ C) Result files đúng như kỳ vọng — PASS
+Thư mục ~/mec-lab/results có đầy đủ:
+raw_gateway_pd_heavy.csv
+summary_pd_heavy.csv
+latency_cdf_pd_heavy.png
+sla_miss_pd_heavy.png
+site_share_pd_heavy.png
+queue_vs_cpu_pd_heavy.png
+
+=> Đây là deliverable cho luận văn.
+
+### Lịch sử 6 ###
+2) Sửa chuẩn: xuất log JSONL sạch (không lẫn INFO)
+
+Trên masterk8s, chạy đúng 3 lệnh sau (copy/paste nguyên khối):
+
+mkdir -p ~/mec-lab/logs
+
+kubectl logs -n mec deploy/gateway-scheduler --since=15m > ~/mec-lab/logs/gateway_raw.log
+
+grep '^{' ~/mec-lab/logs/gateway_raw.log > ~/mec-lab/logs/gateway_pd_heavy.jsonl
+
+wc -l ~/mec-lab/logs/gateway_pd_heavy.jsonl
+tail -n 2 ~/mec-lab/logs/gateway_pd_heavy.jsonl
+
+Output kỳ vọng
+
+wc -l phải > 0 (thường vài trăm đến vài nghìn)
+
+tail ra 2 dòng JSON bắt đầu bằng {
+
+👉 Nếu anh chạy xong, paste output wc -l và tail -n 2.
+
+3) Tạo script tính KPI + xuất CSV + vẽ biểu đồ (để đưa vào luận văn)
+3.1 Tạo file phân tích analyze_logs.py
+
+Tạo file ở: ~/mec-lab/analyze_logs.py
+
+cat > ~/mec-lab/analyze_logs.py <<'EOF'
+import json
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+INPUT = Path(__file__).parent / "logs" / "gateway_pd_heavy.jsonl"
+OUTDIR = Path(__file__).parent / "results"
+OUTDIR.mkdir(parents=True, exist_ok=True)
+
+rows = []
+with INPUT.open("r", encoding="utf-8") as f:
+    for line in f:
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+
+if not rows:
+    raise SystemExit(f"No JSON rows found in {INPUT}")
+
+df = pd.DataFrame(rows)
+
+# Basic sanity checks
+required = ["ts","alg","request_id","cpu_ms","deadline_ms","priority","decision_site","queue_wait_ms","exec_ms","e2e_latency_ms","sla_miss"]
+missing = [c for c in required if c not in df.columns]
+if missing:
+    raise SystemExit(f"Missing columns: {missing}")
+
+# Compute throughput: count per second (based on ts)
+df["ts"] = pd.to_numeric(df["ts"], errors="coerce")
+df = df.dropna(subset=["ts"])
+df["ts"] = df["ts"].astype(int)
+duration_s = max(1, df["ts"].max() - df["ts"].min() + 1)
+throughput_rps = len(df) / duration_s
+
+# KPI summary
+lat_p50 = df["e2e_latency_ms"].quantile(0.50)
+lat_p95 = df["e2e_latency_ms"].quantile(0.95)
+lat_p99 = df["e2e_latency_ms"].quantile(0.99)
+sla_miss_rate = df["sla_miss"].mean()
+
+summary = pd.DataFrame([{
+    "case": f"{df['alg'].iloc[0]}_pd_heavy",
+    "alg": df["alg"].iloc[0],
+    "n_requests": len(df),
+    "duration_s_est": duration_s,
+    "throughput_rps_est": throughput_rps,
+    "latency_p50_ms": lat_p50,
+    "latency_p95_ms": lat_p95,
+    "latency_p99_ms": lat_p99,
+    "sla_miss_rate": sla_miss_rate,
+    "avg_queue_wait_ms": df["queue_wait_ms"].mean(),
+    "avg_exec_ms": df["exec_ms"].mean(),
+}])
+
+# Save CSVs
+df.to_csv(OUTDIR / "raw_gateway_pd_heavy.csv", index=False)
+summary.to_csv(OUTDIR / "summary_pd_heavy.csv", index=False)
+
+print("=== KPI SUMMARY ===")
+print(summary.to_string(index=False))
+
+# Plot 1: Latency distribution (CDF-like via sorted values)
+lat = df["e2e_latency_ms"].sort_values().reset_index(drop=True)
+y = (lat.index + 1) / len(lat)
+plt.figure()
+plt.plot(lat, y)
+plt.xlabel("E2E latency (ms)")
+plt.ylabel("CDF")
+plt.title("E2E Latency CDF (pd, heavy)")
+plt.grid(True)
+plt.savefig(OUTDIR / "latency_cdf_pd_heavy.png", dpi=200)
+
+# Plot 2: SLA miss over time (rolling mean per 10s)
+df2 = df.sort_values("ts").copy()
+df2["sla_miss_int"] = df2["sla_miss"].astype(int)
+# bucket by 10s
+df2["tbin"] = (df2["ts"] // 10) * 10
+miss_rate_by_bin = df2.groupby("tbin")["sla_miss_int"].mean().reset_index()
+plt.figure()
+plt.plot(miss_rate_by_bin["tbin"], miss_rate_by_bin["sla_miss_int"])
+plt.xlabel("Time bin (epoch seconds, 10s bins)")
+plt.ylabel("SLA miss rate")
+plt.title("SLA Miss Rate over Time (pd, heavy)")
+plt.grid(True)
+plt.savefig(OUTDIR / "sla_miss_pd_heavy.png", dpi=200)
+
+# Plot 3: Decision site share
+site_share = df["decision_site"].value_counts(normalize=True).sort_index()
+plt.figure()
+plt.bar(site_share.index, site_share.values)
+plt.xlabel("Decision site")
+plt.ylabel("Share")
+plt.title("Offloading Share by Site (pd, heavy)")
+plt.grid(True, axis="y")
+plt.savefig(OUTDIR / "site_share_pd_heavy.png", dpi=200)
+
+# Plot 4: Queue wait vs CPU
+plt.figure()
+plt.scatter(df["cpu_ms"], df["queue_wait_ms"], s=8)
+plt.xlabel("cpu_ms (task demand)")
+plt.ylabel("queue_wait_ms")
+plt.title("Queue Wait vs CPU Demand (pd, heavy)")
+plt.grid(True)
+plt.savefig(OUTDIR / "queue_vs_cpu_pd_heavy.png", dpi=200)
+
+print(f"\nWrote results to: {OUTDIR}")
+EOF
+
+3.2 Chạy phân tích
+apt update
+apt install -y python3-pip
+pip3 install pandas matplotlib
+
+python3 -V
+python3 ~/mec-lab/analyze_logs.py
+ls -la ~/mec-lab/results
+
+Output kỳ vọng
+
+In ra bảng KPI SUMMARY (p50/p95/p99, SLA miss rate, throughput)
+
+Thư mục ~/mec-lab/results/ có:
+
+raw_gateway_pd_heavy.csv
+
+summary_pd_heavy.csv
+
+4 file png biểu đồ
+
+👉 Anh paste output của:
+
+python3 ~/mec-lab/analyze_logs.py
+
+ls -la ~/mec-lab/results
+
+4) Một điểm rất quan trọng cho “test scale 3 pods”
+
+Hiện tại kubectl logs deploy/gateway-scheduler ... đang báo:
+
+Found 3 pods, using pod/...
+
+Tức là lệnh log đang chỉ lấy 1 pod, không phải gộp cả 3.
+
+Để luận văn “scale test” đúng nghĩa, anh cần log của cả 3 pods. Có 2 cách:
+
+Cách A (nhanh, chuẩn nhất): gom log theo label
+kubectl logs -n mec -l app=gateway-scheduler --since=15m --prefix=true > ~/mec-lab/logs/gateway_allpods_raw.log
+grep '^{' ~/mec-lab/logs/gateway_allpods_raw.log > ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl
+wc -l ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl
+
+Cách B: xuất từng pod rồi concat
+
+(Tôi sẽ đưa nếu anh cần, nhưng A là chuẩn.)
+
+5) Kết luận nhanh cho case hiện tại
+
+PASS: hệ thống chạy thật, ALG=pd hoạt động, heavy load sinh ~1100 task, log JSON đủ trường.
+
+Cần chỉnh: cách export log để tránh permission + lấy đủ 3 pods.
+
+Anh làm ngay 2 việc (để tôi chốt “ready for KPI plots”)
+
+Chạy block export log JSONL sạch (Mục 2) và gửi wc -l + tail -n 2.
+
+Chạy python3 ~/mec-lab/analyze_logs.py và gửi KPI SUMMARY.
+
+Sau đó tôi sẽ hướng dẫn tiếp: chạy ma trận 9 case (3 thuật toán × 3 mức tải) và tạo bảng kết quả tổng hợp đúng format đưa vào luận văn.
+
+
+### Output 5 ###
+root@MasterK8s:~/mec-lab/manifests# kubectl logs -n mec deploy/gateway-scheduler --since=10m > ~/mec-lab/gateway_raw.log
+grep '^{'
+  ~/mec-lab/gateway_raw.log > ~/mec-lab/gateway_logs.jsonl
+wc -l ~/mec-lab/gateway_logs.jsonl
+tail -n 2 ~/mec-lab/gateway_logs.jsonl
+Found 3 pods, using pod/gateway-scheduler-5ff998d99-4qv4s
+ <== BỊ TREO
+^C
+-bash: /root/mec-lab/gateway_raw.log: Permission denied
+0 /root/mec-lab/gateway_logs.jsonl
+root@MasterK8s:~/mec-lab/manifests#
+
+root@MasterK8s:~/mec-lab/manifests# kubectl logs -n mec deploy/trafficgen --tail=50
+Collecting requests
+  Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+Collecting charset_normalizer<4,>=2 (from requests)
+  Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+Collecting idna<4,>=2.5 (from requests)
+  Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+Collecting urllib3<3,>=1.21.1 (from requests)
+  Downloading urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+Collecting certifi>=2017.4.17 (from requests)
+  Downloading certifi-2026.1.4-py3-none-any.whl.metadata (2.5 kB)
+Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 64.7/64.7 kB 3.3 MB/s eta 0:00:00
+Downloading certifi-2026.1.4-py3-none-any.whl (152 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 152.9/152.9 kB 2.8 MB/s eta 0:00:00
+Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 151.6/151.6 kB 14.7 MB/s eta 0:00:00
+Downloading idna-3.11-py3-none-any.whl (71 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 71.0/71.0 kB 23.5 MB/s eta 0:00:00
+Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 131.6/131.6 kB 20.6 MB/s eta 0:00:00
+Installing collected packages: urllib3, idna, charset_normalizer, certifi, requests
+Successfully installed certifi-2026.1.4 charset_normalizer-3.4.4 idna-3.11 requests-2.32.5 urllib3-2.6.3
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 24.0 -> 25.3
+[notice] To update, run: pip install --upgrade pip
+{"sent": 50, "ok": 50, "load": "heavy"}
+{"sent": 100, "ok": 100, "load": "heavy"}
+{"sent": 150, "ok": 150, "load": "heavy"}
+{"sent": 200, "ok": 200, "load": "heavy"}
+{"sent": 250, "ok": 250, "load": "heavy"}
+{"sent": 300, "ok": 300, "load": "heavy"}
+{"sent": 350, "ok": 350, "load": "heavy"}
+{"sent": 400, "ok": 400, "load": "heavy"}
+{"sent": 450, "ok": 450, "load": "heavy"}
+{"sent": 500, "ok": 500, "load": "heavy"}
+{"sent": 550, "ok": 550, "load": "heavy"}
+{"sent": 600, "ok": 600, "load": "heavy"}
+{"sent": 650, "ok": 650, "load": "heavy"}
+{"sent": 700, "ok": 700, "load": "heavy"}
+{"sent": 750, "ok": 750, "load": "heavy"}
+{"sent": 800, "ok": 800, "load": "heavy"}
+{"sent": 850, "ok": 850, "load": "heavy"}
+{"sent": 900, "ok": 900, "load": "heavy"}
+{"sent": 950, "ok": 950, "load": "heavy"}
+{"sent": 1000, "ok": 1000, "load": "heavy"}
+{"sent": 1050, "ok": 1050, "load": "heavy"}
+{"sent": 1100, "ok": 1100, "load": "heavy"}
+{"done": true, "sent": 1102, "ok": 1102, "load": "heavy", "duration_s": 180}
+root@MasterK8s:~/mec-lab/manifests#
+root@MasterK8s:~/mec-lab/manifests# kubectl logs -n mec deploy/gateway-scheduler --since=2m > ~/mec-lab/gateway_raw.log
+grep '^{' ~/mec-lab/gateway_raw.log | tail -n 5
+Found 3 pods, using pod/gateway-scheduler-5ff998d99-4qv4s
+{"ts": 1768892750, "pod": "gateway-scheduler-5ff998d99-4qv4s", "alg": "pd", "request_id": "e9adfd1b-dd14-4d28-b397-2a56a387d0fc", "cpu_ms": 20, "deadline_ms": 120, "priority": 3, "task_size": 2048, "decision_site": "mec2", "queue_wait_ms": 46, "exec_ms": 20, "e2e_latency_ms": 66, "sla_miss": false}
+{"ts": 1768892750, "pod": "gateway-scheduler-5ff998d99-4qv4s", "alg": "pd", "request_id": "f3d36e0f-e388-432a-abcd-1f6440fa8673", "cpu_ms": 20, "deadline_ms": 80, "priority": 2, "task_size": 1024, "decision_site": "mec2", "queue_wait_ms": 38, "exec_ms": 20, "e2e_latency_ms": 58, "sla_miss": false}
+{"ts": 1768892752, "pod": "gateway-scheduler-5ff998d99-4qv4s", "alg": "pd", "request_id": "74ca8367-caf3-4350-99b5-7b400cccc334", "cpu_ms": 200, "deadline_ms": 400, "priority": 1, "task_size": 2048, "decision_site": "mec2", "queue_wait_ms": 40, "exec_ms": 200, "e2e_latency_ms": 240, "sla_miss": false}
+{"ts": 1768892752, "pod": "gateway-scheduler-5ff998d99-4qv4s", "alg": "pd", "request_id": "3107848e-783a-4260-bd4b-a135bafa3aa8", "cpu_ms": 20, "deadline_ms": 120, "priority": 3, "task_size": 512, "decision_site": "mec2", "queue_wait_ms": 44, "exec_ms": 20, "e2e_latency_ms": 64, "sla_miss": false}
+{"ts": 1768892752, "pod": "gateway-scheduler-5ff998d99-4qv4s", "alg": "pd", "request_id": "8f6f99f5-f165-43c0-a5d5-ef49df4aec87", "cpu_ms": 20, "deadline_ms": 120, "priority": 3, "task_size": 2048, "decision_site": "mec2", "queue_wait_ms": 39, "exec_ms": 20, "e2e_latency_ms": 59, "sla_miss": false}
+root@MasterK8s:~/mec-lab/manifests#
+
+1) Check output: PASS/FAIL
+✅ A) Trafficgen heavy — PASS
+Trafficgen chạy xong 180s, gửi 1102 request, OK 1102 (100% success)
+Đây là số liệu throughput thực tế: ~1102/180 ≈ 6.12 req/s (lưu ý: do mỗi request chờ response + gateway sleep, nên không đạt 100 req/s như “sleep=0.01”; đây là bình thường và là một điểm cần nêu trong luận văn).
+
+✅ B) Gateway log “pd” — PASS
+grep '^{' ... | tail -n 5 cho ra 5 dòng JSON đầy đủ trường:
+"alg":"pd" ✅
+cpu_ms, deadline_ms, priority ✅
+decision_site, queue_wait_ms, e2e_latency_ms, sla_miss ✅
+=> Dữ liệu đã đủ để tính KPI.
+
+⚠️ C) Lỗi thao tác “Permission denied” + grep bị xuống dòng — FAIL (nhỏ, do command)
+Dòng này:
+grep '^{'
+  ~/mec-lab/gateway_raw.log > ~/mec-lab/gateway_logs.jsonl
+bị tách thành 2 dòng nên shell hiểu sai, rồi báo:
+Permission denied với /root/mec-lab/gateway_raw.log (thường do file/dir permission hoặc do câu lệnh bị parse sai).
+Fix: dùng đúng 1 dòng, và đảm bảo file nằm trong thư mục anh có quyền ghi.
+
+
+### Lịch sử 5 ###
+5.1 Làm sạch log (lọc JSON)
+
+Sau khi chạy xong 1 case, xuất log:
+
+kubectl logs -n mec deploy/gateway-scheduler --since=10m > ~/mec-lab/gateway_raw.log
+grep '^{'
+  ~/mec-lab/gateway_raw.log > ~/mec-lab/gateway_logs.jsonl
+wc -l ~/mec-lab/gateway_logs.jsonl
+tail -n 2 ~/mec-lab/gateway_logs.jsonl
+
+👉 Nếu tail ra 2 dòng JSON đúng format là OK.
+
+5.2 Tính KPI (p50/p95/p99, SLA miss, throughput) bằng Python
+Tôi sẽ gửi script parse + tính KPI + xuất CSV + vẽ 4 biểu đồ chuẩn (mỗi biểu đồ 1 figure), đúng format luận văn.
+
+Anh làm giúp tôi 2 lệnh để chốt “heavy + pd” đang chạy OK, rồi tôi đưa script KPI/plot
+Theo dõi log trafficgen 15–20 giây:
+
+kubectl logs -n mec deploy/trafficgen --tail=50
+
+Export log gateway 2 phút gần nhất và lọc JSON:
+
+kubectl logs -n mec deploy/gateway-scheduler --since=2m > ~/mec-lab/gateway_raw.log
+grep '^{' ~/mec-lab/gateway_raw.log | tail -n 5
+Gửi output 2 lệnh này, tôi sẽ xác nhận case “pd + heavy” đủ dữ liệu, rồi tôi đưa ngay script KPI + biểu đồ.
+
+### Output 4 ###
+root@MasterK8s:~/mec-lab/manifests# kubectl apply -f 31-trafficgen-configmap.yaml
+configmap/trafficgen-code created
+
+root@MasterK8s:~/mec-lab/manifests# kubectl apply -f 32-trafficgen-deploy.yaml
+deployment.apps/trafficgen created
+
+root@MasterK8s:~/mec-lab/manifests# kubectl get pods -n mec -o wide | grep trafficgen
+trafficgen-6f7bb7d65-5vkd8          1/1     Running   0             38s     192.168.131.207   ue          <none>           <none>
+trafficgen-test                     1/1     Running   2 (56m ago)   176m    192.168.131.206   ue          <none>           <none>
+
+root@MasterK8s:~/mec-lab/manifests# kubectl logs -n mec deploy/trafficgen --tail=20
+  Downloading certifi-2026.1.4-py3-none-any.whl.metadata (2.5 kB)
+Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 64.7/64.7 kB 3.3 MB/s eta 0:00:00
+Downloading certifi-2026.1.4-py3-none-any.whl (152 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 152.9/152.9 kB 2.9 MB/s eta 0:00:00
+Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 151.6/151.6 kB 14.8 MB/s eta 0:00:00
+Downloading idna-3.11-py3-none-any.whl (71 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 71.0/71.0 kB 56.5 MB/s eta 0:00:00
+Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 131.6/131.6 kB 21.8 MB/s eta 0:00:00
+Installing collected packages: urllib3, idna, charset_normalizer, certifi, requests
+Successfully installed certifi-2026.1.4 charset_normalizer-3.4.4 idna-3.11 requests-2.32.5 urllib3-2.6.3
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 24.0 -> 25.3
+[notice] To update, run: pip install --upgrade pip
+{"sent": 50, "ok": 50, "load": "medium"}
+{"sent": 100, "ok": 100, "load": "medium"}
+{"sent": 150, "ok": 150, "load": "medium"}
+root@MasterK8s:~/mec-lab/manifests#
+
+root@MasterK8s:~/mec-lab/manifests# kubectl logs -n mec deploy/gateway-scheduler --since=10m > ~/mec-lab/gateway_logs.jsonl
+wc -l ~/mec-lab/gateway_logs.jsonl
+tail -n 3 ~/mec-lab/gateway_logs.jsonl
+Found 3 pods, using pod/gateway-scheduler-6b6b9d8dc-qcxpc
+430 /root/mec-lab/gateway_logs.jsonl
+INFO:     192.168.131.207:44844 - "POST /api/task HTTP/1.1" 200 OK
+{"ts": 1768891865, "pod": "gateway-scheduler-6b6b9d8dc-qcxpc", "alg": "rr", "request_id": "c429ab63-e5de-4d90-818a-0194bcf381f1", "cpu_ms": 20, "deadline_ms": 400, "priority": 1, "task_size": 1024, "decision_site": "mec2", "queue_wait_ms": 55, "exec_ms": 20, "e2e_latency_ms": 75, "sla_miss": false}
+INFO:     192.168.131.207:44858 - "POST /api/task HTTP/1.1" 200 OK
+
+root@MasterK8s:~/mec-lab/manifests# kubectl set env -n mec deploy/gateway-scheduler ALG=pd
+kubectl rollout status -n mec deploy/gateway-scheduler
+deployment.apps/gateway-scheduler env updated
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+deployment "gateway-scheduler" successfully rolled out
+root@MasterK8s:~/mec-lab/manifests#
+
+root@MasterK8s:~/mec-lab/manifests# kubectl set env -n mec deploy/trafficgen LOAD=heavy DURATION_S=180
+kubectl rollout status -n mec deploy/trafficgen
+kubectl logs -n mec deploy/trafficgen --tail=20
+deployment.apps/trafficgen env updated
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+deployment "trafficgen" successfully rolled out
+Found 2 pods, using pod/trafficgen-6f7bb7d65-5vkd8
+Collecting requests
+  Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+Collecting charset_normalizer<4,>=2 (from requests)
+  Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+Collecting idna<4,>=2.5 (from requests)
+  Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+Collecting urllib3<3,>=1.21.1 (from requests)
+  Downloading urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+Collecting certifi>=2017.4.17 (from requests)
+  Downloading certifi-2026.1.4-py3-none-any.whl.metadata (2.5 kB)
+Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 64.7/64.7 kB 3.1 MB/s eta 0:00:00
+Downloading certifi-2026.1.4-py3-none-any.whl (152 kB)
+root@MasterK8s:~/mec-lab/manifests#
+
+3) Các output anh gửi: PASS/FAIL?
+✅ A) TrafficGen deployment: PASS
+trafficgen chạy trên node ue ✅
+log trafficgen báo:
+{"sent": 50, "ok": 50, "load": "medium"}
+→ nghĩa là 50 request gửi đi, 50 request nhận response 200 OK
+→ hệ thống hoạt động tốt.
+Giá trị dùng cho luận văn: chứng minh traffic generator chạy và đạt được throughput theo cấu hình.
+
+✅ B) Gateway logs export: PASS (nhưng cần tinh chỉnh nhỏ)
+file log có 430 dòng ✅ (đã có dữ liệu)
+có dòng JSON chuẩn:
+{"alg":"rr", "decision_site":"mec2", "queue_wait_ms":55, "e2e_latency_ms":75, "sla_miss":false, ...}
+→ Đây là dữ liệu thô đúng format để tính KPI.
+
+⚠️ Nhưng có 1 vấn đề nhỏ
+Trong file log của anh có lẫn dòng không phải JSON:
+INFO: ... "POST /api/task" 200 OK
+Dòng này đến từ uvicorn access log. Khi parse JSONL, các dòng “INFO:” sẽ làm parse lỗi nếu không lọc.
+Fix rất đơn giản (tôi sẽ hướng dẫn ở bước parse):
+lọc chỉ những dòng bắt đầu bằng {
+hoặc
+tắt access log trong uvicorn (đẹp hơn cho luận văn)
+Tóm lại: PASS, chỉ cần làm sạch log.
+
+✅ C) Đổi ALG sang pd và rollout: PASS
+rollout thành công ✅
+→ nghĩa là thuật toán đã chuyển từ RR sang Priority–Deadline.
+
+✅/⚠️ D) Đổi trafficgen sang heavy: PASS nhưng anh đang nhìn nhầm đoạn log
+Anh thấy log lại hiện pip downloading. Đây là vì:
+trafficgen pod mới rollout, chạy lại, cài requests lại từ đầu (container python slim)
+lúc anh --tail=20 thì nó mới ở đoạn pip, chưa chạy đến phần {"sent": ...}.
+Không phải lỗi, chỉ là log chưa đến đoạn traffic gửi request.
+
+👉 Để xác nhận “heavy load đang chạy”, anh chạy:
+kubectl logs -n mec deploy/trafficgen --follow
+hoặc:
+kubectl logs -n mec deploy/trafficgen --tail=50
+sau 10–20 giây sẽ thấy {"sent": ... "load": "heavy"}.
+
+4) Hiện tại là “test nhanh” hay “đã bắt đầu thực nghiệm”?
+Đã bắt đầu thực nghiệm ở mức kỹ thuật (data generation).
+Tuy nhiên để thành “kết quả luận văn”, anh cần thêm 2 bước:
+Chạy các case theo ma trận (rr/pd/latency × light/medium/heavy, mỗi case 3–5 phút)
+Parse logs → CSV → vẽ biểu đồ (p50/p95/p99, SLA miss rate, throughput)
+
+### Lịch sử 4 ###
+2) Bước tiếp theo: chạy thực nghiệm “có ý nghĩa” (TrafficGen thật + thu logs + KPI + biểu đồ)
+Giờ anh đã có:
+Gateway thật (rr/pd/latency)
+Scale 3 pods
+UE pinning OK
+Ta triển khai tiếp theo 3 block:
+TrafficGen thật (tạo cpu_i, deadline_i, priority_i, điều khiển load light/medium/heavy)
+Thu logs (gateway logs JSONL) và đóng gói thành file
+Parse -> CSV + biểu đồ (p50/p95/p99, SLA miss rate, throughput)
+Tôi sẽ cho anh quy trình copy/paste luôn.
+
+3) TRIỂN KHAI TRAFFICGEN THẬT (pin node UE, cấu hình load)
+3.1 Tạo ConfigMap chứa script trafficgen
+Trên masterk8s:
+Tạo file: 31-trafficgen-configmap.yaml
+
+cat > 31-trafficgen-configmap.yaml <<'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trafficgen-code
+  namespace: mec
+data:
+  trafficgen.py: |
+    import os, time, json, uuid, random
+    import requests
+
+    GATEWAY = os.getenv("GATEWAY_URL", "http://gateway-scheduler.mec.svc.cluster.local:8080/api/task")
+    LOAD = os.getenv("LOAD", "medium")  # light | medium | heavy
+    DURATION_S = int(os.getenv("DURATION_S", "120"))
+    SEED = int(os.getenv("SEED", "1"))
+
+    random.seed(SEED)
+
+    # rate control (simple sleep)
+    if LOAD == "light":
+      sleep_s = 0.20   # ~5 req/s
+    elif LOAD == "heavy":
+      sleep_s = 0.01   # ~100 req/s
+    else:
+      sleep_s = 0.05   # ~20 req/s
+
+    # distributions (adjust later if needed)
+    cpu_choices = [20, 50, 100, 200]           # ms
+    deadline_choices = [80, 120, 200, 400]     # ms
+    priority_choices = [1, 2, 3]               # 1 low, 3 high
+
+    t_end = time.time() + DURATION_S
+    sent = 0
+    ok = 0
+
+    while time.time() < t_end:
+      payload = {
+        "request_id": str(uuid.uuid4()),
+        "task_size": random.choice([512, 1024, 2048]),
+        "cpu_ms": random.choice(cpu_choices),
+        "deadline_ms": random.choice(deadline_choices),
+        "priority": random.choice(priority_choices),
+      }
+      try:
+        r = requests.post(GATEWAY, json=payload, timeout=5)
+        sent += 1
+        if r.status_code == 200:
+          ok += 1
+      except Exception:
+        sent += 1
+
+      # log locally for sanity
+      if sent % 50 == 0:
+        print(json.dumps({"sent": sent, "ok": ok, "load": LOAD}), flush=True)
+
+      time.sleep(sleep_s)
+
+    print(json.dumps({"done": True, "sent": sent, "ok": ok, "load": LOAD, "duration_s": DURATION_S}), flush=True)
+EOF
+
+
+Apply:
+
+kubectl apply -f 31-trafficgen-configmap.yaml
+
+
+Output kỳ vọng: configmap/trafficgen-code created
+
+3.2 Deploy TrafficGen (pin node UE bằng label + toleration của anh)
+Tạo file: 32-trafficgen-deploy.yaml
+
+cat > 32-trafficgen-deploy.yaml <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trafficgen
+  namespace: mec
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: trafficgen }
+  template:
+    metadata:
+      labels: { app: trafficgen }
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/ue: "true"
+      tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "ue"
+        effect: "NoSchedule"
+      containers:
+      - name: trafficgen
+        image: python:3.11-slim
+        env:
+        - name: LOAD
+          value: "medium"     # đổi thành light/medium/heavy
+        - name: DURATION_S
+          value: "180"        # chạy 3 phút / case
+        - name: SEED
+          value: "1"
+        command: ["sh","-lc"]
+        args:
+          - |
+            pip install --no-cache-dir requests &&
+            python /app/trafficgen.py
+        volumeMounts:
+        - name: code
+          mountPath: /app
+        resources:
+          requests: { cpu: "200m", memory: "128Mi" }
+          limits:   { cpu: "500m", memory: "256Mi" }
+      volumes:
+      - name: code
+        configMap:
+          name: trafficgen-code
+EOF
+
+
+Apply + kiểm tra chạy đúng node ue:
+
+kubectl apply -f 32-trafficgen-deploy.yaml
+kubectl get pods -n mec -o wide | grep trafficgen
+kubectl logs -n mec deploy/trafficgen --tail=20
+
+Output đúng kỳ vọng
+
+Pod trafficgen Running trên node ue
+
+Log thấy {"sent":..., "ok":...} và kết thúc có {"done": true, ...}
+
+👉 Anh chạy và gửi output của 2 lệnh:
+
+kubectl get pods -n mec -o wide | grep trafficgen
+
+kubectl logs -n mec deploy/trafficgen --tail=50
+
+4) Thu logs gateway để tính KPI (p50/p95/p99, SLA miss)
+
+Vì gateway logs đang print(json.dumps(log)) nên ta kéo log từ deployment:
+
+kubectl logs -n mec deploy/gateway-scheduler --since=10m > ~/mec-lab/gateway_logs.jsonl
+wc -l ~/mec-lab/gateway_logs.jsonl
+tail -n 3 ~/mec-lab/gateway_logs.jsonl
+
+Output đúng kỳ vọng
+
+wc -l có vài trăm đến vài nghìn dòng (tùy load/duration)
+
+tail là các dòng JSON đầy đủ trường e2e_latency_ms, sla_miss, priority, deadline_ms, decision_site, pod
+
+👉 Anh gửi output:
+
+wc -l ...
+
+tail -n 3 ...
+
+5) Chạy test scale đúng nghĩa: đổi ALG và LOAD theo kịch bản
+5.1 Đổi thuật toán (ALG)
+2) ALG là gì? Có liên quan thuật toán RR/Priority/Latency không?
+✅ Có liên quan trực tiếp.
+ALG là biến môi trường (environment variable) trong pod gateway-scheduler, dùng để chọn thuật toán scheduling/offloading mà gateway đang chạy.
+Trong code gateway của ta:
+ALG=rr → Round Robin
+ALG=pd → Priority–Deadline (priority & deadline aware)
+ALG=latency → Latency-aware (chọn site có queue delay ước lượng thấp nhất)
+Anh thấy trong log JSON của gateway có trường "alg": "rr" là vì biến ALG đang là "rr" lúc đó.
+Vì vậy, kubectl set env ... ALG=pd chính là thao tác chuyển thuật toán để chạy thí nghiệm A/B/C.
+
+Ví dụ chuyển sang pd:
+
+kubectl set env -n mec deploy/gateway-scheduler ALG=pd
+kubectl rollout status -n mec deploy/gateway-scheduler
+
+
+Sau đó chạy trafficgen với LOAD khác (nhanh nhất là edit env và rollout):
+
+kubectl set env -n mec deploy/trafficgen LOAD=heavy DURATION_S=180
+kubectl rollout status -n mec deploy/trafficgen
+kubectl logs -n mec deploy/trafficgen --tail=20
+
+
+(ta sẽ làm bảng test: rr/pd/latency × light/medium/heavy)
+
+Anh làm tiếp theo thứ tự này (không bỏ bước)
+
+Apply trafficgen CM + deploy
+
+Verify trafficgen chạy trên node UE
+
+Export gateway logs JSONL
+
+Tôi sẽ đưa script parse JSONL -> CSV + biểu đồ
+
+Gửi tôi output của các lệnh ở Mục 3.2 và Mục 4, tôi sẽ chốt PASS/FAIL và hướng dẫn tiếp phần parse + biểu đồ/dashboard.
+
+### Output 3 ###
+root@MasterK8s:~/mec-lab/manifests# kubectl delete -f 20-gateway-scheduler.yaml
+deployment.apps "gateway-scheduler" deleted
+service "gateway-scheduler" deleted
+
+root@MasterK8s:~/mec-lab/manifests# kubectl apply -f 21-gateway-code-configmap.yaml
+configmap/gateway-scheduler-code created
+
+root@MasterK8s:~/mec-lab/manifests# kubectl apply -f 22-gateway-scheduler-deploy.yaml
+deployment.apps/gateway-scheduler created
+service/gateway-scheduler created
+root@MasterK8s:~/mec-lab/manifests# kubectl rollout status deploy/gateway-scheduler -n mec
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 of 3 updated replicas are available...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 of 3 updated replicas are available...
+deployment "gateway-scheduler" successfully rolled out
+root@MasterK8s:~/mec-lab/manifests# kubectl get pods -n mec -o wide | grep gateway-scheduler
+gateway-scheduler-6b6b9d8dc-8f6mt   1/1     Running   0             27s    192.168.43.211    open5gs     <none>           <none>
+gateway-scheduler-6b6b9d8dc-h94z4   1/1     Running   0             27s    192.168.30.172    workerk8s   <none>           <none>
+gateway-scheduler-6b6b9d8dc-qcxpc   1/1     Running   0             27s    192.168.35.151    masterk8s   <none>           <none>
+root@MasterK8s:~/mec-lab/manifests# kubectl get svc -n mec -o wide | grep gateway-scheduler
+gateway-scheduler   ClusterIP   10.100.39.112   <none>        8080/TCP   34s   app=gateway-scheduler
+root@MasterK8s:~/mec-lab/manifests#
+
+root@MasterK8s:~/mec-lab/manifests# kubectl exec -n mec -it trafficgen-test -- sh -lc \
+'curl -sS -m 3 http://gateway-scheduler.mec.svc.cluster.local:8080/healthz'
+{"ok":true,"pod":"gateway-scheduler-6b6b9d8dc-h94z4","alg":"rr","uptime_s":123.4}root@MasterK8s:~/mec-lab/manifests#
+
+root@MasterK8s:~/mec-lab/manifests# kubectl exec -n mec -it trafficgen-test -- sh -lc \
+'curl -sS -m 10 -X POST http://gateway-scheduler.mec.svc.cluster.local:8080/api/task \
+ -H "Content-Type: application/json" \
+ -d "{\"request_id\":\"t1\",\"task_size\":1024,\"cpu_ms\":50,\"deadline_ms\":120,\"priority\":2}"'
+{"ok":true,"decision_site":"mec1","e2e_latency_ms":51,"sla_miss":false}root@MasterK8s:~/mec-lab/manifests#
+
+Tôi đã kiểm tra toàn bộ output anh gửi. Kết luận: PASS 100%, và thậm chí cấu hình hiện tại đang ở trạng thái rất “đẹp” để test scale.
+1) Check output: PASS/FAIL chi tiết
+✅ A) Xóa gateway cũ — PASS
+Deployment + Service cũ đã deleted đúng.
+
+✅ B) Tạo ConfigMap code — PASS
+configmap/gateway-scheduler-code created đúng.
+
+✅ C) Deploy gateway mới replicas=3 — PASS
+Rollout hoàn tất, đủ 3 replicas available.
+
+✅ D) Scale test đúng nghĩa “distributed” — PASS
+3 pods gateway đang phân bố trên 3 node khác nhau:
+open5gs
+workerk8s
+masterk8s
+Đây là điều kiện rất tốt để test:
+load balancing qua Service
+khác biệt latency/CPU node (nếu có)
+“scale-out effect”
+
+✅ E) Service ClusterIP — PASS
+ClusterIP: 10.100.39.112:8080 OK.
+
+✅ F) UE -> Service DNS -> Gateway — PASS
+/healthz trả JSON OK.
+POST /api/task trả decision + latency + sla_miss OK.
+pod trả về là gateway-scheduler-...-h94z4 chứng minh service đang route đúng (và có thể đổi pod theo request).
+
 ### Lịch sử 3 ###
 2) Mục tiêu tiếp theo (đúng yêu cầu của anh)
 
