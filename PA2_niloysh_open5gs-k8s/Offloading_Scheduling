@@ -2,6 +2,147 @@
 # 20/01/2026 #
 ##############
 
+### Output 9 ###
+deployment.apps/gateway-scheduler env updated
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+deployment "gateway-scheduler" successfully rolled out
+deployment.apps/trafficgen env updated
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+deployment "trafficgen" successfully rolled out
+Found 2 pods, using pod/trafficgen-56f56fc799-ng5hh
+Collecting requests
+  Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+Collecting charset_normalizer<4,>=2 (from requests)
+  Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+Collecting idna<4,>=2.5 (from requests)
+  Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+Collecting urllib3<3,>=1.21.1 (from requests)
+  Downloading urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+Collecting certifi>=2017.4.17 (from requests)
+  Downloading certifi-2026.1.4-py3-none-any.whl.metadata (2.5 kB)
+Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 64.7/64.7 kB 2.9 MB/s eta 0:00:00
+Downloading certifi-2026.1.4-py3-none-any.whl (152 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 152.9/152.9 kB 2.8 MB/s eta 0:00:00
+Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 151.6/151.6 kB 60.2 MB/s eta 0:00:00
+Downloading idna-3.11-py3-none-any.whl (71 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 71.0/71.0 kB 45.3 MB/s eta 0:00:00
+Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 131.6/131.6 kB 17.7 MB/s eta 0:00:00
+Installing collected packages: urllib3, idna, charset_normalizer, certifi, requests
+Successfully installed certifi-2026.1.4 charset_normalizer-3.4.4 idna-3.11 requests-2.32.5 urllib3-2.6.3
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 24.0 -> 25.3
+[notice] To update, run: pip install --upgrade pip
+{"sent": 50, "ok": 50, "load": "heavy"}
+{"sent": 100, "ok": 100, "load": "heavy"}
+{"sent": 150, "ok": 150, "load": "heavy"}
+{"sent": 200, "ok": 200, "load": "heavy"}
+{"sent": 250, "ok": 250, "load": "heavy"}
+{"sent": 300, "ok": 300, "load": "heavy"}
+{"sent": 350, "ok": 350, "load": "heavy"}
+{"sent": 400, "ok": 400, "load": "heavy"}
+{"sent": 450, "ok": 450, "load": "heavy"}
+{"sent": 500, "ok": 500, "load": "heavy"}
+{"sent": 550, "ok": 550, "load": "heavy"}
+{"sent": 600, "ok": 600, "load": "heavy"}
+{"sent": 650, "ok": 650, "load": "heavy"}
+{"sent": 700, "ok": 700, "load": "heavy"}
+{"done": true, "sent": 724, "ok": 724, "load": "heavy", "duration_s": 120}
+724 /root/mec-lab/logs/gateway_allpods_rr_heavy.jsonl
+=== KPI SUMMARY ===
+case: rr_heavy_allpods
+alg: rr
+n_requests: 724
+duration_s_est: 121
+throughput_rps_est: 5.983471074380165
+latency_p50_ms: 127.0
+latency_p95_ms: 256.0
+latency_p99_ms: 272.30999999999995
+sla_miss_rate: 0.38535911602209943
+avg_queue_wait_ms: 44.15745856353591
+avg_exec_ms: 97.16850828729282
+Wrote: /root/mec-lab/results/rr_heavy_allpods
+case,alg,n_requests,duration_s_est,throughput_rps_est,latency_p50_ms,latency_p95_ms,latency_p99_ms,sla_miss_rate,avg_queue_wait_ms,avg_exec_ms
+rr_heavy_allpods,rr,724,121,5.983471074380165,127.0,256.0,272.30999999999995,0.38535911602209943,44.15745856353591,97.16850828729282
+root@MasterK8s:~#
+
+✅ PASS – đủ 3 case heavy / allpods / 3 replicas.
+Dưới đây là bảng so sánh cuối cùng + kết luận dùng trực tiếp cho luận văn, sau đó tôi đề xuất bước tiếp theo (rất ngắn).
+
+1) Bảng so sánh 3 thuật toán (Heavy load, 3 MEC replicas)
+Thuật toán	Throughput (rps)	p50 (ms)	p95 (ms)	p99 (ms)	SLA miss rate	Avg queue (ms)
+Round Robin (RR)	~5.98	127	256	272	~38.5%	~44.2
+Priority + Deadline (PD)	~4.50	135.5	259	267	~41.5% (cao nhất)	~49.9
+Latency-aware	~6.28 (cao nhất)	106 (thấp nhất)	251 (thấp nhất)	~256 (thấp nhất)	~35.9% (thấp nhất)	~40.8 (thấp nhất)
+2) Kết luận khoa học (viết thẳng vào luận văn)
+Round Robin (RR) đơn giản, throughput khá nhưng không tối ưu tail latency (p99 cao nhất) và không xét SLA.
+PD (Priority + Deadline) phản ánh đúng mô hình QoS lý thuyết, nhưng trong heavy load, việc ưu tiên theo deadline làm tăng hàng đợi, dẫn đến SLA miss rate cao nhất.
+Latency-aware scheduling đạt hiệu năng tổng thể tốt nhất:
+Throughput cao nhất
+Median và tail latency thấp nhất
+SLA miss rate thấp nhất
+➡️ Phù hợp nhất cho MEC khi tải cao và yêu cầu độ trễ nghiêm ngặt.
+Kết luận tổng quát: Trong môi trường MEC đa site với tải lớn, thuật toán latency-aware cho hiệu quả vượt trội so với RR và PD, đặc biệt về tail latency và SLA.
+
+3) Bước tiếp theo (chọn 1, rất ngắn)
+A. Hoàn thiện luận văn (khuyến nghị)
+Tôi sẽ:
+Viết mục 4.x – Experimental Results & Discussion
+Vẽ 1 bảng + 1 hình tổng hợp (latency vs algorithm)
+Viết kết luận chương MEC scheduling
+B. Mở rộng thí nghiệm (nâng điểm luận văn)
+Chạy thêm:
+medium load (so sánh độ ổn định)
+replicas = 1 vs 3 (lợi ích scale MEC)
+hoặc mix traffic (priority skewed)
+👉 Anh chỉ cần trả lời A hoặc B (hoặc A+B). Tôi sẽ làm tiếp đúng nhịp, không dài, không nhiễu.
+
+
+### Lịch sử 9 ###
+3) Bước tiếp theo (ngắn gọn, để hoàn tất bảng so sánh)
+Case C: rr_heavy_allpods (copy–paste)
+
+Mục tiêu: hoàn tất bảng so sánh 3 thuật toán.
+
+# C1) Set RR
+kubectl set env -n mec deploy/gateway-scheduler ALG=rr
+kubectl rollout status -n mec deploy/gateway-scheduler
+
+# C2) Run trafficgen heavy 120s
+kubectl set env -n mec deploy/trafficgen LOAD=heavy DURATION_S=120 SEED=5
+kubectl rollout status -n mec deploy/trafficgen
+kubectl logs -n mec deploy/trafficgen --follow   # thấy "done": true -> Ctrl+C
+
+# C3) Export logs (3 pods) + filter JSON
+rm -f ~/mec-lab/logs/pod_gateway-scheduler-*.log
+for p in $(kubectl get pods -n mec -l app=gateway-scheduler -o name); do
+  out=~/mec-lab/logs/$(echo $p | tr '/' '_' ).log
+  kubectl logs -n mec $p --since=5m > $out
+done
+cat ~/mec-lab/logs/pod_gateway-scheduler-*.log > ~/mec-lab/logs/gateway_allpods_raw.log
+grep '^{' ~/mec-lab/logs/gateway_allpods_raw.log > ~/mec-lab/logs/gateway_allpods_rr_heavy.jsonl
+wc -l ~/mec-lab/logs/gateway_allpods_rr_heavy.jsonl
+
+# C4) Analyze
+python3 ~/mec-lab/analyze_case.py \
+  --input ~/mec-lab/logs/gateway_allpods_rr_heavy.jsonl \
+  --case rr_heavy_allpods
+
+cat ~/mec-lab/results/rr_heavy_allpods/summary.csv
+
+
 ### Output 8 ###
 root@MasterK8s:~/mec-lab/manifests# python3 ~/mec-lab/analyze_case.py \
   --input ~/mec-lab/logs/gateway_allpods_pd_heavy.jsonl \
@@ -137,7 +278,149 @@ avg_queue_wait_ms: 47.466585167074165
 avg_exec_ms: 94.27057864710676
 Wrote: /root/mec-lab/results/rr_heavy_allpods
 
+✅ Đã nhận summary.csv. PASS và số liệu nhìn “đúng chất” để so sánh thuật toán:
+throughput_rps_est ≈ 4.50 rps
+p95 ≈ 259ms, p99 ≈ 267ms
+sla_miss_rate ≈ 41.5%
+Giờ tôi gửi Case B (latency_heavy_allpods) dạng copy–paste 1 block để anh chạy không sai.
 
+
+root@MasterK8s:~# # B1) Set thuật toán gateway = latency
+kubectl set env -n mec deploy/gateway-scheduler ALG=latency
+kubectl rollout status -n mec deploy/gateway-scheduler
+
+# B2) Chạy trafficgen heavy 120s (đổi SEED để khác case trước)
+kubectl set env -n mec deploy/trafficgen LOAD=heavy DURATION_S=120 SEED=4
+kubectl rollout status -n mec deploy/trafficgen
+
+# B3) Follow log đến khi thấy "done": true, rồi Ctrl+C
+kubectl logs -n mec deploy/trafficgen --follow
+
+# B4) Export log 3 pods gateway (5 phút gần nhất) + merge + lọc JSON
+rm -f ~/mec-lab/logs/pod_gateway-scheduler-*.log
+for p in $(kubectl get pods -n mec -l app=gateway-scheduler -o name); do
+  out=~/mec-lab/logs/$(echo $p | tr '/' '_' ).log
+  kubectl logs -n mec $p --since=5m > $out
+done
+
+cat ~/mec-lab/logs/pod_gateway-scheduler-*.log > ~/mec-lab/logs/gateway_allpods_raw.log
+grep '^{' ~/mec-lab/logs/gateway_allpods_raw.log > ~/mec-lab/logs/gateway_allpods_latency_heavy.jsonl
+
+# B5) Quick check dataset
+wc -l ~/mec-lab/logs/gateway_allpods_latency_heavy.jsonl
+tail -n 2 ~/mec-lab/logs/gateway_allpods_latency_heavy.jsonl
+
+# B6) Analyze + in summary
+python3 ~/mec-lab/analyze_case.py \
+  --input ~/mec-lab/logs/gateway_allpods_latency_heavy.jsonl \
+  --case latency_heavy_allpods
+
+cat ~/mec-lab/results/latency_heavy_allpods/summary.csv
+deployment.apps/gateway-scheduler env updated
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+deployment "gateway-scheduler" successfully rolled out
+deployment.apps/trafficgen env updated
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "trafficgen" rollout to finish: 1 old replicas are pending termination...
+deployment "trafficgen" successfully rolled out
+Found 2 pods, using pod/trafficgen-667585cbfb-tqh88
+Collecting requests
+  Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+Collecting charset_normalizer<4,>=2 (from requests)
+  Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+Collecting idna<4,>=2.5 (from requests)
+  Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+Collecting urllib3<3,>=1.21.1 (from requests)
+  Downloading urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+Collecting certifi>=2017.4.17 (from requests)
+  Downloading certifi-2026.1.4-py3-none-any.whl.metadata (2.5 kB)
+Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 64.7/64.7 kB 3.2 MB/s eta 0:00:00
+Downloading certifi-2026.1.4-py3-none-any.whl (152 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 152.9/152.9 kB 2.8 MB/s eta 0:00:00
+Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 151.6/151.6 kB 14.8 MB/s eta 0:00:00
+Downloading idna-3.11-py3-none-any.whl (71 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 71.0/71.0 kB 50.7 MB/s eta 0:00:00
+Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 131.6/131.6 kB 17.9 MB/s eta 0:00:00
+Installing collected packages: urllib3, idna, charset_normalizer, certifi, requests
+Successfully installed certifi-2026.1.4 charset_normalizer-3.4.4 idna-3.11 requests-2.32.5 urllib3-2.6.3
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 24.0 -> 25.3
+[notice] To update, run: pip install --upgrade pip
+{"sent": 50, "ok": 50, "load": "heavy"}
+{"sent": 100, "ok": 100, "load": "heavy"}
+{"sent": 150, "ok": 150, "load": "heavy"}
+{"sent": 200, "ok": 200, "load": "heavy"}
+{"sent": 250, "ok": 250, "load": "heavy"}
+{"sent": 300, "ok": 300, "load": "heavy"}
+{"sent": 350, "ok": 350, "load": "heavy"}
+{"sent": 400, "ok": 400, "load": "heavy"}
+{"sent": 450, "ok": 450, "load": "heavy"}
+{"sent": 500, "ok": 500, "load": "heavy"}
+{"sent": 550, "ok": 550, "load": "heavy"}
+{"sent": 600, "ok": 600, "load": "heavy"}
+{"sent": 650, "ok": 650, "load": "heavy"}
+{"sent": 700, "ok": 700, "load": "heavy"}
+{"sent": 750, "ok": 750, "load": "heavy"}
+{"done": true, "sent": 760, "ok": 760, "load": "heavy", "duration_s": 120}
+760 /root/mec-lab/logs/gateway_allpods_latency_heavy.jsonl
+{"ts": 1768899755, "pod": "gateway-scheduler-86bd77cf5c-x6fw5", "alg": "latency", "request_id": "477a8186-0596-4f04-90b7-30978770ae68", "cpu_ms": 100, "deadline_ms": 80, "priority": 3, "task_size": 1024, "decision_site": "mec1", "queue_wait_ms": 40, "exec_ms": 100, "e2e_latency_ms": 140, "sla_miss": true}
+{"ts": 1768899756, "pod": "gateway-scheduler-86bd77cf5c-x6fw5", "alg": "latency", "request_id": "c9052090-6a48-4200-8ed2-8ecff7545708", "cpu_ms": 100, "deadline_ms": 200, "priority": 1, "task_size": 512, "decision_site": "mec1", "queue_wait_ms": 39, "exec_ms": 100, "e2e_latency_ms": 139, "sla_miss": false}
+=== KPI SUMMARY ===
+case: latency_heavy_allpods
+alg: latency
+n_requests: 760
+duration_s_est: 121
+throughput_rps_est: 6.2809917355371905
+latency_p50_ms: 106.0
+latency_p95_ms: 251.0
+latency_p99_ms: 256.40999999999997
+sla_miss_rate: 0.3592105263157895
+avg_queue_wait_ms: 40.819736842105264
+avg_exec_ms: 90.39473684210526
+Wrote: /root/mec-lab/results/latency_heavy_allpods
+case,alg,n_requests,duration_s_est,throughput_rps_est,latency_p50_ms,latency_p95_ms,latency_p99_ms,sla_miss_rate,avg_queue_wait_ms,avg_exec_ms
+latency_heavy_allpods,latency,760,121,6.2809917355371905,106.0,251.0,256.40999999999997,0.3592105263157895,40.819736842105264,90.39473684210526
+root@MasterK8s:~#
+
+✅ PASS – Case B latency_heavy_allpods hoàn tất và số liệu hợp lệ.
+Dưới đây là xác nhận ngắn gọn + bước tiếp theo đúng yêu cầu (không dài, không nhiễu).
+
+1) Xác nhận kết quả Case B (Latency-aware)
+Summary:
+n_requests: 760
+throughput_rps: ~6.28 rps (cao nhất trong các case heavy hiện có)
+latency_p50: 106 ms (tốt hơn PD)
+latency_p95: 251 ms
+latency_p99: ~256 ms
+sla_miss_rate: ~35.9% (thấp hơn PD ~41.5%)
+avg_queue_wait: ~40.8 ms (thấp hơn PD)
+avg_exec: ~90.4 ms
+
+👉 Kết luận nhanh:
+Thuật toán latency-aware cho throughput cao hơn, median latency thấp hơn, và SLA miss rate thấp hơn so với PD trong điều kiện heavy load + 3 replicas.
+
+2) So sánh nhanh (PD vs Latency – Heavy, 3 replicas)
+Metric	PD	Latency
+Throughput (rps)	~4.50	~6.28
+p50 latency (ms)	~135.5	~106
+p95 latency (ms)	~259	~251
+p99 latency (ms)	~267	~256
+SLA miss rate	~41.5%	~35.9%
+Avg queue wait (ms)	~49.9	~40.8
+
+➡️ Latency-aware vượt trội hơn PD trong heavy load.
 
 ### Lịch sử 8 ###
 Bước 3 — Phân tích case pd_heavy_allpods
