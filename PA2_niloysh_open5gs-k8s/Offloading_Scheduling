@@ -2,6 +2,278 @@
 # 20/01/2026 #
 ##############
 
+### Lịch sử 3 ###
+2) Mục tiêu tiếp theo (đúng yêu cầu của anh)
+
+Thay gateway “http-echo” bằng gateway-scheduler thật:
+
+Nhận request JSON: cpu_ms, deadline_ms, priority, task_size
+
+Chạy 3 thuật toán: rr | pd | latency
+
+Ghi log JSON (1 dòng/task) để parse KPI
+
+Deploy 2–3 pods để test scale (replicas = 3)
+
+Cho trafficgen tạo task distribution (cpu_i, deadline_i, priority_i) và gửi theo rate (light/medium/heavy)
+
+Xuất log -> CSV -> biểu đồ (p50/p95/p99, SLA miss, throughput)
+
+3) TRIỂN KHAI GATEWAY/SCHEDULER THẬT (FastAPI) + SCALE 3 PODS
+3.1 Dọn gateway cũ (http-echo)
+
+Trên masterk8s:
+
+cd ~/mec-lab/manifests
+kubectl delete -f 20-gateway-scheduler.yaml
+
+
+Output kỳ vọng:
+
+deployment.apps "gateway-scheduler" deleted
+
+service "gateway-scheduler" deleted
+
+👉 Chạy xong, paste output nếu có lỗi; nếu không có lỗi ta đi tiếp.
+
+3.2 Tạo ConfigMap chứa code gateway (không cần build image)
+
+Tạo file: 21-gateway-code-configmap.yaml
+
+cat > 21-gateway-code-configmap.yaml <<'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-scheduler-code
+  namespace: mec
+data:
+  app.py: |
+    import os, time, json, itertools, random
+    from fastapi import FastAPI, Request
+    from pydantic import BaseModel, Field
+    from typing import Optional
+
+    APP_START = time.time()
+    POD_NAME = os.getenv("HOSTNAME", "unknown")
+    ALG = os.getenv("ALG", "rr")  # rr | pd | latency
+    SITES = ["mec1", "mec2", "cloud"]
+    rr_cycle = itertools.cycle(SITES)
+
+    # simple moving estimate of per-site queue delay (ms)
+    est_q = {s: 0.0 for s in SITES}
+
+    class Task(BaseModel):
+      request_id: str
+      task_size: int = 1024
+      cpu_ms: int = Field(ge=1, le=2000)
+      deadline_ms: int = Field(ge=1, le=10000)
+      priority: int = Field(ge=1, le=3)
+
+    app = FastAPI()
+
+    def decide_site(t: Task):
+      if ALG == "rr":
+        return next(rr_cycle)
+      if ALG == "pd":
+        # prioritize higher priority and tighter deadlines
+        # score: higher is better
+        scores = {}
+        for s in SITES:
+          scores[s] = (t.priority * 1000) - (t.deadline_ms) - est_q[s]
+        return max(scores, key=scores.get)
+      # latency-aware (queue estimate only; network latency can be added later)
+      return min(est_q, key=est_q.get)
+
+    @app.get("/healthz")
+    def healthz():
+      return {"ok": True, "pod": POD_NAME, "alg": ALG, "uptime_s": round(time.time()-APP_START, 1)}
+
+    @app.post("/api/task")
+    async def api_task(t: Task, req: Request):
+      t1 = time.time()
+      site = decide_site(t)
+
+      # simulate queue wait and execution time (in ms)
+      # queue grows with load; simple model so we can compare algorithms
+      queue_wait_ms = max(0, int(est_q[site] + random.uniform(0, 5)))
+      exec_ms = int(t.cpu_ms)
+
+      # update queue estimate: decay + add workload
+      est_q[site] = max(0.0, est_q[site] * 0.90 + exec_ms * 0.05)
+
+      # simulate processing
+      time.sleep((queue_wait_ms + exec_ms) / 1000.0)
+
+      e2e_ms = int((time.time() - t1) * 1000)
+      sla_miss = e2e_ms > t.deadline_ms
+
+      log = {
+        "ts": int(time.time()),
+        "pod": POD_NAME,
+        "alg": ALG,
+        "request_id": t.request_id,
+        "cpu_ms": t.cpu_ms,
+        "deadline_ms": t.deadline_ms,
+        "priority": t.priority,
+        "task_size": t.task_size,
+        "decision_site": site,
+        "queue_wait_ms": queue_wait_ms,
+        "exec_ms": exec_ms,
+        "e2e_latency_ms": e2e_ms,
+        "sla_miss": sla_miss,
+      }
+      print(json.dumps(log), flush=True)
+      return {"ok": True, "decision_site": site, "e2e_latency_ms": e2e_ms, "sla_miss": sla_miss}
+EOF
+
+
+Apply:
+
+kubectl apply -f 21-gateway-code-configmap.yaml
+
+
+Output kỳ vọng: configmap/gateway-scheduler-code created
+
+👉 Nếu OK ta làm tiếp luôn.
+
+3.3 Tạo Deployment + Service cho gateway-scheduler (replicas=3)
+
+Tạo file: 22-gateway-scheduler-deploy.yaml
+
+cat > 22-gateway-scheduler-deploy.yaml <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-scheduler
+  namespace: mec
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: gateway-scheduler }
+  template:
+    metadata:
+      labels: { app: gateway-scheduler }
+    spec:
+      containers:
+      - name: gateway
+        image: python:3.11-slim
+        env:
+        - name: ALG
+          value: "rr"   # rr | pd | latency (sẽ đổi khi chạy thí nghiệm)
+        ports:
+        - containerPort: 8080
+        command: ["sh","-lc"]
+        args:
+          - |
+            pip install --no-cache-dir fastapi uvicorn pydantic &&
+            uvicorn app:app --host 0.0.0.0 --port 8080
+        volumeMounts:
+        - name: code
+          mountPath: /app
+        workingDir: /app
+        resources:
+          requests: { cpu: "300m", memory: "256Mi" }
+          limits:   { cpu: "1",    memory: "512Mi" }
+      volumes:
+      - name: code
+        configMap:
+          name: gateway-scheduler-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-scheduler
+  namespace: mec
+spec:
+  selector:
+    app: gateway-scheduler
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+EOF
+
+
+Apply + theo dõi rollout:
+
+kubectl apply -f 22-gateway-scheduler-deploy.yaml
+kubectl rollout status deploy/gateway-scheduler -n mec
+kubectl get pods -n mec -o wide | grep gateway-scheduler
+kubectl get svc -n mec -o wide | grep gateway-scheduler
+
+Output đúng kỳ vọng
+
+rollout status báo successfully rolled out
+
+Có 3 pods gateway-scheduler-... Running
+
+Service vẫn có ClusterIP
+
+👉 Anh paste 3 output:
+
+kubectl rollout status ...
+
+kubectl get pods ... | grep gateway-scheduler
+
+kubectl get svc ... | grep gateway-scheduler
+
+3.4 Test từ UE (trafficgen-test) vào endpoint thật
+
+Chạy:
+
+kubectl exec -n mec -it trafficgen-test -- sh -lc \
+'curl -sS -m 3 http://gateway-scheduler.mec.svc.cluster.local:8080/healthz'
+
+
+Output đúng kỳ vọng: JSON có ok, pod, alg.
+
+Tiếp theo test POST 1 task:
+
+kubectl exec -n mec -it trafficgen-test -- sh -lc \
+'curl -sS -m 10 -X POST http://gateway-scheduler.mec.svc.cluster.local:8080/api/task \
+ -H "Content-Type: application/json" \
+ -d "{\"request_id\":\"t1\",\"task_size\":1024,\"cpu_ms\":50,\"deadline_ms\":120,\"priority\":2}"'
+
+
+Output đúng: JSON có decision_site, e2e_latency_ms, sla_miss.
+
+👉 Paste output 2 lệnh curl.
+
+4) TrafficGen thật (tạo cpu_i/deadline_i/priority_i theo distribution) – bước kế tiếp
+
+Ngay khi gateway 3 pods chạy OK, tôi sẽ hướng dẫn:
+
+Tạo trafficgen dạng Deployment (replicas=1) pin lên node ue
+
+Có cấu hình ENV để chọn:
+
+LOAD=light/medium/heavy (rate)
+
+DISTRIBUTION=uniform/weighted
+
+Tự sinh request_id + gửi liên tục
+
+Thu log gateway và parse ra CSV + vẽ biểu đồ
+
+### output 2 ###
+1) Check output: PASS/FAIL
+✅ Bước 4 (Compute sites) — PASS
+kubectl get pods -n mec -o wide cho thấy:
+mec1 chạy trên open5gs ✅
+mec2 chạy trên workerk8s ✅
+cloud chạy trên masterk8s ✅
+trafficgen-test chạy trên ue ✅
+
+✅ Bước 5 (Gateway + Service) — PASS
+gateway pod Running ✅ (đang chạy trên open5gs – chấp nhận)
+service ClusterIP: 10.100.46.245:8080 ✅
+
+✅ Bước 6 (DNS + HTTP từ UE) — PASS
+nslookup resolve đúng ClusterIP ✅
+curl trả OK ✅
+=> Hệ thống “plumbing” đã thông.
+
 ### Lịch sử 2 ###
 BƯỚC 4: Deploy Compute Services (mec1/mec2/cloud) – chạy đúng node
 4.0 Thực hiện ở đâu?
