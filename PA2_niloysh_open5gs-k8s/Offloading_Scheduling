@@ -1,4 +1,205 @@
 ##############
+# 20/01/2026 #
+##############
+Sau khi đã cấu hình K8s + MEC + Scheduler như trong file, làm sao tạo workload (cpu_i, deadline_i, priority_i), cho hệ thống chạy thật, thu kết quả, vẽ biểu đồ / dashboard?
+Tôi trả lời theo đúng hiện trạng file anh gửi, không giả định thêm 
+
+TỔNG QUAN LUỒNG THỰC NGHIỆM (END-TO-END)
+TrafficGen (UE)
+   ↓  (JSON task)
+Gateway / Scheduler
+   ↓  (decision)
+MEC1 / MEC2 / Cloud
+   ↓  (process)
+Logs + Metrics
+   ↓
+CSV / Prometheus
+   ↓
+Python / Grafana
+
+1. TẠO cpu_i, deadline_i, priority_i TỪ ĐÂU?
+
+👉 KHÔNG tạo trong Kubernetes
+👉 TẠO TỪ TRAFFICGEN (UE side)
+
+1.1 Task model (chuẩn cho luận văn)
+
+Mỗi request = 1 task i
+
+{
+  "request_id": "uuid",
+  "cpu_ms": 50,
+  "deadline_ms": 120,
+  "priority": 2,
+  "task_size": 1024
+}
+
+Biến	Ý nghĩa	Ghi chú học thuật
+cpu_ms	cpu_i	workload
+deadline_ms	d_i	SLA
+priority	p_i	QoS class
+task_size	input size	optional
+2. VIẾT TRAFFICGEN (CÁCH ĐƠN GIẢN – HIỆU QUẢ)
+2.1 Logic TrafficGen (pseudo-code)
+import random, time, requests, uuid
+
+while True:
+    task = {
+        "request_id": str(uuid.uuid4()),
+        "cpu_ms": random.choice([20, 50, 100, 200]),
+        "deadline_ms": random.choice([80, 120, 200]),
+        "priority": random.choice([1, 2, 3]),
+        "task_size": random.choice([512, 1024])
+    }
+
+    requests.post("http://gateway-scheduler/api/task", json=task)
+    time.sleep(0.05)  # load control
+
+2.2 Mapping load level (RẤT QUAN TRỌNG)
+Load	sleep	req/s
+Light	0.2s	~5
+Medium	0.05s	~20
+Heavy	0.01s	~100
+
+📌 Chỉ đổi sleep là đổi kịch bản thí nghiệm → hội đồng rất thích
+
+3. SCHEDULER XỬ LÝ TASK NHƯ THẾ NÀO?
+3.1 Round Robin (RR)
+site = sites[next_index]
+
+3.2 Priority–Deadline
+score = alpha * priority - beta * deadline
+site = argmax(score)
+
+3.3 Latency-aware
+site = argmin(
+    estimated_queue_delay + network_latency
+)
+
+
+👉 Anh KHÔNG cần tối ưu toán học cao siêu
+👉 Quan trọng là so sánh kết quả
+
+4. MEC SERVICE “GIẢ LẬP CPU” RA SAO?
+4.1 Cách mô phỏng CPU (đủ cho thạc sĩ)
+import time
+
+def process(cpu_ms):
+    start = time.time()
+    while (time.time() - start) * 1000 < cpu_ms:
+        pass
+
+
+📌 Không cần chạy task thật
+📌 Cái anh cần là độ trễ & tranh chấp tài nguyên
+
+5. LOG PHẢI GHI NHƯ THẾ NÀO? (RẤT QUAN TRỌNG)
+5.1 Log chuẩn (JSON – 1 dòng / task)
+{
+  "request_id": "...",
+  "alg": "rr",
+  "priority": 2,
+  "deadline_ms": 120,
+  "site": "mec1",
+  "queue_wait_ms": 18,
+  "exec_ms": 50,
+  "e2e_latency_ms": 92,
+  "sla_miss": false,
+  "timestamp": 1700000000
+}
+
+
+📌 KHÔNG log text lung tung
+📌 Hội đồng cực kỳ thích log JSON
+
+6. THU KPI NHƯ THẾ NÀO?
+6.1 Cách 1 – ĐỦ & NHANH (Python + CSV) ✅
+kubectl logs gateway-scheduler > logs.json
+
+
+Parse bằng Python:
+
+import pandas as pd
+df = pd.read_json("logs.json", lines=True)
+
+df["e2e_latency_ms"].quantile([0.5, 0.95, 0.99])
+df["sla_miss"].mean()
+
+
+👉 ĐỦ để tốt nghiệp
+
+6.2 Cách 2 – PRO (Prometheus + Grafana) ⭐
+
+Nếu muốn dashboard đẹp:
+
+Gateway expose /metrics
+
+Dùng:
+
+latency_bucket
+
+sla_miss_total
+
+Grafana vẽ:
+
+p50 / p95 / p99
+
+SLA miss %
+
+CPU per MEC site
+
+📌 Không bắt buộc, nhưng rất “ăn điểm”
+
+7. BIỂU ĐỒ NÀO NÊN VẼ? (KHÔNG VẼ THỪA)
+Biểu đồ	Mục đích
+Latency p95 vs Load	So sánh thuật toán
+SLA miss vs Load	Chứng minh priority
+Throughput vs Load	Đánh đổi
+Queue delay per site	Hiệu quả offloading
+8. LỘ TRÌNH THỰC NGHIỆM CHUẨN (GỢI Ý)
+
+Fix RR → chạy ổn
+
+Add Priority–Deadline
+
+Add Latency-aware
+
+Mỗi thuật toán:
+
+Light / Medium / Heavy
+
+Có / không mobility
+
+Mỗi case chạy ≥ 5 phút
+
+👉 Đây là Chương 5 luận văn hoàn chỉnh
+
+9. TÓM LẠI – ANH ĐANG Ở ĐÚNG CHỖ
+
+File hiện tại = xương sống thực nghiệm
+
+Việc anh cần làm NGAY BÂY GIỜ:
+
+Viết trafficgen
+
+Chuẩn hóa log
+
+Chạy load
+
+Xuất CSV
+
+Vẽ biểu đồ
+
+👉 Nếu anh muốn, bước tiếp theo tôi có thể:
+
+Viết trafficgen hoàn chỉnh
+
+Viết scheduler skeleton (RR / Priority / Latency)
+
+Viết script parse log + vẽ biểu đồ (Python)
+
+
+##############
 # 13/01/2026 #
 ##############
 Bước 1: Cấu hình Label và Toleration
