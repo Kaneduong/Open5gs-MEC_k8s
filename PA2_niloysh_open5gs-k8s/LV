@@ -12,41 +12,24 @@ Tôi đang làm luận văn thạc sĩ với đề tài
 “Nghiên cứu phương pháp chuyển tải và phân bổ tài nguyên trong mạng MEC”.
 
 Tôi đã triển khai một hệ thống mô phỏng MEC trên Kubernetes với kiến trúc multi-site:
-
 3 compute sites: MEC1, MEC2, Cloud
-
 1 UE sinh traffic (trafficgen)
-
 1 gateway-scheduler đóng vai trò MEC orchestrator / scheduler
-
 Gateway-scheduler thực hiện quyết định chuyển tải (offloading) và lập lịch/phân bổ tài nguyên cho từng tác vụ dựa trên thuật toán:
-
 Round Robin (RR)
-
 Priority + Deadline (PD)
-
 Latency-aware scheduling
-
 Mỗi request từ UE sinh ra một bản ghi JSON gồm:
 cpu_ms, deadline_ms, priority, decision_site, queue_wait_ms, exec_ms, e2e_latency_ms, sla_miss
-
 Tôi đã chạy thí nghiệm heavy load, 120s, 3 replicas MEC, thu log từ tất cả gateway pods, phân tích bằng Python và thu được kết quả:
-
 PD (heavy, allpods)
 Throughput ≈ 4.5 rps, p95 ≈ 259 ms, SLA miss ≈ 41.5%
-
 Latency-aware (heavy, allpods)
 Throughput ≈ 6.28 rps, p95 ≈ 251 ms, SLA miss ≈ 35.9%
-
 RR (heavy, allpods)
 Throughput ≈ 5.98 rps, p95 ≈ 256 ms, SLA miss ≈ 38.5%
 
 Tôi cần bạn:
-
-Giải thích rõ số liệu này từ đâu ra, hệ thống hoạt động như thế nào, và các thuật toán liên quan gì đến chuyển tải & phân bổ tài nguyên trong MEC (theo cách hội đồng chấp nhận).
-
-Viết tóm tắt quá trình thực nghiệm + phân tích kết quả chuẩn luận văn.
-
 Gợi ý các bước tiếp theo để làm luận văn thuyết phục hơn (mở rộng thí nghiệm hoặc hoàn thiện chương).
 
 PHẦN 2 — TÓM TẮT QUÁ TRÌNH, KẾT QUẢ & HƯỚNG ĐI TIẾP (CHO LUẬN VĂN)
