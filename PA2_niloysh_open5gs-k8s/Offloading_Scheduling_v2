@@ -1,0 +1,362 @@
+##############
+# 20/01/2026 #
+##############
+
+### Output 1 ###
+
+
+### Lịch sử 1 ###
+Bạn đã có cluster OK. Trên masterk8s chạy:
+
+kubectl get nodes -o wide
+kubectl get pods -n mec -o wide
+
+
+Bạn đã có:
+
+gateway-scheduler chạy 3 replica trên 3 node (master/open5gs/workerk8s)
+
+mec1 chạy trên open5gs
+
+mec2 chạy trên workerk8s
+
+cloud chạy trên masterk8s
+
+trafficgen crashloop trên ue
+
+trafficgen-test chạy trên ue
+
+2) Không cần label node (vì bạn có thể pin theo hostname luôn)
+
+Vì node name đã rõ (ue, open5gs, workerk8s, masterk8s), cách chắc chắn nhất là dùng:
+
+nodeSelector:
+  kubernetes.io/hostname: ue
+
+
+Kiểm tra label hostname có tồn tại:
+
+kubectl get node ue --show-labels | head
+
+
+Nếu thấy có kubernetes.io/hostname=ue là dùng được.
+
+3) Tạo Local Executor chạy trên node ue (namespace mec)
+3.1. Tạo file local-executor.yaml trên masterk8s
+
+Lưu ý quan trọng: bạn cần image executor có API xử lý tác vụ (ví dụ /run).
+Nếu bạn chưa có image riêng, bạn có thể dùng image hiện tại của mec1/mec2 nếu nó đã là “executor”.
+Mình sẽ chỉ bạn 2 cách ngay bên dưới.
+
+Trước tiên, xem image của mec1 đang dùng gì:
+
+kubectl -n mec get deploy mec1 -o jsonpath='{.spec.template.spec.containers[0].image}'; echo
+kubectl -n mec get deploy mec2 -o jsonpath='{.spec.template.spec.containers[0].image}'; echo
+
+Cách A (khuyến nghị nhanh): Dùng đúng image của mec1/mec2 cho local-executor
+
+Giả sử image của mec1 là X, bạn dùng luôn X cho local-executor để đảm bảo endpoint giống nhau.
+
+Tạo local-executor.yaml:
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: local-executor
+  namespace: mec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: local-executor
+  template:
+    metadata:
+      labels:
+        app: local-executor
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: ue
+      containers:
+      - name: executor
+        image: <THAY_IMAGE_MEC1_VAO_DAY>
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: local-executor
+  namespace: mec
+spec:
+  selector:
+    app: local-executor
+  ports:
+  - port: 8080
+    targetPort: 8080
+
+
+Apply:
+
+kubectl apply -f local-executor.yaml
+kubectl -n mec get pods -o wide | grep local-executor
+
+
+Bạn phải thấy local-executor-... chạy trên NODE = ue.
+
+Cách B: Nếu mec1/mec2 chỉ là nginx placeholder
+
+Nếu mec1/mec2 hiện chỉ là nginx, bạn cần 1 image “executor” thật. Khi đó thay <THAY_IMAGE_MEC1_VAO_DAY> bằng image executor của bạn.
+
+4) Đảm bảo mec1/mec2/cloud “đúng node” (nếu muốn pin chặt)
+
+Hiện tại:
+
+mec1 đã ở open5gs
+
+mec2 đã ở workerk8s
+
+cloud đã ở masterk8s
+
+Nếu bạn muốn “pin” chặt để rollout không chạy lệch node, patch nodeSelector.
+
+Ví dụ pin mec1 về open5gs:
+
+kubectl -n mec patch deploy mec1 -p '{
+  "spec": {
+    "template": {
+      "spec": {
+        "nodeSelector": {"kubernetes.io/hostname":"open5gs"}
+      }
+    }
+  }
+}'
+
+
+Pin mec2 về workerk8s:
+
+kubectl -n mec patch deploy mec2 -p '{
+  "spec": {
+    "template": {
+      "spec": {
+        "nodeSelector": {"kubernetes.io/hostname":"workerk8s"}
+      }
+    }
+  }
+}'
+
+
+Pin cloud về masterk8s:
+
+kubectl -n mec patch deploy cloud -p '{
+  "spec": {
+    "template": {
+      "spec": {
+        "nodeSelector": {"kubernetes.io/hostname":"masterk8s"}
+      }
+    }
+  }
+}'
+
+
+Kiểm tra:
+
+kubectl -n mec get pods -o wide | egrep 'mec1|mec2|cloud'
+
+5) Cấu hình gateway-scheduler để có “local vs MEC” (đúng yêu cầu thầy)
+5.1. Bạn cần 2 việc trong gateway-scheduler
+
+Có endpoint URL để gọi:
+
+http://local-executor.mec.svc.cluster.local:8080/...
+
+http://mec1.mec.svc.cluster.local:8080/...
+
+http://mec2.mec.svc.cluster.local:8080/...
+
+(tuỳ) http://cloud.mec.svc.cluster.local:8080/...
+
+Gateway phải log ra (Việt hoá càng tốt):
+
+id_tac_vu, chu_ky_cpu, han_chot_ms
+
+uoc_luong_local_ms, uoc_luong_mec1_ms, uoc_luong_mec2_ms
+
+nang_luong_local, nang_luong_offload
+
+quyet_dinh = local/mec1/mec2/cloud
+
+ly_do = local_khong_dat_han_chot / chon_chi_phi_nho_nhat …
+
+noi_thuc_thi (executor trả về)
+
+5.2. Patch env vào gateway-scheduler (không cần sửa yaml tay)
+
+Trước hết xem tên deployment của gateway-scheduler:
+
+kubectl -n mec get deploy | grep gateway
+
+
+Giả sử deployment là gateway-scheduler (đúng như pod list), set env:
+
+kubectl -n mec set env deploy/gateway-scheduler \
+  LOCAL_EXECUTOR_URL="http://local-executor.mec.svc.cluster.local:8080/run" \
+  MEC1_EXECUTOR_URL="http://mec1.mec.svc.cluster.local:8080/run" \
+  MEC2_EXECUTOR_URL="http://mec2.mec.svc.cluster.local:8080/run" \
+  CLOUD_EXECUTOR_URL="http://cloud.mec.svc.cluster.local:8080/run" \
+  TOC_DO_UE_CYCLES_PER_S="300000000" \
+  TOC_DO_MEC1_CYCLES_PER_S="1500000000" \
+  TOC_DO_MEC2_CYCLES_PER_S="900000000" \
+  DO_TRE_UL_MS="20" \
+  DO_TRE_DL_MS="10" \
+  P_CPU_UE_W="1.5" \
+  P_TX_W="1.2" \
+  P_RX_W="0.8" \
+  W_T="1.0" \
+  W_E="0.1"
+
+
+Sau đó restart rollout để env ăn chắc:
+
+kubectl -n mec rollout restart deploy/gateway-scheduler
+kubectl -n mec rollout status deploy/gateway-scheduler
+
+
+Nếu code gateway-scheduler hiện chưa đọc các env này thì bước này chỉ là “cấu hình sẵn”, bạn vẫn cần cập nhật code.
+Nhưng về mặt hạ tầng K8s, đây là cấu hình chuẩn để bạn trình bày trong luận văn.
+
+5.3. Khuyến nghị: tạm scale gateway-scheduler về 1 replica để dễ chứng minh “một bộ điều phối”
+
+Vì nghiên cứu offloading thường giả sử “một decision point”, bạn nên:
+
+kubectl -n mec scale deploy/gateway-scheduler --replicas=1
+kubectl -n mec get pods -o wide | grep gateway
+
+
+Sau khi xong luận văn, bạn scale lại 3 replicas nếu muốn.
+
+6) Sửa trafficgen (đang CrashLoopBackOff) để tạo tác vụ theo slot
+
+Bạn có 2 lựa chọn:
+
+Lựa chọn 1 (nhanh): dùng trafficgen-test (đang Running) làm UE-generator
+
+Kiểm tra nó log gì:
+
+kubectl -n mec logs trafficgen-test --tail=200
+
+
+Nếu trafficgen-test có thể bắn request lên gateway, bạn chỉ cần chỉnh env của nó (nếu hỗ trợ).
+
+Lựa chọn 2 (đúng bài nhất): sửa trafficgen đang crash
+
+Xem lỗi crash:
+
+kubectl -n mec logs deploy/trafficgen --previous --tail=200
+kubectl -n mec describe pod -l app=trafficgen | sed -n '1,160p'
+
+
+Nguyên nhân thường gặp:
+
+thiếu biến môi trường (URL gateway)
+
+thiếu config file
+
+command sai
+
+không resolve DNS service
+
+Patch tối thiểu để nó biết URL gateway
+
+Giả sử trafficgen của bạn cần env GATEWAY_URL:
+
+kubectl -n mec set env deploy/trafficgen \
+  GATEWAY_URL="http://gateway-scheduler.mec.svc.cluster.local:8080/submit" \
+  DO_DAI_SLOT_MS="1000" \
+  SO_SLOT="120" \
+  TAC_VU_MOI_SLOT="10" \
+  KICH_BAN="10UE_1TASK" \
+  SEED="20260126"
+kubectl -n mec rollout restart deploy/trafficgen
+
+
+Nếu trafficgen code của bạn dùng tên env khác, bạn cho mình 20 dòng log crash là mình chỉ đúng env cần set.
+
+7) Kiểm tra “đúng yêu cầu thầy” sau khi cấu hình
+7.1. Kiểm tra pod đúng node
+kubectl -n mec get pods -o wide | egrep 'local-executor|mec1|mec2|cloud|gateway|traffic'
+
+
+Bạn cần thấy:
+
+local-executor ở ue
+
+mec1 ở open5gs
+
+mec2 ở workerk8s
+
+cloud ở masterk8s
+
+7.2. Kiểm tra gateway log có quyết định local/offload
+kubectl -n mec logs deploy/gateway-scheduler --tail=200
+
+
+Trong log bạn phải thấy mỗi tác vụ có:
+
+ID
+
+chu kỳ CPU (hoặc cpu_ms)
+
+deadline
+
+quyết định local hay mec
+
+lý do
+
+7.3. Test tay 1 request “local”
+
+Nếu gateway có endpoint /submit nhận JSON, bạn exec vào một pod bất kỳ để curl:
+
+kubectl -n mec exec -it deploy/gateway-scheduler -- sh
+
+
+Trong shell, thử:
+
+wget -qO- --header='Content-Type: application/json' \
+  --post-data='{"id_tac_vu":"UE01-S0001-0001","id_ue":"UE01","slot":1,"chu_ky_cpu":50000000,"han_chot_ms":500,"du_lieu_vao_kb":10,"du_lieu_ra_kb":5,"muc_uu_tien":1}' \
+  http://localhost:8080/submit
+
+
+Sau đó xem log gateway để xác nhận quyet_dinh=local và noi_thuc_thi=ue.
+
+8) Việc cần làm trên từng VM (thực tế)
+
+MasterK8s: làm toàn bộ kubectl apply/patch, thu log, trích dẫn KPI.
+
+open5gs/workerk8s/ue: không cần gõ gì thêm (vì pod sẽ tự lên đúng node).
+Chỉ cần đảm bảo node Ready như bạn đang có.
+
+Điểm còn thiếu để mình hướng dẫn “chốt hạ” 100%
+
+Bạn đang có gateway-scheduler, mec1, mec2, cloud nhưng mình chưa biết các service này có endpoint gì (ví dụ /run hay /process), và trafficgen đang crash.
+
+Bạn chỉ cần trả lời bằng output của 3 lệnh sau (dán nguyên văn vào chat), mình sẽ sửa đúng từng dòng cấu hình cho khớp code của bạn:
+
+kubectl -n mec get svc
+kubectl -n mec describe deploy gateway-scheduler | sed -n '1,200p'
+kubectl -n mec logs deploy/trafficgen --previous --tail=120
+
+
+Khi có 3 output này, mình sẽ:
+
+chốt đúng URL/port/path của local-executor/mec1/mec2/cloud,
+
+patch gateway-scheduler chính xác,
+
+fix trafficgen hết CrashLoopBackOff để chạy slot 10 tác vụ/slot như thầy yêu cầu.
