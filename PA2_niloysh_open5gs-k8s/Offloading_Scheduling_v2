@@ -1,9 +1,1044 @@
 ##############
 # 20/01/2026 #
 ##############
+### Output 3 ###
+root@MasterK8s:~/mec-lab# kubectl -n mec describe pod trafficgen-test | sed -n '1,220p'
+kubectl -n mec logs trafficgen-test --tail=120
+Name:             trafficgen-test
+Namespace:        mec
+Priority:         0
+Service Account:  default
+Node:             ue/10.10.33.40
+Start Time:       Tue, 20 Jan 2026 10:52:53 +0700
+Labels:           <none>
+Annotations:      cni.projectcalico.org/containerID: 345d655f64f5ab12985868556752a0d21b29cb2c4b8934840e364a3979783939
+                  cni.projectcalico.org/podIP: 192.168.131.206/32
+                  cni.projectcalico.org/podIPs: 192.168.131.206/32
+                  k8s.v1.cni.cncf.io/network-status:
+                    [{
+                        "name": "k8s-pod-network",
+                        "ips": [
+                            "192.168.131.206"
+                        ],
+                        "default": true,
+                        "dns": {}
+                    }]
+Status:           Running
+IP:               192.168.131.206
+IPs:
+  IP:  192.168.131.206
+Containers:
+  curl:
+    Container ID:  containerd://3adaf01476838b6cfa5dfdb79374b6d5e0e9528a05027dc9f71da5bb2024568b
+    Image:         curlimages/curl:8.5.0
+    Image ID:      docker.io/curlimages/curl@sha256:08e466006f0860e54fc299378de998935333e0e130a15f6f98482e9f8dab3058
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      sh
+      -lc
+    Args:
+      echo "trafficgen-test running on node:" &&
+      hostname &&
+      sleep 3600
+
+    State:          Running
+      Started:      Thu, 29 Jan 2026 10:56:29 +0700
+    Last State:     Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Thu, 29 Jan 2026 09:56:28 +0700
+      Finished:     Thu, 29 Jan 2026 10:56:28 +0700
+    Ready:          True
+    Restart Count:  216
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-58594 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       True
+  ContainersReady             True
+  PodScheduled                True
+Volumes:
+  kube-api-access-58594:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              node-role.kubernetes.io/ue=true
+Tolerations:                 dedicated=ue:NoSchedule
+                             node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason   Age                 From     Message
+  ----    ------   ----                ----     -------
+  Normal  Created  29m (x217 over 9d)  kubelet  Created container: curl
+  Normal  Started  29m (x217 over 9d)  kubelet  Started container curl
+  Normal  Pulled   29m (x216 over 8d)  kubelet  Container image "curlimages/curl:8.5.0" already present on machine
+trafficgen-test running on node:
+trafficgen-test
+root@MasterK8s:~/mec-lab#
+
+
+### Lịch sử 3 ###
+✅ Giờ mô hình B đã chạy đúng — output log của anh là bằng chứng “đóng” luôn:
+
+Có "net_ms": 50/8/5 ✅
+
+exec_ms thay đổi theo capacity ✅
+
+cloud: cpu_ms=200 → exec_ms=100 (cap=2.0)
+
+mec2: cpu_ms=50 → exec_ms=72 (50/0.7=71.4 → ceil=72)
+
+mec2: cpu_ms=20 → exec_ms=29 (20/0.7=28.6 → ceil=29)
+
+=> thuật toán latency-aware cũng đã dùng completion time vì nó chọn cloud cho task 200ms với net=50 nhưng exec giảm một nửa (tổng vẫn thấp) ✅
+
+1) Fix ngay lỗi “bị nát terminal” mà anh paste
+
+Trong output anh có đoạn:
+
+-bash: configmap/gateway-scheduler-code: No such file or directory
+14:#: command not found
+...
+
+
+Đây là do anh paste cả output lẫn command vào shell (shell cố chạy các dòng “configmap...” và “14:# ...” như lệnh).
+
+✅ Cách tránh:
+
+Chỉ paste lệnh (khối code), không paste lại output.
+
+Nếu cần dán nhanh: dùng set -e và dán từng block.
+
+Không cần sửa gì hệ thống cả, chỉ là thao tác paste thôi 👍
+
+4) Tiếp theo: chạy thí nghiệm “heavy load 120s” + lưu log đúng chuẩn luận văn (theo ~/mec-lab/results/...)
+
+Vì mô hình B đã OK, giờ ta làm 3 việc:
+
+đặt ALG (rr/pd/latency)
+
+chạy trafficgen heavy 120s
+
+thu log allpods theo folder chuẩn (đúng kiểu anh muốn: /root/mec-lab/results/<case_name>)
+
+4.1 Tạo script run case (một lệnh chạy là ra đủ log)
+
+Tạo file: ~/mec-lab/run_case.sh
+
+cd ~/mec-lab
+
+cat > run_case.sh <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+
+NS="mec"
+DUR="${DUR:-120}"          # seconds
+ALG="${ALG:-latency}"      # rr | pd | latency
+LOAD="${LOAD:-heavy}"      # heavy label for folder naming
+
+CASE="${ALG}_${LOAD}_allpods_$(date +%F_%H%M%S)"
+OUTDIR="$HOME/mec-lab/results/$CASE"
+
+mkdir -p "$OUTDIR"
+echo "CASE=$CASE"
+echo "OUTDIR=$OUTDIR"
+
+echo "[1/5] Set ALG=$ALG + restart gateway-scheduler"
+kubectl -n "$NS" set env deploy/gateway-scheduler ALG="$ALG" >/dev/null
+kubectl -n "$NS" rollout restart deploy/gateway-scheduler >/dev/null
+kubectl -n "$NS" rollout status deploy/gateway-scheduler
+
+echo "[2/5] Snapshot deploy/env for reproducibility"
+kubectl -n "$NS" get deploy gateway-scheduler -o yaml > "$OUTDIR/deploy-gateway-scheduler.yaml"
+kubectl -n "$NS" get cm gateway-scheduler-code -o yaml > "$OUTDIR/cm-gateway-scheduler-code.yaml"
+kubectl -n "$NS" get pods -o wide > "$OUTDIR/pods_wide.txt"
+
+echo "[3/5] Start log collectors (gateway all pods)"
+kubectl -n "$NS" get pods -l app=gateway-scheduler -o name > "$OUTDIR/gateway_pods.txt"
+
+# Collect logs in background (within the same command via subshells)
+while read -r p; do
+  pod="${p#pod/}"
+  kubectl -n "$NS" logs -f "$pod" --since=1s > "$OUTDIR/${pod}.log" &
+done < "$OUTDIR/gateway_pods.txt"
+LOG_PIDS=$(jobs -p || true)
+
+echo "[4/5] Run trafficgen for ${DUR}s"
+# You have trafficgen-test running; prefer it as stable generator.
+# If you want to use a different pod name, override TG_POD.
+TG_POD="${TG_POD:-trafficgen-test}"
+kubectl -n "$NS" get pod "$TG_POD" -o wide | tee "$OUTDIR/trafficgen_pod.txt"
+
+# Assume trafficgen has a command/args to run heavy load; if not, we just wait DUR seconds.
+# If your trafficgen expects a command, set TG_CMD env to run it.
+if [[ -n "${TG_CMD:-}" ]]; then
+  echo "Running TG_CMD: $TG_CMD"
+  kubectl -n "$NS" exec -it "$TG_POD" -- sh -lc "$TG_CMD" | tee "$OUTDIR/trafficgen_stdout.txt"
+else
+  echo "No TG_CMD provided. Sleeping ${DUR}s while traffic runs (ensure your generator is already running heavy mode)."
+  sleep "$DUR"
+fi
+
+echo "[5/5] Stop log collectors"
+if [[ -n "${LOG_PIDS:-}" ]]; then
+  kill $LOG_PIDS 2>/dev/null || true
+fi
+wait 2>/dev/null || true
+
+echo "Done. Logs in: $OUTDIR"
+SH
+
+chmod +x run_case.sh
+ls -lh run_case.sh
+
+
+✅ Script này tạo đúng folder kiểu:
+/root/mec-lab/results/latency_heavy_allpods_2026-01-29_.../
+
+4.2 Điểm duy nhất mình cần anh cung cấp (để script chạy “heavy load” đúng)
+
+Hiện mình chưa biết trafficgen-test của anh chạy heavy bằng cách nào (tham số gì).
+Trong script mình để biến TG_CMD (nếu anh set thì nó chạy, không set thì nó chỉ “sleep 120s”).
+
+👉 Anh paste giúp output 2 lệnh này để mình điền đúng lệnh heavy:
+
+kubectl -n mec describe pod trafficgen-test | sed -n '1,220p'
+kubectl -n mec logs trafficgen-test --tail=120
+
+
+Chỉ cần vậy là mình viết chuẩn TG_CMD (ví dụ: rate=rps, duration=120, deadline distribution…).
+
+4.3 Trong lúc chờ trafficgen, anh có thể test nhanh 1 case (latency, 120s) kiểu “sleep”
+
+Nếu trafficgen-test đang tự chạy liên tục rồi, anh chỉ cần:
+
+cd ~/mec-lab
+ALG=latency LOAD=heavy DUR=120 ./run_case.sh
+
+
+Sau đó chạy tiếp:
+
+ALG=pd LOAD=heavy DUR=120 ./run_case.sh
+ALG=rr LOAD=heavy DUR=120 ./run_case.sh
+
+5) Chuẩn hoá đầu ra log để đưa vào pipeline phân tích của anh (analyze_case.py)
+
+Anh đã có analyze_case.py và results/.
+Giờ mỗi case sẽ có:
+
+gateway-scheduler-<pod>.log (raw)
+
+YAML deploy/cm để chứng minh reproducibility
+
+pods_wide.txt
+
+Sau đó anh chỉ cần update pipeline parse:
+
+thêm field net_ms (đã có trong log)
+
+KPI có thể thêm: site_distribution, mean/net_ms, completion_est (optional)
+
+Chốt lại: mô hình B đã xong ✅
+
+Bước tiếp theo mình cần từ anh (để hoàn thiện “heavy load” đúng chuẩn luận văn):
+
+📌 Paste 2 output:
+
+kubectl -n mec describe pod trafficgen-test | sed -n '1,220p'
+
+kubectl -n mec logs trafficgen-test --tail=120
+
+Từ đó mình sẽ:
+
+chốt TG_CMD chạy heavy 120s đúng tham số,
+
+và chỉnh run_case.sh để tự động “start generator → wait → stop” chuẩn 1 phát ăn ngay.
+
+### Output 2 ###
+root@MasterK8s:~/mec-lab# kubectl get ns | grep -E '^mec\b' || echo "❌ Không thấy namespace mec"
+
+kubectl -n mec get deploy -o wide | egrep -i 'gateway|scheduler' || echo "❌ Không thấy deploy gateway/scheduler trong namespace mec"
+
+kubectl -n mec get cm | egrep -i 'gateway|scheduler|code' || echo "❌ Không thấy configmap liên quan gateway/scheduler trong namespace mec"
+mec                      Active   9d
+gateway-scheduler   3/3     3            3           8d    gateway      python:3.11-slim   app=gateway-scheduler
+gateway-scheduler-code   1      8d
+trafficgen-code          1      8d
+root@MasterK8s:~/mec-lab# cd ~/mec-lab
+
+kubectl -n mec get deploy gateway-scheduler -o yaml > backup/deploy-gateway-scheduler.yaml
+ls -lh backup/deploy-gateway-scheduler.yaml
+-rw-r--r-- 1 root root 3.1K Jan 29 10:56 backup/deploy-gateway-scheduler.yaml
+root@MasterK8s:~/mec-lab# grep -nE "volumes:|volumeMounts:|configMap:|mountPath:|gateway-scheduler-code|app\.py" backup/deploy-gateway-scheduler.yaml
+7:      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"gateway-scheduler","namespace":"mec"},"spec":{"replicas":3,"selector":{"matchLabels":{"app":"gateway-scheduler"}},"template":{"metadata":{"labels":{"app":"gateway-scheduler"}},"spec":{"containers":[{"args":["pip install --no-cache-dir fastapi uvicorn pydantic \u0026\u0026\nuvicorn app:app --host 0.0.0.0 --port 8080\n"],"command":["sh","-lc"],"env":[{"name":"ALG","value":"rr"}],"image":"python:3.11-slim","name":"gateway","ports":[{"containerPort":8080}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"300m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/app","name":"code"}],"workingDir":"/app"}],"volumes":[{"configMap":{"name":"gateway-scheduler-code"},"name":"code"}]}}}}
+58:        volumeMounts:
+59:        - mountPath: /app
+67:      volumes:
+68:      - configMap:
+70:          name: gateway-scheduler-code
+root@MasterK8s:~/mec-lab# cd ~/mec-lab
+
+# 👇 thay tên CM đúng theo output grep ở bước 3.2
+CM_NAME="gateway-scheduler-code"
+
+kubectl -n mec get cm "$CM_NAME" -o yaml > "backup/cm-${CM_NAME}.yaml"
+ls -lh "backup/cm-${CM_NAME}.yaml"
+-rw-r--r-- 1 root root 5.3K Jan 29 10:57 backup/cm-gateway-scheduler-code.yaml
+root@MasterK8s:~/mec-lab# grep -nE "^data:|^  [a-zA-Z0-9_.-]+:" "backup/cm-${CM_NAME}.yaml" | head -n 60
+2:data:
+3:  app.py: |
+82:  annotations:
+85:  creationTimestamp: "2026-01-20T06:39:00Z"
+86:  name: gateway-scheduler-code
+87:  namespace: mec
+88:  resourceVersion: "2306800"
+89:  uid: 6b09288c-799e-4caa-953c-fdd6d608692b
+root@MasterK8s:~/mec-lab# cd ~/mec-lab
+
+python3 - <<PY
+import yaml
+cm_path="backup/cm-${CM_NAME}.yaml"
+with open(cm_path,"r",encoding="utf-8") as f:
+    obj=yaml.safe_load(f)
+data=obj.get("data",{})
+if "app.py" not in data:
+    print("❌ Không thấy key 'app.py'. Keys hiện có:", list(data.keys()))
+    raise SystemExit(2)
+out="work/app.py"
+with open(out,"w",encoding="utf-8") as fo:
+    fo.write(data["app.py"])
+print("✅ Wrote:", out)
+PY
+
+nl -ba work/app.py | sed -n '1,220p'
+✅ Wrote: work/app.py
+     1  import os, time, json, itertools, random
+     2  from fastapi import FastAPI, Request
+     3  from pydantic import BaseModel, Field
+     4  from typing import Optional
+     5
+     6  APP_START = time.time()
+     7  POD_NAME = os.getenv("HOSTNAME", "unknown")
+     8  ALG = os.getenv("ALG", "rr")  # rr | pd | latency
+     9  SITES = ["mec1", "mec2", "cloud"]
+    10  rr_cycle = itertools.cycle(SITES)
+    11
+    12  # simple moving estimate of per-site queue delay (ms)
+    13  est_q = {s: 0.0 for s in SITES}
+    14
+    15  class Task(BaseModel):
+    16    request_id: str
+    17    task_size: int = 1024
+    18    cpu_ms: int = Field(ge=1, le=2000)
+    19    deadline_ms: int = Field(ge=1, le=10000)
+    20    priority: int = Field(ge=1, le=3)
+    21
+    22  app = FastAPI()
+    23
+    24  def decide_site(t: Task):
+    25    if ALG == "rr":
+    26      return next(rr_cycle)
+    27    if ALG == "pd":
+    28      # prioritize higher priority and tighter deadlines
+    29      # score: higher is better
+    30      scores = {}
+    31      for s in SITES:
+    32        scores[s] = (t.priority * 1000) - (t.deadline_ms) - est_q[s]
+    33      return max(scores, key=scores.get)
+    34    # latency-aware (queue estimate only; network latency can be added later)
+    35    return min(est_q, key=est_q.get)
+    36
+    37  @app.get("/healthz")
+    38  def healthz():
+    39    return {"ok": True, "pod": POD_NAME, "alg": ALG, "uptime_s": round(time.time()-APP_START, 1)}
+    40
+    41  @app.post("/api/task")
+    42  async def api_task(t: Task, req: Request):
+    43    t1 = time.time()
+    44    site = decide_site(t)
+    45
+    46    # simulate queue wait and execution time (in ms)
+    47    # queue grows with load; simple model so we can compare algorithms
+    48    queue_wait_ms = max(0, int(est_q[site] + random.uniform(0, 5)))
+    49    exec_ms = int(t.cpu_ms)
+    50
+    51    # update queue estimate: decay + add workload
+    52    est_q[site] = max(0.0, est_q[site] * 0.90 + exec_ms * 0.05)
+    53
+    54    # simulate processing
+    55    time.sleep((queue_wait_ms + exec_ms) / 1000.0)
+    56
+    57    e2e_ms = int((time.time() - t1) * 1000)
+    58    sla_miss = e2e_ms > t.deadline_ms
+    59
+    60    log = {
+    61      "ts": int(time.time()),
+    62      "pod": POD_NAME,
+    63      "alg": ALG,
+    64      "request_id": t.request_id,
+    65      "cpu_ms": t.cpu_ms,
+    66      "deadline_ms": t.deadline_ms,
+    67      "priority": t.priority,
+    68      "task_size": t.task_size,
+    69      "decision_site": site,
+    70      "queue_wait_ms": queue_wait_ms,
+    71      "exec_ms": exec_ms,
+    72      "e2e_latency_ms": e2e_ms,
+    73      "sla_miss": sla_miss,
+    74    }
+    75    print(json.dumps(log), flush=True)
+    76    return {"ok": True, "decision_site": site, "e2e_latency_ms": e2e_ms, "sla_miss": sla_miss}
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# kubectl -n mec set env deploy/gateway-scheduler \
+  SITE_CAP_JSON='{"mec1":1.0,"mec2":0.7,"cloud":2.0}' \
+  SITE_NET_MS_JSON='{"mec1":5,"mec2":8,"cloud":50}'
+kubectl -n mec rollout status deploy/gateway-scheduler
+deployment.apps/gateway-scheduler env updated
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+deployment "gateway-scheduler" successfully rolled out
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# kubectl -n mec describe deploy gateway-scheduler | egrep -n "SITE_CAP_JSON|SITE_NET_MS_JSON|ALG"
+32:      ALG:               rr
+33:      SITE_CAP_JSON:     {"mec1":1.0,"mec2":0.7,"cloud":2.0}
+34:      SITE_NET_MS_JSON:  {"mec1":5,"mec2":8,"cloud":50}
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# cd ~/mec-lab
+grep -nE "def decide_site|ALG\s*==|rr|pd|latency" work/app.py | head -n 80
+8:ALG = os.getenv("ALG", "rr")  # rr | pd | latency
+10:rr_cycle = itertools.cycle(SITES)
+24:def decide_site(t: Task):
+25:  if ALG == "rr":
+26:    return next(rr_cycle)
+27:  if ALG == "pd":
+34:  # latency-aware (queue estimate only; network latency can be added later)
+51:  # update queue estimate: decay + add workload
+72:    "e2e_latency_ms": e2e_ms,
+76:  return {"ok": True, "decision_site": site, "e2e_latency_ms": e2e_ms, "sla_miss": sla_miss}
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# cd ~/mec-lab
+grep -nE "exec_ms|queue_wait_ms|e2e|sla_miss|time\.sleep|decision_site" work/app.py | head -n 120
+48:  queue_wait_ms = max(0, int(est_q[site] + random.uniform(0, 5)))
+49:  exec_ms = int(t.cpu_ms)
+52:  est_q[site] = max(0.0, est_q[site] * 0.90 + exec_ms * 0.05)
+55:  time.sleep((queue_wait_ms + exec_ms) / 1000.0)
+57:  e2e_ms = int((time.time() - t1) * 1000)
+58:  sla_miss = e2e_ms > t.deadline_ms
+69:    "decision_site": site,
+70:    "queue_wait_ms": queue_wait_ms,
+71:    "exec_ms": exec_ms,
+72:    "e2e_latency_ms": e2e_ms,
+73:    "sla_miss": sla_miss,
+76:  return {"ok": True, "decision_site": site, "e2e_latency_ms": e2e_ms, "sla_miss": sla_miss}
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# cd ~/mec-lab
+
+cp -a work/app.py "backup/app.py.before_Bmodel.$(date +%F_%H%M%S)"
+ls -lh backup/app.py.before_Bmodel.*
+-rw-r--r-- 1 root root 2.3K Jan 29 10:58 backup/app.py.before_Bmodel.2026-01-29_110225
+root@MasterK8s:~/mec-lab# cd ~/mec-lab
+
+cat > work/app.py <<'PY'
+import os, time, json, itertools, random, math
+from fastapi import FastAPI, Request
+from pydantic import BaseModel, Field
+from typing import Optional
+
+APP_START = time.time()
+POD_NAME = os.getenv("HOSTNAME", "unknown")
+ALG = os.getenv("ALG", "rr")  # rr | pd | latency
+SITES = ["mec1", "mec2", "cloud"]
+rr_cycle = itertools.cycle(SITES)
+
+# ---- Model B: site compute capacity + network latency profiles ----
+# Example:
+#   SITE_CAP_JSON='{"mec1":1.0,"mec2":0.7,"cloud":2.0}'
+#   SITE_NET_MS_JSON='{"mec1":5,"mec2":8,"cloud":50}'
+SITE_CAP = json.loads(os.getenv("SITE_CAP_JSON", '{"mec1":1.0,"mec2":1.0,"cloud":1.0}'))
+SITE_NET_MS = json.loads(os.getenv("SITE_NET_MS_JSON", '{"mec1":0,"mec2":0,"cloud":0}'))
+
+def exec_ms_for_site(cpu_ms: int, site: str) -> int:
+  """Execution time (ms) depends on site compute capacity."""
+  f = float(SITE_CAP.get(site, 1.0))
+  f = max(0.1, f)  # avoid divide-by-zero
+  return int(math.ceil(cpu_ms / f))
+
+# simple moving estimate of per-site queue delay (ms)
+est_q = {s: 0.0 for s in SITES}
+
+class Task(BaseModel):
+  request_id: str
+  task_size: int = 1024
+  cpu_ms: int = Field(ge=1, le=2000)
+  deadline_ms: int = Field(ge=1, le=10000)
+  priority: int = Field(ge=1, le=3)
+
+app = FastAPI()
+
+def est_completion_ms(t: Task, site: str) -> float:
+  """Predicted completion time = estimated queue + exec_est(site) + net(site)."""
+  q = float(est_q.get(site, 0.0))
+  net = float(SITE_NET_MS.get(site, 0))
+  exec_est = exec_ms_for_site(int(t.cpu_ms), site)
+  return q + exec_est + net
+
+def decide_site(t: Task):
+  if ALG == "rr":
+    return next(rr_cycle)
+
+  if ALG == "pd":
+    # Priority + Deadline (slack-based)
+    # slack(site) = deadline - predicted_completion(site)
+    # If feasible sites exist (slack>=0), pick the site maximizing priority and slack.
+    PRIOR_W = 1000
+    candidates = []
+    for s in SITES:
+      comp = est_completion_ms(t, s)
+      slack = int(t.deadline_ms) - comp
+      candidates.append((s, slack, comp))
+
+    feasible = [x for x in candidates if x[1] >= 0]
+nl -ba work/app.py | sed -n '1,120p' echo "✅ app.py syntax OK"e2e_ms, "sla_miss": sla_miss}
+✅ app.py syntax OK
+     1  import os, time, json, itertools, random, math
+     2  from fastapi import FastAPI, Request
+     3  from pydantic import BaseModel, Field
+     4  from typing import Optional
+     5
+     6  APP_START = time.time()
+     7  POD_NAME = os.getenv("HOSTNAME", "unknown")
+     8  ALG = os.getenv("ALG", "rr")  # rr | pd | latency
+     9  SITES = ["mec1", "mec2", "cloud"]
+    10  rr_cycle = itertools.cycle(SITES)
+    11
+    12  # ---- Model B: site compute capacity + network latency profiles ----
+    13  # Example:
+    14  #   SITE_CAP_JSON='{"mec1":1.0,"mec2":0.7,"cloud":2.0}'
+    15  #   SITE_NET_MS_JSON='{"mec1":5,"mec2":8,"cloud":50}'
+    16  SITE_CAP = json.loads(os.getenv("SITE_CAP_JSON", '{"mec1":1.0,"mec2":1.0,"cloud":1.0}'))
+    17  SITE_NET_MS = json.loads(os.getenv("SITE_NET_MS_JSON", '{"mec1":0,"mec2":0,"cloud":0}'))
+    18
+    19  def exec_ms_for_site(cpu_ms: int, site: str) -> int:
+    20    """Execution time (ms) depends on site compute capacity."""
+    21    f = float(SITE_CAP.get(site, 1.0))
+    22    f = max(0.1, f)  # avoid divide-by-zero
+    23    return int(math.ceil(cpu_ms / f))
+    24
+    25  # simple moving estimate of per-site queue delay (ms)
+    26  est_q = {s: 0.0 for s in SITES}
+    27
+    28  class Task(BaseModel):
+    29    request_id: str
+    30    task_size: int = 1024
+    31    cpu_ms: int = Field(ge=1, le=2000)
+    32    deadline_ms: int = Field(ge=1, le=10000)
+    33    priority: int = Field(ge=1, le=3)
+    34
+    35  app = FastAPI()
+    36
+    37  def est_completion_ms(t: Task, site: str) -> float:
+    38    """Predicted completion time = estimated queue + exec_est(site) + net(site)."""
+    39    q = float(est_q.get(site, 0.0))
+    40    net = float(SITE_NET_MS.get(site, 0))
+    41    exec_est = exec_ms_for_site(int(t.cpu_ms), site)
+    42    return q + exec_est + net
+    43
+    44  def decide_site(t: Task):
+    45    if ALG == "rr":
+    46      return next(rr_cycle)
+    47
+    48    if ALG == "pd":
+    49      # Priority + Deadline (slack-based)
+    50      # slack(site) = deadline - predicted_completion(site)
+    51      # If feasible sites exist (slack>=0), pick the site maximizing priority and slack.
+    52      PRIOR_W = 1000
+    53      candidates = []
+    54      for s in SITES:
+    55        comp = est_completion_ms(t, s)
+    56        slack = int(t.deadline_ms) - comp
+    57        candidates.append((s, slack, comp))
+    58
+    59      feasible = [x for x in candidates if x[1] >= 0]
+    60      if feasible:
+    61        return max(feasible, key=lambda x: (int(t.priority) * PRIOR_W + x[1]))[0]
+    62
+    63      # If none feasible, minimize completion time (reduce damage)
+    64      return min(candidates, key=lambda x: x[2])[0]
+    65
+    66    if ALG == "latency":
+    67      # Latency-aware: choose site with minimal predicted completion time
+    68      return min(SITES, key=lambda s: est_completion_ms(t, s))
+    69
+    70    # default fallback
+    71    return min(SITES, key=lambda s: est_completion_ms(t, s))
+    72
+    73  @app.get("/healthz")
+    74  def healthz():
+    75    return {
+    76      "ok": True,
+    77      "pod": POD_NAME,
+    78      "alg": ALG,
+    79      "uptime_s": round(time.time()-APP_START, 1),
+    80      "site_cap": SITE_CAP,
+    81      "site_net_ms": SITE_NET_MS,
+    82    }
+    83
+    84  @app.post("/api/task")
+    85  async def api_task(t: Task, req: Request):
+    86    t1 = time.time()
+    87    site = decide_site(t)
+    88
+    89    # simulate queue wait and execution time (in ms)
+    90    queue_wait_ms = max(0, int(est_q[site] + random.uniform(0, 5)))
+    91
+    92    # Model B: execution and network latency depend on site
+    93    net_ms = int(SITE_NET_MS.get(site, 0))
+    94    exec_ms = exec_ms_for_site(int(t.cpu_ms), site)
+    95
+    96    # update queue estimate: decay + add workload
+    97    # (use exec_ms AFTER capacity scaling)
+    98    est_q[site] = max(0.0, est_q[site] * 0.90 + exec_ms * 0.05)
+    99
+   100    # simulate processing (queue + compute + network)
+   101    time.sleep((queue_wait_ms + exec_ms + net_ms) / 1000.0)
+   102
+   103    e2e_ms = int((time.time() - t1) * 1000)
+   104    sla_miss = e2e_ms > int(t.deadline_ms)
+   105
+   106    log = {
+   107      "ts": int(time.time()),
+   108      "pod": POD_NAME,
+   109      "alg": ALG,
+   110      "request_id": t.request_id,
+   111      "cpu_ms": t.cpu_ms,
+   112      "deadline_ms": t.deadline_ms,
+   113      "priority": t.priority,
+   114      "task_size": t.task_size,
+   115      "decision_site": site,
+   116      "queue_wait_ms": queue_wait_ms,
+   117      "exec_ms": exec_ms,
+   118      "net_ms": net_ms,
+   119      "e2e_latency_ms": e2e_ms,
+   120      "sla_miss": sla_miss,
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# cd ~/mec-lab
+
+kubectl -n mec create configmap gateway-scheduler-code \
+  --from-file=app.py=work/app.py \
+  -o yaml --dry-run=client > work/cm-gateway-scheduler-code.patched.yaml
+
+# apply configmap
+kubectl -n mec apply -f work/cm-gateway-scheduler-code.patched.yaml
+
+# restart rollout để pods reload code mới
+kubectl -n mec rollout restart deploy/gateway-scheduler
+kubectl -n mec rollout status deploy/gateway-scheduler
+configmap/gateway-scheduler-code configured
+deployment.apps/gateway-scheduler restarted
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+deployment "gateway-scheduler" successfully rolled out
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# kubectl -n mec logs deploy/gateway-scheduler --tail=60 | grep -E '"net_ms"|decision_site|exec_ms|e2e_latency_ms|alg' -n
+Found 6 pods, using pod/gateway-scheduler-5485f568f5-w87zz
+1:{"ts": 1769659390, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "f77ba37f-580a-4d42-b494-894853c8b57d", "cpu_ms": 200, "deadline_ms": 80, "priority": 1, "task_size": 512, "decision_site": "mec1", "queue_wait_ms": 52, "exec_ms": 200, "e2e_latency_ms": 252, "sla_miss": true}
+3:{"ts": 1769659391, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "6b5800c8-8151-472c-9553-a67e8041559e", "cpu_ms": 200, "deadline_ms": 120, "priority": 2, "task_size": 512, "decision_site": "mec2", "queue_wait_ms": 57, "exec_ms": 200, "e2e_latency_ms": 257, "sla_miss": true}
+5:{"ts": 1769659391, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "8ddfdd9b-ffeb-40ba-a965-238c6d223629", "cpu_ms": 50, "deadline_ms": 200, "priority": 3, "task_size": 512, "decision_site": "cloud", "queue_wait_ms": 36, "exec_ms": 50, "e2e_latency_ms": 86, "sla_miss": false}
+7:{"ts": 1769659391, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "eddc422e-848e-48f9-b406-b84ceb2e3a2f", "cpu_ms": 50, "deadline_ms": 400, "priority": 1, "task_size": 1024, "decision_site": "mec1", "queue_wait_ms": 55, "exec_ms": 50, "e2e_latency_ms": 105, "sla_miss": false}
+9:{"ts": 1769659391, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "1cb1e17a-3da3-4da0-bb39-359b115b068b", "cpu_ms": 100, "deadline_ms": 80, "priority": 3, "task_size": 512, "decision_site": "mec2", "queue_wait_ms": 60, "exec_ms": 100, "e2e_latency_ms": 160, "sla_miss": true}
+11:{"ts": 1769659392, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "26d2d0ce-dcac-4d49-ad82-f10e9691048c", "cpu_ms": 200, "deadline_ms": 200, "priority": 3, "task_size": 512, "decision_site": "cloud", "queue_wait_ms": 39, "exec_ms": 200, "e2e_latency_ms": 239, "sla_miss": true}
+13:{"ts": 1769659392, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "b793ae8b-d10f-48f1-ad8a-b819ab72534f", "cpu_ms": 100, "deadline_ms": 400, "priority": 1, "task_size": 512, "decision_site": "mec1", "queue_wait_ms": 56, "exec_ms": 100, "e2e_latency_ms": 156, "sla_miss": false}
+15:{"ts": 1769659392, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "f5038892-7dd0-4c59-b5ae-83261500cf7c", "cpu_ms": 100, "deadline_ms": 80, "priority": 1, "task_size": 1024, "decision_site": "mec2", "queue_wait_ms": 58, "exec_ms": 100, "e2e_latency_ms": 158, "sla_miss": true}
+17:{"ts": 1769659394, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "d41bf29e-d1fa-4bc6-a21f-83641a07e1a8", "cpu_ms": 200, "deadline_ms": 400, "priority": 1, "task_size": 1024, "decision_site": "cloud", "queue_wait_ms": 41, "exec_ms": 200, "e2e_latency_ms": 241, "sla_miss": false}
+19:{"ts": 1769659394, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "43548cb5-a512-4258-8516-6b2ec905e8c2", "cpu_ms": 100, "deadline_ms": 120, "priority": 3, "task_size": 2048, "decision_site": "mec1", "queue_wait_ms": 52, "exec_ms": 100, "e2e_latency_ms": 152, "sla_miss": true}
+21:{"ts": 1769659394, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "d263f035-7ab4-486b-ab35-478f4bda3b26", "cpu_ms": 100, "deadline_ms": 400, "priority": 1, "task_size": 512, "decision_site": "mec2", "queue_wait_ms": 60, "exec_ms": 100, "e2e_latency_ms": 160, "sla_miss": false}
+23:{"ts": 1769659394, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "32a64779-c446-4b6f-814f-f8ff362c95cc", "cpu_ms": 100, "deadline_ms": 400, "priority": 2, "task_size": 1024, "decision_site": "cloud", "queue_wait_ms": 50, "exec_ms": 100, "e2e_latency_ms": 150, "sla_miss": false}
+25:{"ts": 1769659395, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "5c981bee-54a0-4ebc-a9d2-f9cd82297510", "cpu_ms": 200, "deadline_ms": 80, "priority": 3, "task_size": 2048, "decision_site": "mec1", "queue_wait_ms": 53, "exec_ms": 200, "e2e_latency_ms": 253, "sla_miss": true}
+27:{"ts": 1769659396, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "5bf99a6b-f706-41da-8396-dda5faec6f47", "cpu_ms": 100, "deadline_ms": 120, "priority": 1, "task_size": 1024, "decision_site": "mec2", "queue_wait_ms": 56, "exec_ms": 100, "e2e_latency_ms": 156, "sla_miss": true}
+29:{"ts": 1769659397, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "5aafd49e-a8db-4a2a-bf62-d0432af20ddf", "cpu_ms": 100, "deadline_ms": 120, "priority": 3, "task_size": 512, "decision_site": "cloud", "queue_wait_ms": 50, "exec_ms": 100, "e2e_latency_ms": 150, "sla_miss": true}
+31:{"ts": 1769659397, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "766495d3-d2a2-41c3-b7eb-9a3171ff071e", "cpu_ms": 50, "deadline_ms": 200, "priority": 2, "task_size": 2048, "decision_site": "mec1", "queue_wait_ms": 59, "exec_ms": 50, "e2e_latency_ms": 109, "sla_miss": false}
+33:{"ts": 1769659397, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "dcbb811b-73b3-4138-ae0e-294b8ea4d940", "cpu_ms": 100, "deadline_ms": 120, "priority": 1, "task_size": 2048, "decision_site": "mec2", "queue_wait_ms": 56, "exec_ms": 100, "e2e_latency_ms": 156, "sla_miss": true}
+35:{"ts": 1769659398, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "e196d453-807d-4a9f-b51e-dc4b69d79f69", "cpu_ms": 20, "deadline_ms": 120, "priority": 3, "task_size": 2048, "decision_site": "cloud", "queue_wait_ms": 51, "exec_ms": 20, "e2e_latency_ms": 71, "sla_miss": false}
+37:{"ts": 1769659398, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "4b304ee1-9053-474c-9e8d-6299d9ca8a74", "cpu_ms": 100, "deadline_ms": 120, "priority": 1, "task_size": 1024, "decision_site": "mec1", "queue_wait_ms": 57, "exec_ms": 100, "e2e_latency_ms": 157, "sla_miss": true}
+39:{"ts": 1769659398, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "91a06228-0163-4940-ba56-e467279e7be4", "cpu_ms": 200, "deadline_ms": 200, "priority": 3, "task_size": 2048, "decision_site": "mec2", "queue_wait_ms": 59, "exec_ms": 200, "e2e_latency_ms": 259, "sla_miss": true}
+41:{"ts": 1769659398, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "a9c7ed73-3ac4-4e6e-ab01-92e44d660aa7", "cpu_ms": 20, "deadline_ms": 120, "priority": 3, "task_size": 512, "decision_site": "cloud", "queue_wait_ms": 44, "exec_ms": 20, "e2e_latency_ms": 64, "sla_miss": false}
+43:{"ts": 1769659398, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "af3c11bd-6b9a-4154-9952-572557e4d422", "cpu_ms": 20, "deadline_ms": 120, "priority": 3, "task_size": 1024, "decision_site": "mec1", "queue_wait_ms": 54, "exec_ms": 20, "e2e_latency_ms": 74, "sla_miss": false}
+45:{"ts": 1769659399, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "c5620c9d-de17-4a30-96d3-059985c7c8cf", "cpu_ms": 200, "deadline_ms": 400, "priority": 2, "task_size": 2048, "decision_site": "mec2", "queue_wait_ms": 63, "exec_ms": 200, "e2e_latency_ms": 263, "sla_miss": false}
+47:{"ts": 1769659400, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "c3e1abd1-d13e-4b19-bb76-444cf2516e66", "cpu_ms": 200, "deadline_ms": 120, "priority": 2, "task_size": 2048, "decision_site": "cloud", "queue_wait_ms": 41, "exec_ms": 200, "e2e_latency_ms": 241, "sla_miss": true}
+49:{"ts": 1769659402, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "180acfd4-fd93-4eab-b5ee-e863b1e03904", "cpu_ms": 200, "deadline_ms": 120, "priority": 3, "task_size": 512, "decision_site": "mec1", "queue_wait_ms": 50, "exec_ms": 200, "e2e_latency_ms": 250, "sla_miss": true}
+51:{"ts": 1769659403, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "cb4650c3-6b9c-48e2-9424-8639f3733c53", "cpu_ms": 20, "deadline_ms": 200, "priority": 3, "task_size": 512, "decision_site": "mec2", "queue_wait_ms": 68, "exec_ms": 20, "e2e_latency_ms": 88, "sla_miss": false}
+53:{"ts": 1769659403, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "b922026f-847c-4cea-beb5-f2e313a4192d", "cpu_ms": 50, "deadline_ms": 400, "priority": 1, "task_size": 1024, "decision_site": "cloud", "queue_wait_ms": 51, "exec_ms": 50, "e2e_latency_ms": 101, "sla_miss": false}
+55:{"ts": 1769659404, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "a7ee6dcc-309f-45ee-bfb0-db830d036b42", "cpu_ms": 100, "deadline_ms": 200, "priority": 2, "task_size": 512, "decision_site": "mec1", "queue_wait_ms": 55, "exec_ms": 100, "e2e_latency_ms": 155, "sla_miss": false}
+57:{"ts": 1769659404, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "f1a4caad-5a6b-4e69-8ca8-f012d333107b", "cpu_ms": 20, "deadline_ms": 80, "priority": 1, "task_size": 512, "decision_site": "mec2", "queue_wait_ms": 60, "exec_ms": 20, "e2e_latency_ms": 80, "sla_miss": false}
+59:{"ts": 1769659404, "pod": "gateway-scheduler-5485f568f5-w87zz", "alg": "rr", "request_id": "85626edf-138d-42fe-a8f5-5e110516b587", "cpu_ms": 20, "deadline_ms": 200, "priority": 3, "task_size": 1024, "decision_site": "cloud", "queue_wait_ms": 48, "exec_ms": 20, "e2e_latency_ms": 68, "sla_miss": false}
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# # Lấy 1 pod gateway-scheduler bất kỳ
+POD=$(kubectl -n mec get pod -l app=gateway-scheduler -o jsonpath='{.items[0].metadata.name}')
+echo "POD=$POD"
+
+kubectl -n mec exec -it "$POD" -- sh -lc 'wget -qO- http://127.0.0.1:8080/healthz | head -c 300; echo'
+POD=gateway-scheduler-7d495cc9d5-5v7cv
+sh: 1: wget: not found
+
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# kubectl -n mec set env deploy/gateway-scheduler ALG=rr
+kubectl -n mec rollout restart deploy/gateway-scheduler
+kubectl -n mec rollout status deploy/gateway-scheduler
+deployment.apps/gateway-scheduler restarted
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+deployment "gateway-scheduler" successfully rolled out
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# kubectl -n mec set env deploy/gateway-scheduler ALG=pd
+kubectl -n mec rollout restart deploy/gateway-scheduler
+kubectl -n mec rollout status deploy/gateway-scheduler
+deployment.apps/gateway-scheduler env updated
+deployment.apps/gateway-scheduler restarted
+Waiting for deployment "gateway-scheduler" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+deployment "gateway-scheduler" successfully rolled out
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# kubectl -n mec set env deploy/gateway-scheduler ALG=latency
+kubectl -n mec rollout restart deploy/gateway-scheduler
+kubectl -n mec rollout status deploy/gateway-scheduler
+deployment.apps/gateway-scheduler env updated
+deployment.apps/gateway-scheduler restarted
+Waiting for deployment "gateway-scheduler" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "gateway-scheduler" rollout to finish: 1 old replicas are pending termination...
+deployment "gateway-scheduler" successfully rolled out
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# kubectl -n mec get pods -l app=gateway-scheduler -o wide
+
+POD=$(kubectl -n mec get pod -l app=gateway-scheduler -o jsonpath='{.items[0].metadata.name}')
+echo "POD=$POD"
+
+# xem đầu file app.py trong pod
+kubectl -n mec exec -it "$POD" -- sh -lc 'ls -la /app; echo "----"; sed -n "1,120p" /app/app.py | nl -ba | sed -n "1,120p"'
+NAME                                 READY   STATUS    RESTARTS   AGE   IP               NODE        NOMINATED NODE   READINESS GATES
+gateway-scheduler-7b88b678cc-25hkk   1/1     Running   0          93s   192.168.43.225   open5gs     <none>           <none>
+gateway-scheduler-7b88b678cc-hv2zh   1/1     Running   0          97s   192.168.30.182   workerk8s   <none>           <none>
+gateway-scheduler-7b88b678cc-qj42b   1/1     Running   0          94s   192.168.43.224   open5gs     <none>           <none>
+POD=gateway-scheduler-7b88b678cc-25hkk
+total 12
+drwxrwxrwx 3 root root 4096 Jan 29 04:13 .
+drwxr-xr-x 1 root root 4096 Jan 29 04:13 ..
+drwxr-xr-x 2 root root 4096 Jan 29 04:13 ..2026_01_29_04_13_51.2434863745
+lrwxrwxrwx 1 root root   32 Jan 29 04:13 ..data -> ..2026_01_29_04_13_51.2434863745
+lrwxrwxrwx 1 root root   13 Jan 29 04:13 app.py -> ..data/app.py
+----
+     1  import os, time, json, itertools, random, math
+     2  from fastapi import FastAPI, Request
+     3  from pydantic import BaseModel, Field
+     4  from typing import Optional
+     5
+     6  APP_START = time.time()
+     7  POD_NAME = os.getenv("HOSTNAME", "unknown")
+     8  ALG = os.getenv("ALG", "rr")  # rr | pd | latency
+     9  SITES = ["mec1", "mec2", "cloud"]
+    10  rr_cycle = itertools.cycle(SITES)
+    11
+    12  # ---- Model B: site compute capacity + network latency profiles ----
+    13  # Example:
+    14  #   SITE_CAP_JSON='{"mec1":1.0,"mec2":0.7,"cloud":2.0}'
+    15  #   SITE_NET_MS_JSON='{"mec1":5,"mec2":8,"cloud":50}'
+    16  SITE_CAP = json.loads(os.getenv("SITE_CAP_JSON", '{"mec1":1.0,"mec2":1.0,"cloud":1.0}'))
+    17  SITE_NET_MS = json.loads(os.getenv("SITE_NET_MS_JSON", '{"mec1":0,"mec2":0,"cloud":0}'))
+    18
+    19  def exec_ms_for_site(cpu_ms: int, site: str) -> int:
+    20    """Execution time (ms) depends on site compute capacity."""
+    21    f = float(SITE_CAP.get(site, 1.0))
+    22    f = max(0.1, f)  # avoid divide-by-zero
+    23    return int(math.ceil(cpu_ms / f))
+    24
+    25  # simple moving estimate of per-site queue delay (ms)
+    26  est_q = {s: 0.0 for s in SITES}
+    27
+    28  class Task(BaseModel):
+    29    request_id: str
+    30    task_size: int = 1024
+    31    cpu_ms: int = Field(ge=1, le=2000)
+    32    deadline_ms: int = Field(ge=1, le=10000)
+    33    priority: int = Field(ge=1, le=3)
+    34
+    35  app = FastAPI()
+    36
+    37  def est_completion_ms(t: Task, site: str) -> float:
+    38    """Predicted completion time = estimated queue + exec_est(site) + net(site)."""
+    39    q = float(est_q.get(site, 0.0))
+    40    net = float(SITE_NET_MS.get(site, 0))
+    41    exec_est = exec_ms_for_site(int(t.cpu_ms), site)
+    42    return q + exec_est + net
+    43
+    44  def decide_site(t: Task):
+    45    if ALG == "rr":
+    46      return next(rr_cycle)
+    47
+    48    if ALG == "pd":
+    49      # Priority + Deadline (slack-based)
+    50      # slack(site) = deadline - predicted_completion(site)
+    51      # If feasible sites exist (slack>=0), pick the site maximizing priority and slack.
+    52      PRIOR_W = 1000
+    53      candidates = []
+    54      for s in SITES:
+    55        comp = est_completion_ms(t, s)
+    56        slack = int(t.deadline_ms) - comp
+    57        candidates.append((s, slack, comp))
+    58
+    59      feasible = [x for x in candidates if x[1] >= 0]
+    60      if feasible:
+    61        return max(feasible, key=lambda x: (int(t.priority) * PRIOR_W + x[1]))[0]
+    62
+    63      # If none feasible, minimize completion time (reduce damage)
+    64      return min(candidates, key=lambda x: x[2])[0]
+    65
+    66    if ALG == "latency":
+    67      # Latency-aware: choose site with minimal predicted completion time
+    68      return min(SITES, key=lambda s: est_completion_ms(t, s))
+    69
+    70    # default fallback
+    71    return min(SITES, key=lambda s: est_completion_ms(t, s))
+    72
+    73  @app.get("/healthz")
+    74  def healthz():
+    75    return {
+    76      "ok": True,
+    77      "pod": POD_NAME,
+    78      "alg": ALG,
+    79      "uptime_s": round(time.time()-APP_START, 1),
+    80      "site_cap": SITE_CAP,
+    81      "site_net_ms": SITE_NET_MS,
+    82    }
+    83
+    84  @app.post("/api/task")
+    85  async def api_task(t: Task, req: Request):
+    86    t1 = time.time()
+    87    site = decide_site(t)
+    88
+    89    # simulate queue wait and execution time (in ms)
+    90    queue_wait_ms = max(0, int(est_q[site] + random.uniform(0, 5)))
+    91
+    92    # Model B: execution and network latency depend on site
+    93    net_ms = int(SITE_NET_MS.get(site, 0))
+    94    exec_ms = exec_ms_for_site(int(t.cpu_ms), site)
+    95
+    96    # update queue estimate: decay + add workload
+    97    # (use exec_ms AFTER capacity scaling)
+    98    est_q[site] = max(0.0, est_q[site] * 0.90 + exec_ms * 0.05)
+    99
+   100    # simulate processing (queue + compute + network)
+   101    time.sleep((queue_wait_ms + exec_ms + net_ms) / 1000.0)
+   102
+   103    e2e_ms = int((time.time() - t1) * 1000)
+   104    sla_miss = e2e_ms > int(t.deadline_ms)
+   105
+   106    log = {
+   107      "ts": int(time.time()),
+   108      "pod": POD_NAME,
+   109      "alg": ALG,
+   110      "request_id": t.request_id,
+   111      "cpu_ms": t.cpu_ms,
+   112      "deadline_ms": t.deadline_ms,
+   113      "priority": t.priority,
+   114      "task_size": t.task_size,
+   115      "decision_site": site,
+   116      "queue_wait_ms": queue_wait_ms,
+   117      "exec_ms": exec_ms,
+   118      "net_ms": net_ms,
+   119      "e2e_latency_ms": e2e_ms,
+   120      "sla_miss": sla_miss,
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# cd ~/mec-lab
+
+# tạo YAML configmap mới từ file app.py
+kubectl -n mec create configmap gateway-scheduler-code \
+  --from-file=app.py=work/app.py \
+  -o yaml --dry-run=client > work/cm-gateway-scheduler-code.patched.yaml
+
+# apply
+kubectl -n mec apply -f work/cm-gateway-scheduler-code.patched.yaml
+
+# xác nhận CM có keyword mới
+kubectl -n mec get cm gateway-scheduler-code -o jsonpath='{.data.app\.py}' | grep -nE "SITE_CAP_JSON|net_ms|exec_ms_for_site" | head || echo "❌ CM vẫn chưa có code mới"
+configmap/gateway-scheduler-code configured
+14:#   SITE_CAP_JSON='{"mec1":1.0,"mec2":0.7,"cloud":2.0}'
+16:SITE_CAP = json.loads(os.getenv("SITE_CAP_JSON", '{"mec1":1.0,"mec2":1.0,"cloud":1.0}'))
+19:def exec_ms_for_site(cpu_ms: int, site: str) -> int:
+41:  exec_est = exec_ms_for_site(int(t.cpu_ms), site)
+81:    "site_net_ms": SITE_NET_MS,
+93:  net_ms = int(SITE_NET_MS.get(site, 0))
+94:  exec_ms = exec_ms_for_site(int(t.cpu_ms), site)
+101:  time.sleep((queue_wait_ms + exec_ms + net_ms) / 1000.0)
+118:    "net_ms": net_ms,
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# root@MasterK8s:~/mec-lab# cd ~/mec-lab
+
+# tạo YAML configmap mới từ file app.py
+kubectl -n mec create configmap gateway-scheduler-code \
+  --from-file=app.py=work/app.py \
+  -o yaml --dry-run=client > work/cm-gateway-scheduler-code.patched.yaml
+
+# apply
+kubectl -n mec apply -f work/cm-gateway-scheduler-code.patched.yaml
+
+# xác nhận CM có keyword mới
+kubectl -n mec get cm gateway-scheduler-code -o jsonpath='{.data.app\.py}' | grep -nE "SITE_CAP_JSON|net_ms|exec_ms_for_site" | head || echo "❌ CM vẫn chưa có code mới"
+configmap/gateway-scheduler-code configured
+14:#   SITE_CAP_JSON='{"mec1":1.0,"mec2":0.7,"cloud":2.0}'
+16:SITE_CAP = json.loads(os.getenv("SITE_CAP_JSON", '{"mec1":1.0,"mec2":1.0,"cloud":1.0}'))
+19:def exec_ms_for_site(cpu_ms: int, site: str) -> int:
+41:  exec_est = exec_ms_for_site(int(t.cpu_ms), site)
+81:    "site_net_ms": SITE_NET_MS,
+93:  net_ms = int(SITE_NET_MS.get(site, 0))
+94:  exec_ms = exec_ms_for_site(int(t.cpu_ms), site)
+101:  time.sleep((queue_wait_ms + exec_ms + net_ms) / 1000.0)
+118:    "net_ms": net_ms,
+root@MasterK8s:~/mec-lab#
+-bash: root@MasterK8s:~/mec-lab#: No such file or directory
+configmap/gateway-scheduler-code configured
+14:#   SITE_CAP_JSON='{"mec1":1.0,"mec2":0.7,"cloud":2.0}'
+16:SITE_CAP = json.loads(os.getenv("SITE_CAP_JSON", '{"mec1":1.0,"mec2":1.0,"cloud":1.0}'))
+19:def exec_ms_for_site(cpu_ms: int, site: str) -> int:
+41:  exec_est = exec_ms_for_site(int(t.cpu_ms), site)
+81:    "site_net_ms": SITE_NET_MS,
+93:  net_ms = int(SITE_NET_MS.get(site, 0))
+94:  exec_ms = exec_ms_for_site(int(t.cpu_ms), site)
+101:  time.sleep((queue_wait_ms + exec_ms + net_ms) / 1000.0)
+118:    "net_ms": net_ms,
+-bash: configmap/gateway-scheduler-code: No such file or directory
+14:#: command not found
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+81:: command not found
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+118:: command not found
+-bash: root@MasterK8s:~/mec-lab#: No such file or directory
+root@MasterK8s:~/mec-lab#
+root@MasterK8s:~/mec-lab# POD="gateway-scheduler-7b88b678cc-25hkk"
+
+# 1) tail log của đúng pod này (đừng dùng deploy logs vì nó chọn pod ngẫu nhiên)
+kubectl -n mec logs -f "$POD" --tail=0
+{"ts": 1769660480, "pod": "gateway-scheduler-7b88b678cc-25hkk", "alg": "latency", "request_id": "60dd3026-50f0-4368-ab57-8c0d95e3a085", "cpu_ms": 200, "deadline_ms": 400, "priority": 1, "task_size": 512, "decision_site": "cloud", "queue_wait_ms": 50, "exec_ms": 100, "net_ms": 50, "e2e_latency_ms": 200, "sla_miss": false}
+INFO:     127.0.0.1:49126 - "POST /api/task HTTP/1.1" 200 OK
+{"ts": 1769660480, "pod": "gateway-scheduler-7b88b678cc-25hkk", "alg": "latency", "request_id": "23b248e9-f507-401c-a90d-d836e524990d", "cpu_ms": 200, "deadline_ms": 400, "priority": 2, "task_size": 512, "decision_site": "cloud", "queue_wait_ms": 46, "exec_ms": 100, "net_ms": 50, "e2e_latency_ms": 196, "sla_miss": false}
+INFO:     127.0.0.1:49134 - "POST /api/task HTTP/1.1" 200 OK
+{"ts": 1769660480, "pod": "gateway-scheduler-7b88b678cc-25hkk", "alg": "latency", "request_id": "7b758758-f694-4856-bb61-8bf3d30fd54e", "cpu_ms": 100, "deadline_ms": 200, "priority": 3, "task_size": 512, "decision_site": "mec1", "queue_wait_ms": 43, "exec_ms": 100, "net_ms": 5, "e2e_latency_ms": 148, "sla_miss": false}
+INFO:     127.0.0.1:49142 - "POST /api/task HTTP/1.1" 200 OK
+{"ts": 1769660480, "pod": "gateway-scheduler-7b88b678cc-25hkk", "alg": "latency", "request_id": "ffffa668-6ebd-4875-83a2-c063f5428010", "cpu_ms": 50, "deadline_ms": 200, "priority": 1, "task_size": 512, "decision_site": "mec2", "queue_wait_ms": 18, "exec_ms": 72, "net_ms": 8, "e2e_latency_ms": 98, "sla_miss": false}
+INFO:     127.0.0.1:49154 - "POST /api/task HTTP/1.1" 200 OK
+{"ts": 1769660480, "pod": "gateway-scheduler-7b88b678cc-25hkk", "alg": "latency", "request_id": "9727bbf4-701f-4756-9ada-0a97b7119d75", "cpu_ms": 20, "deadline_ms": 120, "priority": 3, "task_size": 512, "decision_site": "mec2", "queue_wait_ms": 22, "exec_ms": 29, "net_ms": 8, "e2e_latency_ms": 59, "sla_miss": false}
+INFO:     127.0.0.1:49164 - "POST /api/task HTTP/1.1" 200 OK
+
+### Lịch sử 2 ###
+Prompt (copy/paste dùng để triển khai Cách B)
+Tôi đang mô phỏng MEC trên Kubernetes với kiến trúc multi-site gồm 3 compute sites: MEC1, MEC2, Cloud; 1 UE (trafficgen); 1 gateway-scheduler đóng vai trò MEC orchestrator/scheduler. Hiện hệ thống log per-request JSON: cpu_ms, deadline_ms, priority, decision_site, queue_wait_ms, exec_ms, e2e_latency_ms, sla_miss.
+
+Tôi muốn nâng mô hình theo “Cách B”: mỗi site có năng lực tính toán khác nhau và độ trễ mạng khác nhau:
+- exec_ms phải phụ thuộc decision_site theo capacity profile (exec_ms = ceil(cpu_ms / cap[site])).
+- net_ms phải được cộng vào e2e_latency_ms theo latency profile (e2e = queue_wait + exec + net).
+- Thuật toán latency-aware và PD phải dùng ước lượng completion time dự kiến: est_completion(site)= est_q(site) + exec_est(site) + net(site).
+- Log cần bổ sung net_ms (và có thể pred_completion_ms) nhưng vẫn giữ schema cũ để pipeline phân tích không bị gãy.
+
+Hãy hướng dẫn chi tiết cách sửa code gateway-scheduler (đang nằm trong ConfigMap gateway-scheduler-code/app.py), thêm biến môi trường SITE_CAP_JSON và SITE_NET_MS_JSON trong Deployment, và cách apply/rollout trong K8s. Đồng thời đưa các bước sanity check để xác nhận exec_ms và net_ms thay đổi đúng theo site.
+###
+0) Sửa nhanh vấn đề “trafficgen CrashLoopBackOff” (để test được ngay) 🔧
+
+Anh có trafficgen-test running, còn trafficgen crash. Trước khi chỉnh mô hình, nên đảm bảo generator ổn định:
+
+kubectl -n mec logs trafficgen-56f56fc799-ng5hh --previous --tail=80
+kubectl -n mec describe pod trafficgen-56f56fc799-ng5hh | sed -n '1,120p'
+
+
+Nếu crash vì pip/install mỗi lần khởi động (log trước đây có pip install), giải pháp đúng là build image có sẵn dependency hoặc bỏ pip install lúc runtime.
+
+Tạm thời: dùng trafficgen-test để chạy thí nghiệm.
+
+Phần dưới tôi vẫn hướng dẫn đầy đủ; anh có thể chạy với pod generator nào ổn định.
+
+1) Chuẩn hoá “site mapping” theo node hiện tại (rất quan trọng) 🧭
+
+Hiện mapping thực tế của anh là:
+
+Site logic	Node k8s
+mec1	open5gs
+mec2	workerk8s
+cloud	masterk8s
+ue	ue
+
+Để đúng chuẩn luận văn + dễ ràng buộc placement, anh nên gắn label site=... lên node.
+
+1.1 Gắn label node
+
+Chạy trên masterk8s:
+
+kubectl label node open5gs site=mec1 --overwrite
+kubectl label node workerk8s site=mec2 --overwrite
+kubectl label node masterk8s site=cloud --overwrite
+kubectl label node ue site=ue --overwrite
+kubectl get nodes --show-labels | grep site=
+
+
 
 ### Output 1 ###
-
+Chưa thực hiện
 
 ### Lịch sử 1 ###
 Bạn đã có cluster OK. Trên masterk8s chạy:
