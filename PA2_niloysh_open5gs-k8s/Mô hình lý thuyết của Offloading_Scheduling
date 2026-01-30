@@ -1,0 +1,147 @@
+Hãy xây dựng mô hình lý thuyết cho luận văn: “Tìm hiểu phương pháp chuyển tải (task offloading) và phân bổ tài nguyên trong mạng MEC”.
+
+Yêu cầu mô hình gồm:
+
+System model MEC: UE–RAN–MEC–(Cloud), mô hình tác vụ (input size, CPU cycles, output size, deadline, priority), mô hình truyền thông (uplink/downlink rate), mô hình tính toán (UE local CPU, MEC CPU), có queueing delay tại MEC.
+
+Decision model: biến quyết định offload/local, chọn MEC, phân bổ CPU và (tuỳ chọn) băng thông.
+
+E2E latency decomposition: local vs offload.
+
+Energy model của UE (ít nhất energy truyền uplink; local computing energy nếu cần).
+
+Objective function: tối ưu độ trễ hoặc đa mục tiêu latency–energy–deadline violation.
+
+Tích hợp 3 thuật toán để so sánh:
+
+RR (Round Robin) baseline
+
+PD (Priority Discipline / EDF)
+
+Latency-aware (ước lượng latency, chọn MEC tối ưu, scheduling theo slack/deadline)
+
+Đưa ra bảng so sánh ngắn (ưu/nhược) và KPIs (avg latency, p95/p99, miss ratio, energy, utilization, fairness).
+Hãy trình bày rõ ràng theo cấu trúc chương luận văn và cung cấp công thức LaTeX copy/paste.
+
+LaTeX công thức (copy/paste)
+1) Task model
+\[
+\Gamma_i = (s_i, c_i, o_i, T_i^{\max}, p_i)
+\]
+
+2) Communication delays (uplink/downlink)
+\[
+D_i^{tx} = \frac{s_i}{R_u^{UL}}, \qquad D_i^{rx} = \frac{o_i}{R_u^{DL}}
+\]
+
+3) Local computation delay
+\[
+D_i^{loc} = \frac{c_i}{f_u^{loc}}
+\]
+
+4) MEC CPU allocation constraint + computation delay
+\[
+\sum_{i \in Q_m} f_{i,m} \le F_m
+\]
+\[
+D_{i,m}^{cpu} = \frac{c_i}{f_{i,m}}
+\]
+
+5) Queueing delay (ký hiệu chung)
+\[
+D_{i,m}^{q} = W_{i,m}(t)
+\]
+
+6) End-to-end latency
+
+Local:
+
+\[
+D_i = D_i^{loc}
+\]
+
+
+Offload to MEC $m$:
+
+\[
+D_i = D_i^{tx} + D_{i,m}^{q} + D_{i,m}^{cpu} + D_i^{rx}
+\]
+
+7) Offloading decision + MEC selection variables
+\[
+x_i \in \{0,1\} \quad (0=\text{local},\ 1=\text{offload})
+\]
+\[
+y_{i,m}\in\{0,1\},\qquad \sum_{m\in\mathcal{M}} y_{i,m} = x_i
+\]
+
+8) Deadline/QoS constraint
+\[
+D_i \le T_i^{\max}
+\]
+
+9) UE energy model (uplink transmit)
+\[
+E_i^{tx} = P_u^{tx}\cdot D_i^{tx}
+\]
+
+
+(Tuỳ chọn) Local computing energy (CMOS)
+
+\[
+E_i^{loc} = \kappa (f_u^{loc})^2 c_i
+\]
+
+10) Objective function (2 lựa chọn)
+
+(A) Latency-centric
+
+\[
+\min \sum_i D_i
+\]
+
+
+(B) Multi-objective latency–energy–deadline violation
+
+\[
+\min \sum_i \left(\alpha D_i + \beta E_i^{tx} + \gamma \cdot \mathbf{1}[D_i>T_i^{\max}]\right)
+\]
+
+11) RR CPU share (mẫu đơn giản)
+\[
+f_{i,m} = \frac{F_m}{|Q_m|}
+\]
+
+12) PD weighted CPU share (mẫu theo priority weight)
+\[
+f_{i,m} = \frac{w_{p_i}}{\sum_{j\in Q_m} w_{p_j}}F_m
+\]
+
+13) Latency-aware estimated offload latency score
+\[
+\widehat{D}_{i\to m} = \frac{s_i}{R_u^{UL}} + \widehat{W}_m + \frac{c_i}{\widehat{f}_{i,m}} + \frac{o_i}{R_u^{DL}}
+\]
+
+
+Ước lượng đơn giản (gợi ý):
+
+\[
+\widehat{W}_m = \eta \cdot |Q_m|, \qquad \widehat{f}_{i,m} = \frac{F_m}{|Q_m|+1}
+\]
+
+14) Latency-aware offloading rule + MEC selection
+\[
+x_i =
+\begin{cases}
+1 & \text{if } \min_m \widehat{D}_{i\to m} < D_i^{loc} \ \text{and}\ \min_m \widehat{D}_{i\to m} \le T_i^{\max} \\
+0 & \text{otherwise}
+\end{cases}
+\]
+\[
+m^*=\arg\min_m \widehat{D}_{i\to m}
+\]
+
+15) Latency-aware urgency/slack metric (1 ví dụ)
+\[
+U_i = \frac{T_i^{\max} - \widehat{D}_i^{remain}}{T_i^{\max}}
+\]
