@@ -1,7 +1,7 @@
 # Mô phỏng open5gs ở biên MEC với k8s
 
 # Kiến trúc
-![Open5GS_MEC_K8s_DRL](v2/HinhAnh/Open5GS_MEC_K8s_DRL.jpg)
+![Open5GS_MEC_K8s_DRL](HinhAnh/Open5GS_MEC_K8s_DRL.jpg)
 
 # 1. Master node: Ubuntu 22.04 LTS; 4 cores, 4GB RAM, and internet access.
 #Clone the repository
