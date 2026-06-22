@@ -92,7 +92,7 @@ kubectl apply -k open5gs -n open5gs
 
 
 
-## 9. Tạo file định nghĩa mạng N6 Local
+# 9. Tạo file định nghĩa mạng N6 Local
 ```bash
 cat <<EOF > n6-local-net.yaml
 apiVersion: "k8s.cni.cncf.io/v1"
@@ -122,7 +122,7 @@ EOF
 
 
 
-## 10. Tạo file định nghĩa mạng N6 Global
+# 10. Tạo file định nghĩa mạng N6 Global
 ```bash
 cat <<EOF > n6-global-net.yaml
 apiVersion: "k8s.cni.cncf.io/v1"
@@ -346,7 +346,7 @@ spec:
         configMap: { name: ue1-config }
 ```
 
-## 16. Tạo mạng N9 Tunnel (Đường hầm nối UPF Edge và UPF Core)
+# 16. Tạo mạng N9 Tunnel (Đường hầm nối UPF Edge và UPF Core)
 ```bash
 cat <<EOF > n9-tunnel-net.yaml
 apiVersion: "k8s.cni.cncf.io/v1"
@@ -375,7 +375,7 @@ EOF
 ```
 
 
-## 17. Tạo ConfigMap cho UPF-Core
+# 17. Tạo ConfigMap cho UPF-Core
 ```bash
 apiVersion: v1	
 kind: ConfigMap	
@@ -420,7 +420,7 @@ data:
 ```
 
 
-## 18. Cấu hình Deployment UPF-core
+# 18. Cấu hình Deployment UPF-core
 ```bash
 nano upf-core.yaml	
 
@@ -476,7 +476,7 @@ spec:
 ```
 
 
-## 19. Tạo file configmap smf
+# 19. Tạo file configmap smf
 ```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
