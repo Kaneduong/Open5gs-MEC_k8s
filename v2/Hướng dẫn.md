@@ -92,7 +92,7 @@ kubectl apply -k open5gs -n open5gs
 
 
 
-## Tạo file định nghĩa mạng N6 Local
+## 9. Tạo file định nghĩa mạng N6 Local
 ```bash
 cat <<EOF > n6-local-net.yaml
 apiVersion: "k8s.cni.cncf.io/v1"
@@ -122,7 +122,7 @@ EOF
 
 
 
-## Tạo file định nghĩa mạng N6 Global
+## 10. Tạo file định nghĩa mạng N6 Global
 ```bash
 cat <<EOF > n6-global-net.yaml
 apiVersion: "k8s.cni.cncf.io/v1"
@@ -146,7 +146,7 @@ spec:
   }'
 ```
 
-# upf1 chạy trên node open5gs
+# 11. upf1 chạy trên node open5gs
 #CẤU HÌNH UPF BIÊN 1
 ```bash
 apiVersion: v1
@@ -205,7 +205,7 @@ spec:
         configMap: { name: upf1-configmap, defaultMode: 0777 }
 ```
 
-# upf2 chạy trên workerk8s
+# 12. upf2 chạy trên workerk8s
 #CẤU HÌNH UPF BIÊN 2 (Tương tự UPF1 nhưng đổi IP và Node)
 ```bash
 apiVersion: v1
@@ -262,7 +262,7 @@ spec:
 ```
 
 
-# gNB 1 (Chạy trên Node Biên 1)
+# 13. gNB 1 (Chạy trên Node Biên 1)
 ```bash
 apiVersion: apps/v1
 kind: Deployment
@@ -290,7 +290,7 @@ spec:
         configMap: { name: gnb-mec1-config }
 ```
 
-# gNB 2 (Chạy trên Node Biên 2)
+# 14. gNB 2 (Chạy trên Node Biên 2)
 ```bash
 apiVersion: apps/v1
 kind: Deployment
@@ -319,7 +319,7 @@ spec:
 ```
 
 
-# ĐIỆN THOẠI UE1 (Chạy trên Node UE)
+# 15. UE1 (Chạy trên Node UE)
 ```bash
 apiVersion: apps/v1
 kind: Deployment
@@ -346,7 +346,7 @@ spec:
         configMap: { name: ue1-config }
 ```
 
-##  Tạo mạng N9 Tunnel (Đường hầm nối UPF Edge và UPF Core)
+## 16. Tạo mạng N9 Tunnel (Đường hầm nối UPF Edge và UPF Core)
 ```bash
 cat <<EOF > n9-tunnel-net.yaml
 apiVersion: "k8s.cni.cncf.io/v1"
@@ -375,7 +375,7 @@ EOF
 ```
 
 
-## Tạo ConfigMap cho UPF-Core
+## 17. Tạo ConfigMap cho UPF-Core
 ```bash
 apiVersion: v1	
 kind: ConfigMap	
@@ -420,7 +420,7 @@ data:
 ```
 
 
-## Cấu hình Deployment UPF-core
+## 18. Cấu hình Deployment UPF-core
 ```bash
 nano upf-core.yaml	
 
@@ -476,7 +476,7 @@ spec:
 ```
 
 
-## Tạo file configmap smf
+## 19. Tạo file configmap smf
 ```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -565,7 +565,7 @@ data:
 EOF
 ```
 
-# Cụm Redis (Stateful Context Management)
+# 20. Cụm Redis (Stateful Context Management)
 #File: redis-cluster.yaml
 ```bash
 apiVersion: v1
@@ -597,7 +597,7 @@ spec:
         command: ["redis-server"]
 ```
 
-# Lớp Giám Sát (Prometheus Monitor)
+# 21. Lớp Giám Sát (Prometheus Monitor)
 #File: prometheus.yaml
 ```bash
 apiVersion: v1
@@ -655,7 +655,7 @@ spec:
   selector: { app: prometheus }
 ```
 
-# DRL AI Agent
+# 22. DRL AI Agent
 #File: drl-agent.yaml
 ```bash
 apiVersion: v1
