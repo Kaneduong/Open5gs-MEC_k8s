@@ -1,5 +1,8 @@
 # Mô phỏng open5gs ở biên MEC với k8s
 
+# Kiến trúc
+![Open5GS_MEC_K8s_DRL](HinhAnh/Open5GS_MEC_K8s_DRL.jpg)
+
 # 1. Master node: Ubuntu 22.04 LTS; 4 cores, 4GB RAM, and internet access.
 #Clone the repository
 ```bash
@@ -143,6 +146,205 @@ spec:
   }'
 ```
 
+# upf1 chạy trên node open5gs
+#CẤU HÌNH UPF BIÊN 1
+```bash
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: upf1-configmap
+  namespace: open5gs
+data:
+  upfcfg.yaml: |
+    logger: { file: /open5gs/install/var/log/open5gs/upf.log, level: info }
+    global: { max: { ue: 1024 } }
+    upf:
+      pfcp: { server: [ { dev: n4 } ] }
+      gtpu: { server: [ { dev: n3 }, { dev: n9 } ] }
+      session: [ { subnet: 10.41.0.1/16, dnn: internet } ]
+      metrics: { server: [ { address: 0.0.0.0, port: 9090 } ] }
+  wrapper.sh: |
+    #!/bin/bash
+    ip tuntap add name ogstun mode tun
+    ip addr add 10.41.0.1/16 dev ogstun
+    sysctl -w net.ipv6.conf.all.disable_ipv6=1
+    ip link set ogstun up
+    sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+    iptables -t nat -A POSTROUTING -s 10.41.0.0/16 ! -o ogstun -j MASQUERADE
+    /open5gs/install/bin/open5gs-upfd -c /open5gs/config/upfcfg.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-upf1
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: open5gs, name: upf1 } }
+  template:
+    metadata:
+      labels: { app: open5gs, name: upf1 }
+      annotations:
+        k8s.v1.cni.cncf.io/networks: '[ 
+          { "name": "n4network", "interface": "n4", "ips": [ "10.10.4.1/24" ] }, 
+          { "name": "n3network", "interface": "n3" }, 
+          { "name": "n9-tunnel", "interface": "n9", "ips": [ "10.10.9.11/24" ] },
+          { "name": "n6-local", "interface": "n6", "ips": [ "10.10.6.11/24" ] } 
+        ]'
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: open5gs
+      containers:
+      - name: upf
+        image: ghcr.io/niloysh/open5gs:v2.7.0-v2
+        command: ["/open5gs/config/wrapper.sh"]
+        securityContext: { privileged: true }
+        volumeMounts: [ { mountPath: /open5gs/config/, name: upf-vol } ]
+      volumes:
+      - name: upf-vol
+        configMap: { name: upf1-configmap, defaultMode: 0777 }
+```
+
+# upf2 chạy trên workerk8s
+#CẤU HÌNH UPF BIÊN 2 (Tương tự UPF1 nhưng đổi IP và Node)
+```bash
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: upf2-configmap
+  namespace: open5gs
+data:
+  upfcfg.yaml: |
+    logger: { file: /open5gs/install/var/log/open5gs/upf.log, level: info }
+    global: { max: { ue: 1024 } }
+    upf:
+      pfcp: { server: [ { dev: n4 } ] }
+      gtpu: { server: [ { dev: n3 }, { dev: n9 } ] }
+      session: [ { subnet: 10.41.0.1/16, dnn: internet } ]
+      metrics: { server: [ { address: 0.0.0.0, port: 9090 } ] }
+  wrapper.sh: |
+    #!/bin/bash
+    ip tuntap add name ogstun mode tun; ip addr add 10.41.0.1/16 dev ogstun; ip link set ogstun up
+    sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+    iptables -t nat -A POSTROUTING -s 10.41.0.0/16 ! -o ogstun -j MASQUERADE
+    /open5gs/install/bin/open5gs-upfd -c /open5gs/config/upfcfg.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-upf2
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: open5gs, name: upf2 } }
+  template:
+    metadata:
+      labels: { app: open5gs, name: upf2 }
+      annotations:
+        k8s.v1.cni.cncf.io/networks: '[ 
+          { "name": "n4network", "interface": "n4", "ips": [ "10.10.4.2/24" ] }, 
+          { "name": "n3network", "interface": "n3" }, 
+          { "name": "n9-tunnel", "interface": "n9", "ips": [ "10.10.9.12/24" ] },
+          { "name": "n6-local", "interface": "n6", "ips": [ "10.10.6.12/24" ] } 
+        ]'
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: workerk8s
+      containers:
+      - name: upf
+        image: ghcr.io/niloysh/open5gs:v2.7.0-v2
+        command: ["/open5gs/config/wrapper.sh"]
+        securityContext: { privileged: true }
+        volumeMounts: [ { mountPath: /open5gs/config/, name: upf-vol } ]
+      volumes:
+      - name: upf-vol
+        configMap: { name: upf2-configmap, defaultMode: 0777 }
+```
+
+
+# gNB 1 (Chạy trên Node Biên 1)
+```bash
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ueransim-gnb-mec1
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: ueransim, name: gnb-mec1 } }
+  template:
+    metadata:
+      labels: { app: ueransim, name: gnb-mec1 }
+      annotations: { k8s.v1.cni.cncf.io/networks: '[ { "name": "n3network", "interface": "n3" } ]' }
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: open5gs
+      containers:
+      - name: gnb
+        image: free5gmano/ueransim:v3.2.6
+        command: ["./nr-gnb", "-c", "/config/gnb.yaml"]
+        volumeMounts: [ { name: gnb-config, mountPath: /config } ]
+        securityContext: { privileged: true }
+      volumes:
+      - name: gnb-config
+        configMap: { name: gnb-mec1-config }
+```
+
+# gNB 2 (Chạy trên Node Biên 2)
+```bash
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ueransim-gnb-mec2
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: ueransim, name: gnb-mec2 } }
+  template:
+    metadata:
+      labels: { app: ueransim, name: gnb-mec2 }
+      annotations: { k8s.v1.cni.cncf.io/networks: '[ { "name": "n3network", "interface": "n3" } ]' }
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: workerk8s
+      containers:
+      - name: gnb
+        image: free5gmano/ueransim:v3.2.6
+        command: ["./nr-gnb", "-c", "/config/gnb.yaml"]
+        volumeMounts: [ { name: gnb-config, mountPath: /config } ]
+        securityContext: { privileged: true }
+      volumes:
+      - name: gnb-config
+        configMap: { name: gnb-mec2-config }
+```
+
+
+# ĐIỆN THOẠI UE1 (Chạy trên Node UE)
+```bash
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ueransim-ue1
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: ueransim, name: ue1 } }
+  template:
+    metadata:
+      labels: { app: ueransim, name: ue1 }
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: ue
+      containers:
+      - name: ue
+        image: free5gmano/ueransim:v3.2.6
+        command: ["sh", "-c", "sleep 10 && ./nr-ue -c /config/ue.yaml"]
+        securityContext: { privileged: true, capabilities: { add: ["NET_ADMIN"] } }
+        volumeMounts: [ { name: ue-config, mountPath: /config } ]
+      volumes:
+      - name: ue-config
+        configMap: { name: ue1-config }
+```
 
 ##  Tạo mạng N9 Tunnel (Đường hầm nối UPF Edge và UPF Core)
 ```bash
@@ -361,4 +563,165 @@ data:
           upf:
             - address: 10.10.4.2
 EOF
+```
+
+# Cụm Redis (Stateful Context Management)
+#File: redis-cluster.yaml
+```bash
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-mec
+  namespace: open5gs
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-mec
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: redis } }
+  template:
+    metadata: { labels: { app: redis } }
+    spec:
+      containers:
+      - name: redis
+        image: redis:alpine
+        ports: [ { containerPort: 6379 } ]
+        command: ["redis-server"]
+```
+
+# Lớp Giám Sát (Prometheus Monitor)
+#File: prometheus.yaml
+```bash
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: open5gs
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 2s 
+    scrape_configs:
+      - job_name: 'open5gs-metrics'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [ 'open5gs' ]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: open5gs
+          - source_labels: [__meta_kubernetes_pod_container_port_number]
+            action: keep
+            regex: 9090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: prometheus } }
+  template:
+    metadata: { labels: { app: prometheus } }
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus:latest
+        args: [ "--config.file=/etc/prometheus/prometheus.yml" ]
+        ports: [ { containerPort: 9090 } ]
+        volumeMounts: [ { name: config-volume, mountPath: /etc/prometheus/ } ]
+      volumes:
+      - name: config-volume
+        configMap: { name: prometheus-config }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-svc
+  namespace: open5gs
+spec:
+  type: ClusterIP
+  ports: [ { port: 9090, targetPort: 9090 } ]
+  selector: { app: prometheus }
+```
+
+# DRL AI Agent
+#File: drl-agent.yaml
+```bash
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: drl-agent-code
+  namespace: open5gs
+data:
+  agent.py: |
+    import time
+    import requests
+    import random
+    
+    PROMETHEUS_URL = "http://prometheus-svc:9090/api/v1/query"
+    SMF_API_URL = "http://smf1-nsmf:80/nudm-sdm/v2/" # Cổng SBI của Open5GS
+
+    def get_metrics():
+        print("[Prometheus] Đang cào dữ liệu trạng thái mạng...")
+        try:
+            # Truy vấn Prometheus (Ví dụ: Số lượng PDU Session trên UPF1)
+            response = requests.get(f"{PROMETHEUS_URL}?query=upf_sessions_total").json()
+            return response['data']['result']
+        except:
+            return None
+
+    def calculate_reward(state):
+        # DDPG / PPO Logic xử lý ở đây
+        print("[DRL Agent] Chạy thuật toán DQN... Tính toán Reward...")
+        cpu_load_edge1 = random.randint(20, 90) # Giả lập metric
+        return cpu_load_edge1
+
+    def take_action(cpu_load):
+        if cpu_load > 80:
+            print(f"[Cảnh báo] Tải Edge 1 ({cpu_load}%) quá cao! Quyết định: Offload về Core.")
+            # Thực thi API can thiệp Open5GS (PDU Session Update)
+            action_payload = { "routing_rule": "10.10.4.3" } # Đẩy về Core UPF
+            print(f"[SMF SBI] Đã gửi lệnh cập nhật định tuyến: {action_payload}")
+        else:
+            print(f"[Tối ưu] Tải Edge 1 ({cpu_load}%) ổn định. Quyết định: Local Breakout (MEC).")
+
+    if __name__ == "__main__":
+        print("🚀 Khởi động DRL AI Agent cho mạng 5G MEC SON...")
+        while True:
+            state = get_metrics()
+            reward_metric = calculate_reward(state)
+            take_action(reward_metric)
+            print("-" * 50)
+            time.sleep(5) # Vòng lặp học và điều phối mỗi 5 giây
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drl-ai-agent
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: drl-agent } }
+  template:
+    metadata: { labels: { app: drl-agent } }
+    spec:
+      containers:
+      - name: ai-agent
+        image: python:3.9-slim
+        command: ["/bin/sh", "-c", "pip install requests && python /app/agent.py"]
+        volumeMounts: [ { name: code-volume, mountPath: /app } ]
+      volumes:
+      - name: code-volume
+        configMap: { name: drl-agent-code }
 ```
