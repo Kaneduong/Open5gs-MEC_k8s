@@ -1,0 +1,109 @@
+  GNU nano 6.2                                           upf.yaml
+#logger:
+#  file:
+#    path: /var/log/open5gs/upf.log
+logger:
+  file:
+    path: /dev/stdout
+  level: info   # fatal|error|warn|info(default)|debug|trace
+
+global:
+  max:
+    ue: 1024
+    peer: 64
+
+upf:
+  pfcp:
+    server:
+      - address: 0.0.0.0
+#      - address: 10.10.33.60
+    client:
+      smf:
+        - address: 10.10.33.54   # IP của SMF trên VM1
+  gtpu:
+    server:
+      - address: 0.0.0.0
+#      - address: 10.10.33.60
+  session:
+    - subnet: 10.45.0.0/16
+      gateway: 10.45.0.1
+    - subnet: 2001:db8:cafe::/48
+      gateway: 2001:db8:cafe::1
+  metrics:
+    server:
+      - address: 0.0.0.0
+#      - address: 10.10.33.60
+        port: 9090
+####################################################################
+  GNU nano 6.2                                       upf-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: upf-config
+  namespace: open5gs
+data:
+  upf.yaml: |
+    logger:
+      file:
+        path: /dev/stdout
+      level: info
+
+    global:
+      max:
+        ue: 1024
+        peer: 64
+
+    upf:
+      pfcp:
+        server:
+          - address: 0.0.0.0
+        client:
+          smf:
+            - address: 10.10.33.54   # IP SMF trên VM1
+      gtpu:
+        server:
+          - address: 0.0.0.0
+      session:
+        - subnet: 10.45.0.0/16
+          gateway: 10.45.0.1
+        - subnet: 2001:db8:cafe::/48
+          gateway: 2001:db8:cafe::1
+      metrics:
+        server:
+          - address: 0.0.0.0
+            port: 9090
+####################################################################
+  GNU nano 6.2                                     upf-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: upf
+  template:
+    metadata:
+      labels:
+        app: upf
+    spec:
+      containers:
+      - name: upf
+        image: open5gs:local
+        command: ["/usr/local/bin/open5gs-upfd"]
+        args: ["-c", "/etc/open5gs/upf.yaml"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: upf-config
+          mountPath: /etc/open5gs
+          readOnly: true
+      volumes:
+      - name: upf-config
+        configMap:
+          name: upf-config
+          items:
+          - key: upf.yaml
+            path: upf.yaml

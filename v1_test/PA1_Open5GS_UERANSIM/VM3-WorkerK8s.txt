@@ -1,0 +1,143 @@
+sudo nano /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg				
+network: {config: disabled}				
+sudo touch /etc/cloud/cloud-init.disabled				
+				
+sudo nano /etc/hosts				
+192.168.50.11   Open5GS				
+192.168.50.12   MasterK8s				
+192.168.50.13   WorkerK8s				
+192.168.50.14   UE				
+				
+sudo hostnamectl set-hostname WorkerK8s				
+				
+sudo nano /etc/netplan/50-cloud-init.yaml				
+eth1:				
+            dhcp4: no				
+            dhcp6: no				
+            addresses:				
+              - 192.168.50.12/24				
+            match:				
+                macaddress: 7c:7f:37:04:37:99				
+            set-name: eth1				
+				
+				
+Bước 1 – Cài Kubernetes (VM2 = Master, VM3 = Worker)				
+Chúng ta chia bước này thành 4 việc:				
+1	Cài containerd trên cả VM2 & VM3			
+2	Cài kubeadm, kubelet, kubectl trên cả hai VM			
+3	Init Kubernetes trên MasterK8s (VM2)			
+4	Join WorkerK8s (VM3) vào cluster			
+Mình bắt đầu Việc 1.				
+🧩 Việc 1 – Cài containerd (runtime) trên VM2 & VM3				
+Kubernetes cần container runtime. Chúng ta dùng containerd vì ổn định và tương thích tốt với K8s.				
+🔧 1. Cài containerd				
+📌 Chạy lệnh này trên VM2 (MasterK8s) và VM3 (WorkerK8s):				
+apt update				
+apt install -y containerd				
+🔧 2. Tạo file cấu hình mặc định cho containerd				
+mkdir -p /etc/containerd				
+containerd config default | tee /etc/containerd/config.toml				
+🔧 3. Bật SystemdCgroup để tương thích Kubernetes				
+Mở file:				
+nano /etc/containerd/config.toml				
+Tìm đoạn:				
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]				
+  SystemdCgroup = false				
+→ Sửa thành:				
+  SystemdCgroup = true				
+Lưu lại (Ctrl+O, Enter, Ctrl+X).				
+🔧 4. Restart containerd				
+systemctl restart containerd				
+systemctl enable containerd				
+🔧 5. Cài module kernel cần thiết cho Kubernetes				
+cat <<EOF | tee /etc/modules-load.d/k8s.conf				
+overlay				
+br_netfilter				
+EOF				
+Nạp module:				
+modprobe overlay				
+modprobe br_netfilter				
+🔧 6. Bật các sysctl cho K8s				
+cat <<EOF | tee /etc/sysctl.d/k8s.conf				
+net.bridge.bridge-nf-call-iptables = 1				
+net.bridge.bridge-nf-call-ip6tables = 1				
+net.ipv4.ip_forward = 1				
+EOF				
+Áp dụng:				
+sysctl --system				
+📹 Video tham khảo cực chuẩn (cài containerd + kubeadm)				
+Kubeadm Full Setup – Vietnamese				
+https://www.youtube.com/watch?v=X9fSMGkjtug				
+(Bạn chỉ xem phần containerd & sysctl, không xem phần join cluster vội.)				
+✅ Nhiệm vụ của bạn bây giờ				
+1	Chạy toàn bộ lệnh trên trên VM2 & VM3			
+2	Gửi mình output cuối của 2 lệnh:			
+systemctl status containerd --no-pager				
+sysctl net.ipv4.ip_forward				
+Khi mình xác nhận OK → chúng ta chuyển sang Việc 2: Cài kubeadm, kubelet, kubectl.				
+				
+				
+CHUYỂN SANG VIỆC 2 – CÀI kubeadm, kubelet, kubectl				
+Việc này áp dụng cho cả VM2 (MasterK8s) và VM3 (WorkerK8s).				
+Mình sẽ cung cấp lệnh đã được xác thực bởi tài liệu chính thức, có video hướng dẫn, không bịa.				
+📘 Nguồn chính thức (documentation)				
+Bạn có thể kiểm tra lại theo link chuẩn:				
+🔗 Kubernetes Official Install (apt method)				
+https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/				
+Mình dùng đúng theo tài liệu này.				
+📹 VIDEO HƯỚNG DẪN (bản chuẩn, không bịa)**				
+⭐ Hướng dẫn cài kubeadm chuẩn (containerd + kubeadm + calico)				
+https://www.youtube.com/watch?v=X9fSMGkjtug				
+(Đây là video phổ biến nhất và trùng với tài liệu chính thức.)				
+🧩 VIỆC 2 – Cài kubeadm, kubelet, kubectl (trên cả Master & Worker)				
+🔧 Bước 1: Cài dependency				
+apt update				
+apt install -y apt-transport-https ca-certificates curl				
+🔧 Bước 2: Thêm kho Kubernetes				
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg				
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list				
+(Theo đúng tài liệu chính thức Kubernetes)				
+🔧 Bước 3: Cài kubeadm, kubelet, kubectl				
+apt update				
+apt install -y kubelet kubeadm kubectl				
+🔧 Bước 4: Hold version (tránh auto-update gây lỗi)				
+apt-mark hold kubelet kubeadm kubectl				
+🔧 Bước 5: Kiểm tra cài đặt				
+kubeadm version				
+kubectl version --client				
+kubelet --version				
+Nếu hiện phiên bản tương ứng → OK.				
+📝 Nhiệm vụ của bạn				
+❗ Chạy toàn bộ các lệnh trên TRÊN VM2 và VM3				
+(Ý: cả MasterK8s và WorkerK8s đều phải có kubeadm + kubelet + kubectl.)				
+Sau đó gửi mình output của các lệnh sau từ VM2 và VM3:				
+kubeadm version				
+kubectl version --client				
+kubelet --version				
+				
+				
+Tiếp tục: VIỆC 4 — Cho WorkerK8s JOIN vào cluster				
+Bạn copy lệnh join từ output kubeadm init:				
+kubeadm join 192.168.50.12:6443 --token 75lqf3.mzq9msb23ssqbxjz \				
+        --discovery-token-ca-cert-hash sha256:b21742913d988dc30c3e584567c0372455176164104ad7aa983471227f97ebb6				
+👉 Chạy lệnh này trên WorkerK8s (VM3).				
+🧩 Sau khi chạy lệnh join, kiểm tra tại Master:				
+Trên MasterK8s, chạy:				
+kubectl get nodes				
+Kết quả đúng sẽ là:				
+NAME          STATUS   ROLES           AGE   VERSION				
+masterk8s     Ready    control-plane   Xm    v1.30.14				
+workerk8s     Ready    <none>          Xs    v1.30.14				
+Worker ban đầu có thể ở trạng thái NotReady trong 10–30 giây → chờ calico-node trên Worker chạy lên.				
+📹 Video Join Worker theo kubeadm				
+How to join worker node to kubeadm cluster (Official style):				
+https://www.youtube.com/watch?v=EjQsB0C7nYA				
+📩 NHIỆM VỤ CỦA BẠN:				
+1	Chạy lệnh			
+	kubeadm join			
+	trên WorkerK8s.			
+2	Gửi lại output của lệnh đó.			
+3	Gửi thêm			
+	kubectl get nodes			
+	từ MasterK8s.			
+Mình sẽ xác nhận xem Worker đã join đúng chưa → rồi chuyển sang Bước 2: Cài Multus CNI.				

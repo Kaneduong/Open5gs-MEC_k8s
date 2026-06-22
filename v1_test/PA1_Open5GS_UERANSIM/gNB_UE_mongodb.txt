@@ -1,0 +1,164 @@
+  GNU nano 6.2                   config/my-gnb.yaml
+mcc: '999'          # Mobile Country Code value
+mnc: '70'           # Mobile Network Code value (2 or 3 digits)
+
+nci: '0x000000010'  # NR Cell Identity (36-bit)
+idLength: 32        # NR gNB ID length in bits [22...32]
+tac: 1              # Tracking Area Code
+
+linkIp: 10.10.33.40   # gNB's local IP address for Radio Link Simulation (Usual>
+ngapIp: 10.10.33.40   # gNB's local IP address for N2 Interface (Usually same w>
+gtpIp: 10.10.33.40    # gNB's local IP address for N3 Interface (Usually same w>
+
+# List of AMF address information
+amfConfigs:
+  - address: 10.10.33.54
+    port: 38412
+
+# List of supported S-NSSAIs by this gNB
+slices:
+  - sst: 1
+#    sd: 000000 không được để sd
+#    sd: "010203" <== lỗi
+#    sd: 000001 <== [error] NG Setup procedure is failed. Cause: radio-network/>
+
+# Indicates whether or not SCTP stream number errors should be ignored.
+ignoreStreamIds: true
+###########################################################################################
+  GNU nano 6.2                                      config/my-ue.yaml
+# IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)
+supi: 'imsi-999700000000001'
+# Mobile Country Code value of HPLMN
+mcc: '999'
+# Mobile Network Code value of HPLMN (2 or 3 digits)
+mnc: '70'
+# SUCI Protection Scheme : 0 for Null-scheme, 1 for Profile A and 2 for Profile B
+protectionScheme: 0
+# Home Network Public Key for protecting with SUCI Profile A
+homeNetworkPublicKey: '5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650'
+# Home Network Public Key ID for protecting with SUCI Profile A
+homeNetworkPublicKeyId: 1
+# Routing Indicator
+routingIndicator: '0000'
+
+# Permanent subscription key
+key: '465B5CE8B199B49FAA5F0A2EE238A6BC'
+# Operator code (OP or OPC) of the UE
+op: 'E8ED289DEBA952E4283B54E88E6183CA'
+# This value specifies the OP type and it can be either 'OP' or 'OPC'
+opType: 'OPC'
+# Authentication Management Field (AMF) value
+amf: '8000'
+# IMEI number of the device. It is used if no SUPI is provided
+imei: '356938035643803'
+# IMEISV number of the device. It is used if no SUPI and IMEI is provided
+imeiSv: '4370816125816151'
+
+# Network mask used for the UE's TUN interface to define the subnet size
+tunNetmask: '255.255.255.0'
+
+# List of gNB IP addresses for Radio Link Simulation
+gnbSearchList:
+  - 10.10.33.40
+
+# UAC Access Identities Configuration
+uacAic:
+  mps: false
+  mcs: false
+
+# UAC Access Control Class
+uacAcc:
+  normalClass: 0
+  class11: false
+  class12: false
+  class13: false
+  class14: false
+  class15: false
+
+# Initial PDU sessions to be established
+sessions:
+  - type: 'IPv4'
+    apn: 'internet'
+    slice:
+      sst: 1
+      sd: 000000 #mới thêm vào
+# Configured NSSAI for this UE by HPLMN
+configured-nssai:
+  - sst: 1
+
+# Default Configured NSSAI for this UE
+default-nssai:
+  - sst: 1
+    sd: 1
+
+# Supported integrity algorithms by this UE
+integrity:
+  IA1: true
+  IA2: true
+  IA3: true
+
+# Supported encryption algorithms by this UE
+ciphering:
+  EA1: true
+  EA2: true
+  EA3: true
+
+# Integrity protection maximum data rate for user plane
+integrityMaxRate:
+  uplink: 'full'
+  downlink: 'full'
+###########################################################################################
+
+#Cấu hình thuê bao trong mongosh
+open5gs> db.subscribers.find({ "imsi": "999700000000001" }).pretty()
+...
+[
+  {
+    _id: ObjectId('6943a619b4362d26848de666'),
+    imsi: '999700000000001',
+    subscribed_rau_tau_timer: 12,
+    network_access_mode: 0,
+    subscriber_status: 0,
+    access_restriction_data: 32,
+    subscribed_ue_ambr: {
+      uplink: { value: 100, unit: 2 },
+      downlink: { value: 100, unit: 2 }
+    },
+    slice: [
+      {
+        sst: 1,
+        sd: '000000',
+        default_indicator: true,
+        session: [
+          {
+            nssai: { sst: 1, sd: '000000' },
+            dnn: 'internet',
+            qos: {
+              index: 9,
+              arp: {
+                priority_level: 8,
+                pre_emption_capability: 1,
+                pre_emption_vulnerability: 1
+              }
+            },
+            ambr: {
+              uplink: { value: 100, unit: 2 },
+              downlink: { value: 100, unit: 2 }
+            }
+          }
+        ]
+      }
+    ],
+    security: {
+      k: '465B5CE8B199B49FAA5F0A2EE238A6BC',
+      amf: '8000',
+      op: null,
+      opc: 'E8ED289DEBA952E4283B54E88E6183CA',
+      algorithm_id: 1,
+      sqn: Long('129')
+    },
+    schema_version: 1,
+    imeisv: '4370816125816151'
+  }
+]
+open5gs>
