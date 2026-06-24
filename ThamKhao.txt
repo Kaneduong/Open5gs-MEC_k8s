@@ -1,0 +1,31 @@
+[1] S. Kekki et al., “ETSI White Paper No. 28: MEC in 5G networks,” 2018.
+[2] R. Keating, D. Yoon, T. Tao, and H. Huang, “Opportunities and challenges for nr rat-dependent based positioning,” in 2019 IEEE 90th Vehicular Technology Conference (VTC2019-Fall), 2019, pp. 1–6.
+[3] F. Giust, X. Costa-Perez, and A. Reznik, “Multi-access edge computing: An overview of ETSI MEC ISG,” IEEE 5G Tech Focus, vol. 1, no. 4, p. 4, 2017.
+[4] Y. Liu, M. Peng, G. Shou, Y. Chen, and S. Chen, “Toward Edge Intelligence: Multiaccess Edge Computing for 5G and Internet of Things,” IEEE Internet of Things Journal, vol. 7, no. 8, pp. 6722–6747, 2020.
+[5] W. Lu, X. Meng, and G. Guo, “Fast Service Migration Method Based on Virtual Machine Technology for MEC,” IEEE Internet of Things Journal, vol. 6, no. 3, pp. 4344–4354, 2019.
+[6] Z. Lv and W.Xiu, “Interaction of Edge-Cloud Computing Based on SDN and NFV for Next Generation IoT,” IEEE Internet of Things Journal, vol. 7, no. 7, pp. 5706–5712, 2020.
+[7] M. Corici, P. Chakraborty, and T. Magedanz, “A Study of 5G Edge-Central Core Network Split Options,” Network, vol. 1, no. 3, pp. 354–368, 2021. [Online]. Available: https://www.mdpi.com/2673-8732/1/3/20
+[8] S. Lee, S. Lee, and M.-K. Shin, “Low Cost MEC Server Placement and Association in 5G Networks,” in 2019 International Conference on Information and Communication Technology Convergence (ICTC), 2019, pp. 879–882.
+[9] M. Emara, M. C. Filippou, and D. Sabella, “MEC-Assisted End-to-End Latency Evaluations for C-V2X Communications,” in 2018 European Conference on Networks and Communications (EuCNC), 2018.
+[10] I. Farris, T. Taleb, H. Flinck, and A. Iera, “Providing ultra-short latency to user-centric 5G applications at the mobile network edge,” Transactions on Emerging Telecommunications Technologies, vol. 29, no. 4, p. e3169, 2018, e3169 ett.3169. [Online]. Available: https://onlinelibrary.wiley.com/doi/abs/10.1002/ett.3169
+[11] S. Ramanathan, K. Kondepu, M. Razo, M. Tacca, L. Valcarenghi, and A. Fumagalli, “Live Migration of Virtual Machine and Container Based Mobile Core Network Components: A Comprehensive Study,” IEEE Access, vol. 9, pp. 105082–105100, 2021.
+[12] S. Ramanathan, A. Bhattacharyya, K. Kondepu, M. Razo, M. Tacca, L. Valcarenghi, and A. Fumagalli, “Demonstration of Containerized Central Unit Live Migration in 5G Radio Access Network,” in 2022 IEEE 8th International Conference on Network Softwarization (NetSoft), 2022, pp. 225–227.
+[13] H. Abdah, J. P. Barraca, and R. L. Aguiar, “Handover prediction integrated with service migration in 5g systems,” in ICC 2020- 2020 IEEE International Conference on Communications (ICC), 2020, pp. 1–7.
+[14] M. Pomalo, V. T. Le, N. El Ioini, C. Pahl, and H. R. Barzegar, “Service migration in multi-domain cellular networks based on machine learning approaches,” in 2020 7th International Conference on Internet of Things: Systems, Management and Security (IOTSMS), 2020, pp. 1–8.
+[15] A. Abouaomar, Z. Mlika, A. Filali, S. Cherkaoui, and A. Kobbane, “A deep reinforcement learning approach for service migration in mec enabled vehicular networks,” in 2021 IEEE 46th Conference on Local Computer Networks (LCN), 2021, pp. 273–280.
+[16] R. A. Addad, D. L. C. Dutra, T. Taleb, and H. Flinck, “AI-Based Network-Aware Service Function Chain Migration in 5G and Beyond Networks,” IEEE Transactions on Network and Service Management, vol. 19, no. 1, pp. 472–484, 2022.
+[17] N. Nikaein, M. K. Marina, S. Manickam, A. Dawson, R. Knopp, and C. Bonnet, “Openairinterface: A flexible platform for 5g research,” SIGCOMM Comput. Commun. Rev., vol. 44, no. 5, p. 33–38, Oct. 2014. [Online]. Available: https://doi.org/10.1145/2677046.2677053
+[18] N. Makris, C. Zarafetas, S. Kechagias, T. Korakis, I. Seskar, and L. Tas siulas, “Enabling open access to LTE network components; the NITOS testbed paradigm,” in Proceedings of the 2015 1st IEEE Conference on Network Softwarization (NetSoft). IEEE, 2015, pp. 1–6.
+[19] “KubeVirt: Virtualization extension for Kubernetes,” [Online], https:// github.com/kubevirt/kubevirt.
+[20] “CRIU- a utility to checkpoint/restore Linux tasks,” [Online], https: //criu.org.
+[21] J. Schrettenbrunner, “Migrating pods in kubernetes,” Ph.D. dissertation, 12 2020.
+[22] “Podmigration-Operator: An operator that supports Pod Migration in K8s,” [Online], https://github.com/SSU-DCN/podmigration-operator.
+[23] M. Hines and K. Gopalan, “Post-copy based live virtual machine migration using pre-paging and dynamic self-ballooning,” 01 2009, pp. 51–60.
+[24] M. Gundall, J. Stegmann, C. Huber, and H. Schotten, “Towards organic 6g networks: Virtualization and live migration of core network functions,” 10 2021.
+[25] S. Dwivedi, R. Shreevastav, F. Munier, J. Nygren, I. Siomina, Y. Lyazidi, D. Shrestha, G. Lindmark, P. Ernstr¨om, E. Stare, S. M. Razavi, S. Muruganathan, G. Masini, Busin, and F. Gunnarsson,“Positioning in 5g networks,” 2021. [Online]. Available: https: //arxiv.org/abs/2102.03361
+[26] G. Brockman, V. Cheung, L. Pettersson, J. Schneider, J. Schulman, J. Tang, and W. Zaremba, “Openai gym,” 2016. [Online]. Available: https://arxiv.org/abs/1606.01540
+[27] “OOKLA 5G MAP™: The interactive Ookla 5G Map tracks 5G rollouts in cities across the globe.” [Online], https://www.speedtest.net/ookla-5g-map.
+[28] M. Tirmazi, A. Barker, N. Deng, M. E. Haque, Z. G. Qin, S. Hand, M. Harchol-Balter, and J. Wilkes, “Borg: the next generation,” in EuroSys’20, Heraklion, Crete, 2020.
+[29] H. van Hasselt, A. Guez, and D. Silver, “Deep reinforcement learning with double q-learning,” 2015. [Online]. Available: https://arxiv.org/abs/1509.06461
+[30] D. Zhao, H. Wang, K. Shao, and Y. Zhu, “Deep reinforcement learning with experience replay based on sarsa,” in 2016 IEEE Symposium Series on Computational Intelligence (SSCI), 2016, pp. 1–6.
+[31] “SIPp- a SIP protocol test tool,” [Online], https://github.com/SIPp/sipp.
