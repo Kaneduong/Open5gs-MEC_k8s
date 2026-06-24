@@ -697,7 +697,7 @@ data:
             print(f"[Tối ưu] Tải Edge 1 ({cpu_load}%) ổn định. Quyết định: Local Breakout (MEC).")
 
     if __name__ == "__main__":
-        print("🚀 Khởi động DRL AI Agent cho mạng 5G MEC SON...")
+        print("Khởi động DRL AI Agent cho mạng 5G MEC...")
         while True:
             state = get_metrics()
             reward_metric = calculate_reward(state)
