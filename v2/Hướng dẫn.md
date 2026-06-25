@@ -725,3 +725,237 @@ spec:
       - name: code-volume
         configMap: { name: drl-agent-code }
 ```
+
+# Giai đoạn 2: Giảm tải tại gnb1 -> giảm tải tại 2 gnb -> di chuyển
+Bước 1: Gán nhãn cho 2 node biên
+kubectl label nodes open5gs edge-location=mec1
+kubectl label nodes workerk8s edge-location=mec2
+
+Bước 2: Tạo và khởi chạy MEC App
+nano mec-apps.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mec-app-1-svc
+  namespace: default
+spec:
+  selector:
+    app: mec-app-1
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mec-app-1
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mec-app-1
+  template:
+    metadata:
+      labels:
+        app: mec-app-1
+    spec:
+      nodeSelector:
+        edge-location: mec1
+      containers:
+      - name: mec-app-1
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mec-app-2-svc
+  namespace: default
+spec:
+  selector:
+    app: mec-app-2
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mec-app-2
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mec-app-2
+  template:
+    metadata:
+      labels:
+        app: mec-app-2
+    spec:
+      nodeSelector:
+        edge-location: mec2
+      containers:
+      - name: mec-app-2
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+
+kubectl apply -f mec-apps.yaml
+
+##Bước 3: Kiểm tra vị trí App và lấy IP
+root@MasterK8s:~# kubectl get pods -n default -o wide | grep mec-app
+mec-app-1-7d8b5658b-p669c   1/1     Running   0          2m42s   192.168.43.247   open5gs     <none>           <none>
+mec-app-2-9ff69847f-w6jpp   1/1     Running   0          2m42s   192.168.30.190   workerk8s   <none>           <none>
+root@MasterK8s:~# kubectl get svc -n default | grep mec-app
+mec-app-1-svc   ClusterIP   10.99.131.123   <none>        80/TCP    3m24s
+mec-app-2-svc   ClusterIP   10.109.144.29   <none>        80/TCP    3m24s
+
+##Cấu hình "Bản đồ rẽ nhánh" cho SMF
+cat << 'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: open5gs
+    name: smf1
+    nf: smf
+  name: smf1-configmap
+  namespace: open5gs
+data:
+  smfcfg.yaml: |
+    logger:
+      file: /open5gs/install/var/log/open5gs/smf.log
+
+    global:
+      max:
+        ue: 1024
+
+    smf:
+      sbi:
+        server:
+          - dev: eth0
+            advertise: smf1-nsmf
+            port: 80
+        client:
+          scp:
+            - uri: http://scp-nscp:80
+            
+      pfcp:
+        server:
+          - dev: n4
+        client:
+          upf:
+            - address: 10.10.4.3
+              dnn: internet
+            - address: 10.10.4.1
+              dnn: internet
+            - address: 10.10.4.2
+              dnn: internet
+              
+      gtpc:
+        server:
+          - dev: eth0
+      gtpu:
+        server:
+          - dev: n3
+      metrics:
+        server:
+          - address: 0.0.0.0
+            port: 9090
+            
+      session:
+        - subnet: 10.41.0.1/16
+      dns:
+        - 8.8.8.8
+        - 8.8.4.4
+      mtu: 1400
+      ctf:
+        enabled: auto
+      freeDiameter: /open5gs/install/etc/freeDiameter/smf.conf
+
+      info:
+        - s_nssai:
+          - sst: 1
+            sd: 000001
+            dnn:
+              - internet
+
+      upf:
+        - address: 10.10.4.3
+        - address: 10.10.4.1
+          links:
+            - address: 10.10.4.3
+        - address: 10.10.4.2
+          links:
+            - address: 10.10.4.3
+
+      route:
+        - destination: 10.99.131.123/32
+          upf:
+            - address: 10.10.4.1
+        - destination: 10.109.144.29/32
+          upf:
+            - address: 10.10.4.2
+        # ĐÂY LÀ CHÌA KHÓA CỨU MẠNG: ĐẨY TRAFFIC CÒN LẠI LÊN CORE
+        - destination: 0.0.0.0/0
+          upf:
+            - address: 10.10.4.3
+EOF
+
+## Reset lại SMF
+kubectl delete pod -l app=open5gs,nf=smf -n open5gs
+kubectl delete pod -l app=ueransim -n open5gs
+
+UPF1=$(kubectl get pods -n open5gs | grep upf1 | awk '{print $1}')
+kubectl exec -it $UPF1 -n open5gs -- sh -c "sysctl net.ipv4.ip_forward=1 && iptables -I FORWARD -j ACCEPT && iptables -t nat -A POSTROUTING -s 10.41.0.0/16 -o eth0 -j MASQUERADE"
+
+UPF2=$(kubectl get pods -n open5gs | grep upf2 | awk '{print $1}')
+kubectl exec -it $UPF2 -n open5gs -- sh -c "sysctl net.ipv4.ip_forward=1 && iptables -I FORWARD -j ACCEPT && iptables -t nat -A POSTROUTING -s 10.41.0.0/16 -o eth0 -j MASQUERADE"
+
+UPFCORE=$(kubectl get pods -n open5gs | grep upf-core | awk '{print $1}')
+kubectl exec -it $UPFCORE -n open5gs -- sh -c "sysctl net.ipv4.ip_forward=1 && iptables -I FORWARD -j ACCEPT && iptables -t nat -A POSTROUTING -s 10.41.0.0/16 -o eth0 -j MASQUERADE"
+
+UE_NEW=$(kubectl get pods -n open5gs | grep ue1 | awk '{print $1}')
+kubectl exec -it $UE_NEW -n open5gs -- bash
+
+apt update && apt install curl iputils-ping -y
+
+curl http://10.99.131.123 --max-time 5
+curl http://google.com --max-time 5
+
+
+Cấu hình hiện tại:
+root@MasterK8s:~# kubectl get cm -n open5gs
+NAME                            DATA   AGE
+amf-configmap                   1      26d
+ausf-configmap                  1      26d
+bsf-configmap                   1      26d
+gnb-configmap-mec1-4fmk99cbb5   2      26d
+gnb-configmap-mec1-7b282t6d54   2      171d
+gnb-configmap-mec2-8kbht2mt2t   2      26d
+gnb-configmap-mec2-c4cb9hm479   2      171d
+kube-root-ca.crt                1      172d
+nrf-configmap                   1      26d
+nssf-configmap                  1      26d
+pcf-configmap                   1      26d
+scp-configmap                   1      26d
+smf1-configmap                  1      26d
+udm-configmap                   1      26d
+udr-configmap                   1      26d
+ue1-configmap-958dfff995        2      26d
+ue1-configmap-bf6k66264b        2      171d
+ue1-configmap-bt9m5g8994        2      171d
+ue1-configmap-gh9h9h47gm        2      26d
+ue1-configmap-gm4m9kf6d9        2      171d
+ue1-configmap-hhkc54cd6t        2      26d
+upf-core-configmap              2      6d
+upf1-configmap                  2      26d
+upf2-configmap                  2      26d
+webui-configmap                 1      171d
+
