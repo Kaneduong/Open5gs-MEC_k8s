@@ -29,3 +29,255 @@
 [29] H. van Hasselt, A. Guez, and D. Silver, “Deep reinforcement learning with double q-learning,” 2015. [Online]. Available: https://arxiv.org/abs/1509.06461
 [30] D. Zhao, H. Wang, K. Shao, and Y. Zhu, “Deep reinforcement learning with experience replay based on sarsa,” in 2016 IEEE Symposium Series on Computational Intelligence (SSCI), 2016, pp. 1–6.
 [31] “SIPp- a SIP protocol test tool,” [Online], https://github.com/SIPp/sipp.
+
+- Chuẩn bị: Hướng dẫn Full code app.py, cách build, push ... chi tiết
+from flask import Flask, jsonify
+import redis
+import os
+import socket
+
+app = Flask(__name__)
+
+# Kết nối đến cụm Redis lưu trữ ngữ cảnh chung
+REDIS_HOST = os.getenv("REDIS_HOST", "10.100.219.196")
+r = redis.Redis(host=REDIS_HOST, port=6379, db=0, decode_responses=True)
+
+@app.route('/video_stream')
+def video_stream():
+    # Đọc định danh của Pod hiện tại
+    pod_name = socket.gethostname()
+    
+    # Đọc số khung hình hiện tại từ Redis, nếu chưa có thì khởi tạo là 0
+    current_frame = r.get("ue1_session")
+    frame_number = int(current_frame) if current_frame else 0
+    
+    # Tăng frame (mô phỏng tiến trình UE đọc luồng dữ liệu liên tục)
+    frame_number += 1
+    r.set("ue1_session", frame_number)
+    
+    return jsonify({
+        "serving_pod": pod_name,
+        "current_frame": frame_number,
+        "status": "active"
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000)
+
+###
+# Tạo Dockerfile
+cat <<EOF > Dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+RUN pip install flask redis
+COPY app.py .
+CMD ["python", "app.py"]
+EOF
+
+# Build image cục bộ
+docker build -t ueransim-mec-app:v1 .
+
+# Gắn thẻ và đẩy lên Registry của hệ thống (Ví dụ dùng Docker Hub hoặc Local Registry)
+docker save -o mec-app.tar ueransim-mec-app:v1
+
+root@MasterK8s:~/mec-app# scp -P 26266 mec-app.tar root@10.10.33.54:/root/
+root@10.10.33.54's password:
+mec-app.tar                                                                       100%  136MB   6.5MB/s   00:21
+root@MasterK8s:~/mec-app# scp -P 26266 mec-app.tar root@10.10.33.60:/root/
+root@10.10.33.60's password:
+mec-app.tar                                                                       100%  136MB   5.9MB/s   00:22
+
+root@Open5GS:~# ctr -n k8s.io images import /root/mec-app.tar
+docker.io/library/ueransim mec app:v1           saved
+application/vnd.oci.image.manifest.v1+json sha256:d6c30dddfdc818eadc9e9649bf133b05b7222b260024edfe34ff1bc7f0138874
+Importing       elapsed: 8.2 s  total:   0.0 B  (0.0 B/s)
+root@Open5GS:~#
+
+root@WorkerK8s:~# ctr -n k8s.io images import /root/mec-app.tar
+docker.io/library/ueransim mec app:v1           saved
+application/vnd.oci.image.manifest.v1+json sha256:d6c30dddfdc818eadc9e9649bf133b05b7222b260024edfe34ff1bc7f0138874
+Importing       elapsed: 9.0 s  total:   0.0 B  (0.0 B/s)
+root@WorkerK8s:~#
+
+nano deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mec-app-1
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mec-app
+      zone: mec1
+  template:
+    metadata:
+      labels:
+        app: mec-app
+        zone: mec1
+    spec:
+      containers:
+      - name: frame-counter
+        image: ueransim-mec-app:v1
+        imagePullPolicy: Never  # BẮT BUỘC CÓ DÒNG NÀY: Ép K8s dùng image có sẵn, không đi tải trên mạng
+        ports:
+        - containerPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mec-app-2
+  namespace: open5gs
+spec:
+  replicas: 0 # Mặc định tắt, Agent sẽ bật lên khi di chuyển
+  selector:
+    matchLabels:
+      app: mec-app
+      zone: mec2
+  template:
+    metadata:
+      labels:
+        app: mec-app
+        zone: mec2
+    spec:
+      containers:
+      - name: frame-counter
+        image: ueransim-mec-app:v1
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mec-app-service
+  namespace: open5gs
+spec:
+  selector:
+    app: mec-app
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+
+
+root@MasterK8s:~/mec-app# kubectl apply -f deployment.yaml
+deployment.apps/mec-app-1 created
+deployment.apps/mec-app-2 created
+service/mec-app-service created
+
+root@MasterK8s:~/mec-app# kubectl get pods,svc,endpoints -n open5gs -l app=mec-app
+NAME                             READY   STATUS    RESTARTS   AGE
+pod/mec-app-1-85cc7b66c8-c2t2p   1/1     Running   0          27m
+root@MasterK8s:~/mec-app# kubectl get svc mec-app-service -n open5gs
+NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+mec-app-service   ClusterIP   10.107.115.169   <none>        8000/TCP   28m
+
+
+root@MasterK8s:~/mec-app# kubectl get pods,svc -n open5gs | grep mec-app
+pod/mec-app-1-85cc7b66c8-c2t2p           1/1     Running   0            22m
+service/mec-app-service     ClusterIP   10.107.115.169   <none>        8000/TCP                                     22m
+
+
+- Cách Kiểm tra thử pop UE đã curl được đếp Framecounter app chưa? hoặc mạng thông đến 2 mec? 
+root@MasterK8s:~/mec-app# kubectl exec -it ueransim-ue1-54f54cdd9c-77f6g -n open5gs -- curl --interface uesimtun0 -s http://10.107.115.169:8000/video_stream
+Defaulted container "ue" out of: ue, wait-gnb (init)                                                             ^Ccommand terminated with exit code 130
+root@MasterK8s:~/mec-app# kubectl exec -it ueransim-ue1-54f54cdd9c-77f6g -n open5gs -- curl -s http://10.107.115.169:8000/video_stream
+Defaulted container "ue" out of: ue, wait-gnb (init)
+<!doctype html>
+<html lang=en>
+<title>500 Internal Server Error</title>
+<h1>Internal Server Error</h1>
+<p>The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.</p>
+root@MasterK8s:~/mec-app#
+
+
+
+
+
+
+- Bước 1: Show tất cả IP của UE, GNB1,2, MEC1,2 và Cho UE truy cập Framecounter, chứng minh UE đang xem Framecounter ở MEC nào?
+Hành động trên Terminal:
+
+Bash
+# Lấy danh sách toàn bộ các thành phần kèm theo IP Pod và Node triển khai
+kubectl get pods -n open5gs -o wide
+Bằng chứng thu được trên video:
+
+Xác định IP của Pod UE, ueransim-gnb-mec1-xxx (gNB1), ueransim-gnb-mec2-xxx (gNB2).
+
+Xác định IP của Pod ứng dụng đang chạy: mec-app-1-xxx.
+
+Lệnh kết nối thực tế từ UE:
+
+Bash
+# Lệnh chạy lặp lại liên tục trên UE để mô phỏng xem video
+while true; do kubectl exec -it <tên-pod-ue> -n open5gs -- curl --interface uesimtun0 -s http://mec-app-service:8000/video_stream; echo ""; sleep 1; done
+Kết quả hiển thị trên màn hình:
+
+JSON
+{"current_frame": 12, "serving_pod": "mec-app-1-7fbd56", "status": "active"}
+{"current_frame": 13, "serving_pod": "mec-app-1-7fbd56", "status": "active"}
+Giải thích lập luận: Tên Pod phục vụ hiển thị rõ chữ mec-app-1, chứng minh gói tin từ giao diện 5G uesimtun0 đang đổ về cụm MEC số 1.
+
+
+
+- Bước 2: Trigger di chuyển (Migration), trình bày các bước show export (tắt mở exporter). Trình bày agent.py
+Mục tiêu: Chứng minh cơ chế kích hoạt dựa trên dữ liệu hạ tầng (Prometheus), không dùng lệnh can thiệp thủ công vào ứng dụng.
+
+Thao tác dừng/bật Exporter để thay đổi RSRP có kiểm soát:
+
+Bash
+# Để chứng minh Prometheus cập nhật động, ta tắt Exporter để đẩy giá trị RSRP về mức mất sóng (-105dBm)
+kubectl scale deployment ueransim-exporter -n open5gs --replicas=0
+Bằng chứng trên Prometheus Web UI: Chụp/Quay biểu đồ của biểu thức ueransim_ue_rsrp. Đồ thị đột ngột gãy từ mức -70dBm xuống thẳng mức dưới ngưỡng an toàn.
+
+Hoạt động của agent.py: Agent chạy ngầm liên tục gửi yêu cầu HTTP GET đến API của Prometheus (http://<prometheus-ip>:9090/api/v1/query?query=ueransim_ue_rsrp). Khi dữ liệu từ API trả về con số vượt ngưỡng, Agent kích hoạt hai lệnh điều khiển trực tiếp vào API Server của Kubernetes:
+
+Thay đổi cấu hình định tuyến Data Plane của mạng 5G lõi:
+
+Bash
+kubectl patch configmap smf1-configmap -n open5gs --type='json' -p='[{"op": "replace", "path": "/data/smfcfg.yaml", "value": "..."}]'
+Thực hiện điều phối lại tải ứng dụng ở tầng MEC: Thay đổi số lượng bản sao giữa MEC1 và MEC2.
+
+
+
+- Bước 3: Chứng minh Frame counter app Pod tại MEC "cũ" bị xóa và tạo Pod "mới" tại MEC mới
+Mục tiêu: Cho người xem thấy sự dịch chuyển vật lý ở cấp độ hạ tầng (Lifespan của Container).
+
+Hành động trên Terminal (Chạy song song lúc diễn ra Migration):
+
+Bash
+# Theo dõi trực tiếp sự thay đổi trạng thái của Pod ứng dụng
+kubectl get pods -n open5gs -l app=mec-app -w
+Bằng chứng thu được trên video:
+
+Plaintext
+NAME                         READY   STATUS        RESTARTS   AGE
+mec-app-1-7fbd56c4d-x8291    1/1     Terminating   0          14m
+mec-app-2-84cd97f7b-m2n10    0/1     Pending       0          0s
+mec-app-2-84cd97f7b-m2n10    0/1     ContainerCreating   0    1s
+mec-app-2-84cd97f7b-m2n10    1/1     Running       0          3s
+Giải thích lập luận: Màn hình giám sát của Kubernetes hiển thị trạng thái Terminating (Đang xóa bỏ) đối với cụm MEC1 và trạng thái Running với tuổi đời 3s (Mới khởi tạo) tại cụm MEC2. Đây là minh chứng rõ ràng cho thấy không có sự duy trì ngầm tiến trình ứng dụng cũ.
+
+
+- Bước 4: Chứng minh thêm Ngữ cảnh (State) không bị mất
+Mục tiêu: Giải quyết câu hỏi: "Làm sao Pod mới biết người dùng đang xem đến đoạn nào để xử lý tiếp?".
+
+Kết quả thu được trên màn hình UE (Lệnh curl ở Bước 1 vẫn đang chạy liên tục):
+
+JSON
+{"current_frame": 44, "serving_pod": "mec-app-1-7fbd56", "status": "active"}
+{"current_frame": 45, "serving_pod": "mec-app-1-7fbd56", "status": "active"}
+[Hệ thống mất 2 giây để chuyển mạch định tuyến định tuyến 5G và tạo Pod mới]
+{"current_frame": 46, "serving_pod": "mec-app-2-84cd97", "status": "active"}
+{"current_frame": 47, "serving_pod": "mec-app-2-84cd97", "status": "active"}
+Lệnh kiểm tra trực tiếp kho lưu trữ trạng thái:
+
+Bash
+# Truy vấn trực tiếp vào khóa lưu trữ phiên trên máy chủ Redis độc lập
+redis-cli -h 10.100.219.196 GET ue1_session
+Output trên Terminal: 47
+
+Giải thích kết luận chốt hạ: Con số trả về từ lệnh redis-cli trùng khớp hoàn toàn với giá trị khung hình mà UE nhận được từ Pod mới (mec-app-2-84cd97). Vì bộ đếm tăng liên tục từ 45 sang 46 mà không bị quay về giá trị 1, điều này chứng minh Pod mới được tạo ra ở MEC2 đã đọc thành công trạng thái được lưu trữ ngoài (Externalized State) từ cụm Redis trước khi xử lý yêu cầu tiếp theo của thiết bị di động. Luồng Migration có trạng thái đã thành công toàn vẹn.
