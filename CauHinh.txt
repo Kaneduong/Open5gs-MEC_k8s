@@ -1,0 +1,289 @@
+--- THÔNG TIN CÁC NODE (4 VM) ---
+NAME        STATUS   ROLES                AGE    VERSION    INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION       CONTAINER-RUNTIME
+masterk8s   Ready    control-plane,core   181d   v1.30.14   10.10.33.45   <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://2.2.1
+open5gs     Ready    mec                  181d   v1.30.14   10.10.33.54   <none>        Ubuntu 22.04.5 LTS   5.15.0-176-generic   containerd://2.2.1
+ue          Ready    ue                   181d   v1.30.14   10.10.33.40   <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://2.2.1
+workerk8s   Ready    mec                  181d   v1.30.14   10.10.33.60   <none>        Ubuntu 22.04.5 LTS   5.15.0-171-generic   containerd://2.2.1
+--- TẤT CẢ PODS TRONG NAMESPACE OPEN5GS ---
+NAME                                 READY   STATUS    RESTARTS      AGE   IP                NODE        NOMINATED NODE   READINESS GATES
+mec-app-1-85cc7b66c8-hwfjt           1/1     Running   0             22h   192.168.30.132    workerk8s   <none>           <none>
+mec-app-1-9f46f4456-xbrdr            1/1     Running   0             21h   192.168.43.242    open5gs     <none>           <none>
+mongodb-0                            1/1     Running   0             36d   192.168.35.165    masterk8s   <none>           <none>
+open5gs-amf-57f6995c9-dt8fq          1/1     Running   0             22h   192.168.35.151    masterk8s   <none>           <none>
+open5gs-ausf-675d6d5865-pxgsn        1/1     Running   0             15d   192.168.35.148    masterk8s   <none>           <none>
+open5gs-bsf-6c94585f79-mfqb5         1/1     Running   0             15d   192.168.35.185    masterk8s   <none>           <none>
+open5gs-nrf-6c997f96cb-qvtc9         1/1     Running   0             15d   192.168.35.130    masterk8s   <none>           <none>
+open5gs-nssf-7ff65b6c8d-fq9m4        1/1     Running   0             15d   192.168.35.129    masterk8s   <none>           <none>
+open5gs-pcf-7d49d4b94b-lhmw9         1/1     Running   0             15d   192.168.35.155    masterk8s   <none>           <none>
+open5gs-scp-5fc94c65fd-94w4c         1/1     Running   0             15d   192.168.35.166    masterk8s   <none>           <none>
+open5gs-smf1-794ff9cf96-lm8d5        1/1     Running   0             22h   192.168.35.142    masterk8s   <none>           <none>
+open5gs-udm-56c8469d75-b5lmh         1/1     Running   0             15d   192.168.35.146    masterk8s   <none>           <none>
+open5gs-udr-c85f848d9-tq7lx          1/1     Running   0             15d   192.168.35.154    masterk8s   <none>           <none>
+open5gs-upf-core-68f59f558d-9svqm    1/1     Running   0             41h   192.168.35.178    masterk8s   <none>           <none>
+open5gs-upf1-68774996-lxwlt          1/1     Running   0             41h   192.168.43.238    open5gs     <none>           <none>
+open5gs-upf2-f746f4457-b5ht4         1/1     Running   0             41h   192.168.30.137    workerk8s   <none>           <none>
+ueransim-exporter-78554cf6b7-f5gbd   1/1     Running   0             22h   192.168.30.150    workerk8s   <none>           <none>
+ueransim-gnb-mec1-68ffd5d576-qzhnf   1/1     Running   1 (22h ago)   22h   192.168.43.193    open5gs     <none>           <none>
+ueransim-gnb-mec2-56d6697fbb-4dt4l   1/1     Running   1 (22h ago)   22h   192.168.30.156    workerk8s   <none>           <none>
+ueransim-ue1-54f54cdd9c-whxgt        1/1     Running   0             22h   192.168.131.236   ue          <none>           <none>
+--- TẤT CẢ SERVICES ĐANG CHẠY ---
+NAME              TYPE       CLUSTER-IP    EXTERNAL-IP   PORT(S)          AGE
+mec-app-service   NodePort   10.99.229.8   <none>        8000:30615/TCP   21h
+--- DANH SÁCH CONFIGMAPS (NƠI CHỨA FILE CONFIG) ---
+NAME                            DATA   AGE
+amf-configmap                   1      36d
+ausf-configmap                  1      36d
+bsf-configmap                   1      36d
+gnb-configmap-mec1-4fmk99cbb5   2      36d
+gnb-configmap-mec1-7b282t6d54   2      181d
+gnb-configmap-mec2-8kbht2mt2t   2      36d
+gnb-configmap-mec2-c4cb9hm479   2      181d
+kube-root-ca.crt                1      181d
+nrf-configmap                   1      36d
+nssf-configmap                  1      36d
+pcf-configmap                   1      36d
+scp-configmap                   1      36d
+smf1-configmap                  1      36d
+udm-configmap                   1      36d
+udr-configmap                   1      36d
+ue1-configmap-958dfff995        2      36d
+ue1-configmap-bf6k66264b        2      181d
+ue1-configmap-bt9m5g8994        2      181d
+ue1-configmap-gh9h9h47gm        2      36d
+ue1-configmap-gm4m9kf6d9        2      181d
+ue1-configmap-hhkc54cd6t        2      36d
+ueransim-exporter-script        1      2d23h
+upf-core-configmap              2      15d
+upf1-configmap                  2      36d
+upf2-configmap                  2      36d
+webui-configmap                 1      181d
+--- CẤU HÌNH AMF ---
+apiVersion: v1
+data:
+  amfcfg.yaml: |
+    logger:
+      file: /open5gs/install/var/log/open5gs/amf.log
+
+    global:
+      max:
+        ue: 1024
+
+    amf:
+      sbi:
+        server:
+          - dev: eth0
+            advertise: amf-namf
+            port: 80
+        client:
+          scp:
+            - uri: http://scp-nscp:80
+      ngap:
+        server:
+          - address: 10.10.3.200
+      metrics:
+        server:
+          - address: 0.0.0.0
+            port: 9090
+      guami:
+        - plmn_id:
+            mcc: 001
+            mnc: 01
+          amf_id:
+            region: 2
+            set: 1
+      tai:
+        - plmn_id:
+            mcc: 001
+            mnc: 01
+          tac: 1
+      plmn_support:
+        - plmn_id:
+            mcc: 001
+            mnc: 01
+          s_nssai:
+            - sst: 1
+              sd: 000001
+            - sst: 2
+              sd: 000002
+      security:
+          integrity_order : [ NIA2, NIA1, NIA0 ]
+          ciphering_order : [ NEA0, NEA1, NEA2 ]
+      network_name:
+          full: Open5GS
+      amf_name: open5gs-amf0
+
+      time:
+        t3512:
+          value: 540
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"amfcfg.yaml":"logger:\n  file: /open5gs/install/var/log/open5gs/amf.log\n\nglobal:\n  max:\n    ue: 1024\n\namf:\n  sbi:\n    server:\n      - dev: eth0\n        advertise: amf-namf\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n  ngap:\n    server:\n      - address: 10.10.3.200\n  metrics:\n    server:\n      - address: 0.0.0.0\n        port: 9090\n  guami:\n    - plmn_id:\n        mcc: 001\n        mnc: 01\n      amf_id:\n        region: 2\n        set: 1\n  tai:\n    - plmn_id:\n        mcc: 001\n        mnc: 01\n      tac: 1\n  plmn_support:\n    - plmn_id:\n        mcc: 001\n        mnc: 01\n      s_nssai:\n        - sst: 1\n          sd: 000001\n        - sst: 2\n          sd: 000002\n  security:\n      integrity_order : [ NIA2, NIA1, NIA0 ]\n      ciphering_order : [ NEA0, NEA1, NEA2 ]\n  network_name:\n      full: Open5GS\n  amf_name: open5gs-amf0\n\n  time:\n    t3512:\n      value: 540\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs"},"name":"amf-configmap","namespace":"open5gs"}}
+  creationTimestamp: "2026-05-29T07:38:27Z"
+  labels:
+    app: open5gs
+  name: amf-configmap
+  namespace: open5gs
+  resourceVersion: "4162677"
+  uid: 6b7cc857-2895-4a21-a1f0-0303468fddfd
+--- CẤU HÌNH SMF ---
+apiVersion: v1
+data:
+  smfcfg.yaml: |
+    logger:
+      file: /open5gs/install/var/log/open5gs/smf.log
+    global:
+      max:
+        ue: 1024
+    smf:
+      sbi:
+        server:
+          - dev: eth0
+            advertise: smf1-nsmf
+            port: 80
+        client:
+          scp:
+            - uri: http://scp-nscp:80
+      pfcp:
+        server:
+          - dev: n4
+        client:
+          upf:
+            - address: 10.10.4.1
+              dnn: internet
+            - address: 10.10.4.2
+              dnn: internet
+            - address: 10.10.4.3
+              dnn: internet
+      gtpc:
+        server:
+          - dev: eth0
+      gtpu:
+        server:
+          - dev: n3
+      metrics:
+        server:
+          - address: 0.0.0.0
+            port: 9090
+      session:
+        - subnet: 10.41.0.1/16
+      dns:
+        - 8.8.8.8
+        - 8.8.4.4
+      mtu: 1400
+      ctf:
+        enabled: auto
+      freeDiameter: /open5gs/install/etc/freeDiameter/smf.conf
+      info:
+        - s_nssai:
+            - sst: 1
+              sd: 1
+              dnn:
+                - internet
+      upf:
+        - address: 10.10.4.1
+          links:
+            - address: 10.10.4.3
+        - address: 10.10.4.2
+          links:
+            - address: 10.10.4.3
+        - address: 10.10.4.3
+      route:
+        - destination: 10.107.115.169/32
+          upf:
+            - address: 10.10.4.1
+        - destination: 0.0.0.0/0
+          upf:
+            - address: 10.10.4.3
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"smfcfg.yaml":"logger:\n  file: /open5gs/install/var/log/open5gs/smf.log\nglobal:\n  max:\n    ue: 1024\nsmf:\n  sbi:\n    server:\n      - dev: eth0\n        advertise: smf1-nsmf\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n  pfcp:\n    server:\n      - dev: n4\n    client:\n      upf:\n        - address: 10.10.4.1\n          dnn: internet\n        - address: 10.10.4.2\n          dnn: internet\n        - address: 10.10.4.3\n          dnn: internet\n  gtpc:\n    server:\n      - dev: eth0\n  gtpu:\n    server:\n      - dev: n3\n  metrics:\n    server:\n      - address: 0.0.0.0\n        port: 9090\n  session:\n    - subnet: 10.41.0.1/16\n  dns:\n    - 8.8.8.8\n    - 8.8.4.4\n  mtu: 1400\n  ctf:\n    enabled: auto\n  freeDiameter: /open5gs/install/etc/freeDiameter/smf.conf\n  info:\n    - s_nssai:\n        - sst: 1\n          sd: 1\n          dnn:\n            - internet\n  upf:\n    - address: 10.10.4.1\n      links:\n        - address: 10.10.4.3\n    - address: 10.10.4.2\n      links:\n        - address: 10.10.4.3\n    - address: 10.10.4.3\n  route:\n    - destination: 10.107.115.169/32\n      upf:\n        - address: 10.10.4.1\n    - destination: 0.0.0.0/0\n      upf:\n        - address: 10.10.4.3\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"smf1-configmap","namespace":"open5gs"}}
+  creationTimestamp: "2026-05-29T07:38:27Z"
+  name: smf1-configmap
+  namespace: open5gs
+  resourceVersion: "16980171"
+  uid: 817a786e-29ad-4fe6-b6a6-2e763ac46b5b
+--- LOG CỦA UE (KIỂM TRA CÓ NHẬN ĐƯỢC IP TỪ 5G KHÔNG) ---
+No resources found in open5gs namespace.
+--- LOG CỦA GNB (KIỂM TRA KẾT NỐI VỚI AMF) ---
+No resources found in open5gs namespace.
+--- KIỂM TRA ĐỊNH TUYẾN TRONG UPF (MẤU CHỐT CỦA MẠNG) ---
+error: pod, type/name or --filename must be specified
+--- THÔNG TIN DEPLOYMENT MEC APP ---
+Name:                   mec-app-1
+Namespace:              open5gs
+CreationTimestamp:      Fri, 03 Jul 2026 16:00:15 +0700
+Labels:                 <none>
+Annotations:            deployment.kubernetes.io/revision: 2
+Selector:               app=mec-app,zone=mec1
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=mec-app
+           zone=mec1
+  Containers:
+   frame-counter:
+    Image:      ueransim-mec-app:v1
+    Port:       8000/TCP
+    Host Port:  0/TCP
+    Environment:
+      FLASK_RUN_HOST:  0.0.0.0
+    Mounts:            <none>
+  Volumes:             <none>
+  Node-Selectors:      <none>
+  Tolerations:         <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  mec-app-1-85cc7b66c8 (0/0 replicas created)
+NewReplicaSet:   mec-app-1-9f46f4456 (1/1 replicas created)
+Events:          <none>
+--- KIỂM TRA IP CỦA CÁC POD MEC ---
+NAME                        IP
+mec-app-1-9f46f4456-xbrdr   192.168.43.242
+root@MasterK8s:~#
+--- 3. CẤU HÌNH CHI TIẾT POD MEC APP ---
+    name: mec-app-1-9f46f4456-xbrdr
+      name: mec-app-1-9f46f4456
+    - env:
+      - name: FLASK_RUN_HOST
+      image: ueransim-mec-app:v1
+      name: frame-counter
+        name: kube-api-access-vbnlf
+    - name: kube-api-access-vbnlf
+            name: kube-root-ca.crt
+      image: docker.io/library/ueransim-mec-app:v1
+      name: frame-counter
+--- 4. KIỂM TRA ENV CỦA MEC APP (QUAN TRỌNG ĐỂ BIẾT NÓ TRỎ VÀO ĐÂU) ---
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOSTNAME=mec-app-1-9f46f4456-xbrdr
+LANG=C.UTF-8
+GPG_KEY=E3FF2839C048B25C084DEBE9B26995E310250568
+PYTHON_VERSION=3.9.25
+PYTHON_SHA256=00e07d7c0f2f0cc002432d1ee84d2a40dae404a99303e3f97701c10966c91834
+FLASK_RUN_HOST=0.0.0.0
+KUBERNETES_PORT_443_TCP_PORT=443
+KUBERNETES_SERVICE_PORT=443
+KUBERNETES_PORT_443_TCP=tcp://10.96.0.1:443
+KUBERNETES_PORT=tcp://10.96.0.1:443
+KUBERNETES_PORT_443_TCP_ADDR=10.96.0.1
+MEC_APP_SERVICE_PORT_8000_TCP_PROTO=tcp
+MEC_APP_SERVICE_PORT_8000_TCP_PORT=8000
+KUBERNETES_SERVICE_HOST=10.96.0.1
+KUBERNETES_SERVICE_PORT_HTTPS=443
+KUBERNETES_PORT_443_TCP_PROTO=tcp
+MEC_APP_SERVICE_SERVICE_HOST=10.99.229.8
+MEC_APP_SERVICE_SERVICE_PORT=8000
+MEC_APP_SERVICE_PORT_8000_TCP_ADDR=10.99.229.8
+MEC_APP_SERVICE_PORT=tcp://10.99.229.8:8000
+MEC_APP_SERVICE_PORT_8000_TCP=tcp://10.99.229.8:8000
+TERM=xterm
+HOME=/root
+
