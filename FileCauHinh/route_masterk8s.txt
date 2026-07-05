@@ -1,0 +1,31 @@
+Creating debugging pod node-debugger-masterk8s-tc7pn with container debugger on node masterk8s.
+default via 42.96.5.1 dev ens18 
+10.10.33.32/27 dev ens19 scope link  src 10.10.33.45 
+42.96.5.0/24 dev ens18 scope link  src 42.96.5.247 
+172.17.0.0/16 dev docker0 scope link  src 172.17.0.1 
+192.168.30.128/26 via 10.10.33.60 dev tunl0 onlink 
+192.168.30.132 via 10.10.33.60 dev tunl0 
+blackhole 192.168.35.128/26 
+192.168.35.129 dev cali22e03ceac33 scope link 
+192.168.35.130 dev cali02864a752e0 scope link 
+192.168.35.135 dev cali3d615546b5f scope link 
+192.168.35.136 dev cali42ac86ff0c0 scope link 
+192.168.35.138 dev cali74c94b23c5e scope link 
+192.168.35.141 dev calidd8c327392e scope link 
+192.168.35.142 dev calia725020f6a4 scope link 
+192.168.35.146 dev cali370f0a391b6 scope link 
+192.168.35.148 dev calif23316e046d scope link 
+192.168.35.150 dev cali6a3f538b59d scope link 
+192.168.35.151 dev calie9e1141ee1d scope link 
+192.168.35.154 dev cali9cb296e5623 scope link 
+192.168.35.155 dev cali70d320323b6 scope link 
+192.168.35.165 dev cali1099c08d53e scope link 
+192.168.35.166 dev calie379bc4cf40 scope link 
+192.168.35.168 dev cali04febefc0bb scope link 
+192.168.35.173 dev caliad97fecc1aa scope link 
+192.168.35.177 dev cali5834cb2ed73 scope link 
+192.168.35.178 dev calic1f0907152f scope link 
+192.168.35.185 dev cali7bdc1197e57 scope link 
+192.168.35.187 dev cali5cc7af0df2c scope link 
+192.168.43.192/26 via 10.10.33.54 dev tunl0 onlink 
+192.168.131.192/26 via 10.10.33.40 dev tunl0 onlink 

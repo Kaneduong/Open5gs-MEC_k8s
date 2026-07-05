@@ -1,0 +1,13 @@
+Creating debugging pod node-debugger-open5gs-lwd4l with container debugger on node open5gs.
+default via 42.96.13.1 dev ens18 
+10.10.33.32/27 dev ens19 scope link  src 10.10.33.54 
+42.96.13.0/24 dev ens18 scope link  src 42.96.13.152 
+192.168.30.128/26 via 10.10.33.60 dev tunl0 onlink 
+192.168.35.128/26 via 10.10.33.45 dev tunl0 onlink 
+blackhole 192.168.43.192/26 
+192.168.43.193 dev cali6906b7dcd2c scope link 
+192.168.43.209 dev cali110231f0300 scope link 
+192.168.43.238 dev calic42621b9f8e scope link 
+192.168.43.242 dev cali4ded13ee324 scope link 
+192.168.43.247 dev cali06d82577394 scope link 
+192.168.131.192/26 via 10.10.33.40 dev tunl0 onlink 

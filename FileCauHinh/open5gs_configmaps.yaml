@@ -1,0 +1,1176 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  data:
+    amfcfg.yaml: |
+      logger:
+        file: /open5gs/install/var/log/open5gs/amf.log
+
+      global:
+        max:
+          ue: 1024
+
+      amf:
+        sbi:
+          server:
+            - dev: eth0
+              advertise: amf-namf
+              port: 80
+          client:
+            scp:
+              - uri: http://scp-nscp:80
+        ngap:
+          server:
+            - address: 10.10.3.200
+        metrics:
+          server:
+            - address: 0.0.0.0
+              port: 9090
+        guami:
+          - plmn_id:
+              mcc: 001
+              mnc: 01
+            amf_id:
+              region: 2
+              set: 1
+        tai:
+          - plmn_id:
+              mcc: 001
+              mnc: 01
+            tac: 1
+        plmn_support:
+          - plmn_id:
+              mcc: 001
+              mnc: 01
+            s_nssai:
+              - sst: 1
+                sd: 000001
+              - sst: 2
+                sd: 000002
+        security:
+            integrity_order : [ NIA2, NIA1, NIA0 ]
+            ciphering_order : [ NEA0, NEA1, NEA2 ]
+        network_name:
+            full: Open5GS
+        amf_name: open5gs-amf0
+
+        time:
+          t3512:
+            value: 540
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"amfcfg.yaml":"logger:\n  file: /open5gs/install/var/log/open5gs/amf.log\n\nglobal:\n  max:\n    ue: 1024\n\namf:\n  sbi:\n    server:\n      - dev: eth0\n        advertise: amf-namf\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n  ngap:\n    server:\n      - address: 10.10.3.200\n  metrics:\n    server:\n      - address: 0.0.0.0\n        port: 9090\n  guami:\n    - plmn_id:\n        mcc: 001\n        mnc: 01\n      amf_id:\n        region: 2\n        set: 1\n  tai:\n    - plmn_id:\n        mcc: 001\n        mnc: 01\n      tac: 1\n  plmn_support:\n    - plmn_id:\n        mcc: 001\n        mnc: 01\n      s_nssai:\n        - sst: 1\n          sd: 000001\n        - sst: 2\n          sd: 000002\n  security:\n      integrity_order : [ NIA2, NIA1, NIA0 ]\n      ciphering_order : [ NEA0, NEA1, NEA2 ]\n  network_name:\n      full: Open5GS\n  amf_name: open5gs-amf0\n\n  time:\n    t3512:\n      value: 540\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs"},"name":"amf-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+    name: amf-configmap
+    namespace: open5gs
+    resourceVersion: "4162677"
+    uid: 6b7cc857-2895-4a21-a1f0-0303468fddfd
+- apiVersion: v1
+  data:
+    ausfcfg.yaml: |
+      logger:
+        file: /open5gs/install/var/log/open5gs/ausf.log
+
+      global:
+        max:
+          ue: 1024
+
+      ausf:
+        sbi:
+          server:
+            - address: 0.0.0.0
+              advertise: ausf-nausf
+              port: 80
+          client:
+            scp:
+              - uri: http://scp-nscp:80
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"ausfcfg.yaml":"logger:\n  file: /open5gs/install/var/log/open5gs/ausf.log\n\nglobal:\n  max:\n    ue: 1024\n\nausf:\n  sbi:\n    server:\n      - address: 0.0.0.0\n        advertise: ausf-nausf\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs"},"name":"ausf-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+    name: ausf-configmap
+    namespace: open5gs
+    resourceVersion: "4162678"
+    uid: 038e1fbd-6d22-4af0-85f7-0bae227af061
+- apiVersion: v1
+  data:
+    bsfcfg.yaml: |
+      logger:
+        file: /open5gs/install/var/log/open5gs/bsf.log
+
+      global:
+        max:
+          ue: 1024
+
+      bsf:
+        sbi:
+          server:
+            - dev: eth0
+              advertise: bsf-nbsf
+              port: 80
+          client:
+            scp:
+              - uri: http://scp-nscp:80
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"bsfcfg.yaml":"logger:\n  file: /open5gs/install/var/log/open5gs/bsf.log\n\nglobal:\n  max:\n    ue: 1024\n\nbsf:\n  sbi:\n    server:\n      - dev: eth0\n        advertise: bsf-nbsf\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs"},"name":"bsf-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+    name: bsf-configmap
+    namespace: open5gs
+    resourceVersion: "4162680"
+    uid: de333188-58b5-4bb6-a67f-e74fc02c5f00
+- apiVersion: v1
+  data:
+    open5gs-gnb.yaml: |
+      mcc: '999'
+      mnc: '70'
+
+      nci: '0x000000010'
+      idLength: 32
+      tac: 1
+
+      linkIp: 0.0.0.0
+      ngapIp: 10.10.3.231
+      gtpIp: 10.10.3.231
+
+      amfConfigs:
+        - address: 10.10.3.200
+          port: 38412
+
+      slices:
+        - sst: 1
+          sd: 000001
+        - sst: 2
+          sd: 000002
+
+      ignoreStreamIds: true
+    wrapper.sh: |
+      #!/bin/bash
+      /ueransim/nr-gnb --config /ueransim/config/open5gs-gnb.yaml
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"open5gs-gnb.yaml":"mcc: '999'\nmnc: '70'\n\nnci: '0x000000010'\nidLength: 32\ntac: 1\n\nlinkIp: 0.0.0.0\nngapIp: 10.10.3.231\ngtpIp: 10.10.3.231\n\namfConfigs:\n  - address: 10.10.3.200\n    port: 38412\n\nslices:\n  - sst: 1\n    sd: 000001\n  - sst: 2\n    sd: 000002\n\nignoreStreamIds: true\n","wrapper.sh":"#!/bin/bash\n/ueransim/nr-gnb --config /ueransim/config/open5gs-gnb.yaml\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"gnb-configmap-mec1-4fmk99cbb5","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T16:27:03Z"
+    name: gnb-configmap-mec1-4fmk99cbb5
+    namespace: open5gs
+    resourceVersion: "4215098"
+    uid: 86498549-ecbb-41a6-915d-239d812dd676
+- apiVersion: v1
+  data:
+    open5gs-gnb.yaml: |
+      mcc: '001'
+      mnc: '01'
+
+      nci: '0x000000010'
+      idLength: 32
+      tac: 1
+
+      linkIp: 0.0.0.0
+      ngapIp: 10.10.3.231
+      gtpIp: 10.10.3.231
+
+      amfConfigs:
+        - address: 10.10.3.200
+          port: 38412
+
+      slices:
+        - sst: 1
+          sd: 000001
+        - sst: 2
+          sd: 000002
+
+      ignoreStreamIds: true
+    wrapper.sh: |
+      #!/bin/bash
+      /ueransim/nr-gnb --config /ueransim/config/open5gs-gnb.yaml
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"open5gs-gnb.yaml":"mcc: '001'\nmnc: '01'\n\nnci: '0x000000010'\nidLength: 32\ntac: 1\n\nlinkIp: 0.0.0.0\nngapIp: 10.10.3.231\ngtpIp: 10.10.3.231\n\namfConfigs:\n  - address: 10.10.3.200\n    port: 38412\n\nslices:\n  - sst: 1\n    sd: 000001\n  - sst: 2\n    sd: 000002\n\nignoreStreamIds: true\n","wrapper.sh":"#!/bin/bash\n/ueransim/nr-gnb --config /ueransim/config/open5gs-gnb.yaml\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"gnb-configmap-mec1-7b282t6d54","namespace":"open5gs"}}
+    creationTimestamp: "2026-01-04T11:11:33Z"
+    name: gnb-configmap-mec1-7b282t6d54
+    namespace: open5gs
+    resourceVersion: "112797"
+    uid: 71db43a1-f446-4c48-a386-b95c861f3077
+- apiVersion: v1
+  data:
+    open5gs-gnb.yaml: |
+      mcc: '999'
+      mnc: '70'
+
+      nci: '0x000000011'
+      idLength: 32
+      tac: 1
+
+      linkIp: 0.0.0.0
+      ngapIp: 10.10.3.232
+      gtpIp: 10.10.3.232
+
+      amfConfigs:
+        - address: 10.10.3.200
+          port: 38412
+
+      slices:
+        - sst: 1
+          sd: 000001
+        - sst: 2
+          sd: 000002
+
+      ignoreStreamIds: true
+    wrapper.sh: |
+      #!/bin/bash
+      /ueransim/nr-gnb --config /ueransim/config/open5gs-gnb.yaml
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"open5gs-gnb.yaml":"mcc: '999'\nmnc: '70'\n\nnci: '0x000000011'\nidLength: 32\ntac: 1\n\nlinkIp: 0.0.0.0\nngapIp: 10.10.3.232\ngtpIp: 10.10.3.232\n\namfConfigs:\n  - address: 10.10.3.200\n    port: 38412\n\nslices:\n  - sst: 1\n    sd: 000001\n  - sst: 2\n    sd: 000002\n\nignoreStreamIds: true\n","wrapper.sh":"#!/bin/bash\n/ueransim/nr-gnb --config /ueransim/config/open5gs-gnb.yaml\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"gnb-configmap-mec2-8kbht2mt2t","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T16:27:04Z"
+    name: gnb-configmap-mec2-8kbht2mt2t
+    namespace: open5gs
+    resourceVersion: "4215114"
+    uid: 0a079271-9535-4aed-984e-b383a63aa449
+- apiVersion: v1
+  data:
+    open5gs-gnb.yaml: |
+      mcc: '001'
+      mnc: '01'
+
+      nci: '0x000000011'
+      idLength: 32
+      tac: 1
+
+      linkIp: 0.0.0.0
+      ngapIp: 10.10.3.232
+      gtpIp: 10.10.3.232
+
+      amfConfigs:
+        - address: 10.10.3.200
+          port: 38412
+
+      slices:
+        - sst: 1
+          sd: 000001
+        - sst: 2
+          sd: 000002
+
+      ignoreStreamIds: true
+    wrapper.sh: |
+      #!/bin/bash
+      /ueransim/nr-gnb --config /ueransim/config/open5gs-gnb.yaml
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"open5gs-gnb.yaml":"mcc: '001'\nmnc: '01'\n\nnci: '0x000000011'\nidLength: 32\ntac: 1\n\nlinkIp: 0.0.0.0\nngapIp: 10.10.3.232\ngtpIp: 10.10.3.232\n\namfConfigs:\n  - address: 10.10.3.200\n    port: 38412\n\nslices:\n  - sst: 1\n    sd: 000001\n  - sst: 2\n    sd: 000002\n\nignoreStreamIds: true\n","wrapper.sh":"#!/bin/bash\n/ueransim/nr-gnb --config /ueransim/config/open5gs-gnb.yaml\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"gnb-configmap-mec2-c4cb9hm479","namespace":"open5gs"}}
+    creationTimestamp: "2026-01-04T11:11:34Z"
+    name: gnb-configmap-mec2-c4cb9hm479
+    namespace: open5gs
+    resourceVersion: "4213403"
+    uid: 2768022a-aac5-4e9b-9617-9f5ae7abcee3
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBTCCAe2gAwIBAgIIXdmEB9/fmjowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjAxMDQwNDM4NDVaFw0zNjAxMDIwNDQzNDVaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDR2GkZF2ATImCGlzb3gteGRjPSfA42TCMHz4a5bEJ/twrllhKI4CXsLmri
+      3HpA3TY1RgbSG0wlARRyeXdBICvtXGrmZO3SO4aISu1QhZyTkyql0WOvwTXW6yJL
+      MUEUqecSfm1OMJj2K1gWR3FSMt0mEGsTzTsJmynv6/mrQlII05v/n0y0zm/p5C6H
+      Oy2LbKbMSyPXKKBRfAiAgVLcU3m2vk5INxy/7vWbu7HMP3yMmpeuMobjSA238wJD
+      2ZHdMqOGoPvOuSijDeu3SEvzTYhWKj2KjM2JG/eHDVb+SAZ/ZpRZ+Hq+04wvrlzX
+      LU6iZX1nCCinBqc9j5xi6pIXNhhBAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTrR0sfGBaf/mpbiR9uyGFnTVQWiDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQC2phA+Cohj
+      BoUlGFyLwuSSaOjaIfCqQ6x8zy5JoauiQLoLNkcv4hR+CZuF8rA6ztt9IckGB/7X
+      QZXFYrIWt/d6/q9hxChMcK+pOAf13kKODfARDGyRuZ8H5LWcFnF1AKr9zznBqpEG
+      EZS6iqs1YGhGRobgol9L08NpTI4mXyx0p69gvSVGvEucekF2tTXtc9xdmoUd/Eig
+      0nLXnsidpOqj/1ZdolqnufDNagFZCd6jzElqOjxSWrxwcVBynYQWo07FMHFN2MBx
+      O3M9+JIA17AyvNemV54F7MGj4bRJqPoYInb6sE3HyJ8Zb2/0o9g6uZqBzDRuhYNg
+      QcYnEvLlh40l
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    creationTimestamp: "2026-01-04T06:43:32Z"
+    name: kube-root-ca.crt
+    namespace: open5gs
+    resourceVersion: "11050"
+    uid: 60f5f181-12c4-462c-ab3c-7eb08057bc32
+- apiVersion: v1
+  data:
+    nrfcfg.yaml: |
+      logger:
+        file: /open5gs/install/var/log/open5gs/nrf.log
+
+      global:
+        max:
+          ue: 1024
+
+      nrf:
+        serving:
+          - plmn_id:
+              mcc: 001
+              mnc: 01
+
+        sbi:
+          server:
+            - dev: eth0
+              advertise: nrf-nnrf
+              port: 80
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"nrfcfg.yaml":"logger:\n  file: /open5gs/install/var/log/open5gs/nrf.log\n\nglobal:\n  max:\n    ue: 1024\n\nnrf:\n  serving:\n    - plmn_id:\n        mcc: 001\n        mnc: 01\n\n  sbi:\n    server:\n      - dev: eth0\n        advertise: nrf-nnrf\n        port: 80\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs","nf":"nrf"},"name":"nrf-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+      nf: nrf
+    name: nrf-configmap
+    namespace: open5gs
+    resourceVersion: "4162681"
+    uid: 580afd20-3896-4f52-a280-e3e007eee865
+- apiVersion: v1
+  data:
+    nssfcfg.yaml: |
+      logger:
+        file: /open5gs/install/var/log/open5gs/nssf.log
+
+      global:
+        max:
+          ue: 1024
+
+      nssf:
+        sbi:
+          server:
+            - dev: eth0
+              advertise: nssf-nnssf
+              port: 80
+          client:
+            scp:
+              - uri: http://scp-nscp:80
+            nsi:
+              - uri: http://nrf-nnrf:80
+                s_nssai:
+                  sst: 1
+                  sd: 000001
+              - uri: http://nrf-nnrf:80
+                s_nssai:
+                  sst: 2
+                  sd: 000002
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"nssfcfg.yaml":"logger:\n  file: /open5gs/install/var/log/open5gs/nssf.log\n\nglobal:\n  max:\n    ue: 1024\n\nnssf:\n  sbi:\n    server:\n      - dev: eth0\n        advertise: nssf-nnssf\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n      nsi:\n        - uri: http://nrf-nnrf:80\n          s_nssai:\n            sst: 1\n            sd: 000001\n        - uri: http://nrf-nnrf:80\n          s_nssai:\n            sst: 2\n            sd: 000002\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs"},"name":"nssf-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+    name: nssf-configmap
+    namespace: open5gs
+    resourceVersion: "4162682"
+    uid: a36fd9fe-2600-403f-a9d5-15c8e976f8b2
+- apiVersion: v1
+  data:
+    pcfcfg.yaml: |
+      db_uri: mongodb://mongodb/open5gs
+
+      logger:
+        file: /open5gs/install/var/log/open5gs/pcf.log
+
+      global:
+        max:
+          ue: 1024
+
+      pcf:
+        sbi:
+          server:
+            - dev: eth0
+              advertise: pcf-npcf
+              port: 80
+          client:
+            scp:
+              - uri: http://scp-nscp:80
+        metrics:
+          server:
+            - address: 0.0.0.0
+              port: 9090
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"pcfcfg.yaml":"db_uri: mongodb://mongodb/open5gs\n\nlogger:\n  file: /open5gs/install/var/log/open5gs/pcf.log\n\nglobal:\n  max:\n    ue: 1024\n\npcf:\n  sbi:\n    server:\n      - dev: eth0\n        advertise: pcf-npcf\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n  metrics:\n    server:\n      - address: 0.0.0.0\n        port: 9090\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs"},"name":"pcf-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+    name: pcf-configmap
+    namespace: open5gs
+    resourceVersion: "4162683"
+    uid: 0a8f9b69-7508-431c-8e0c-6cbf9fdb8968
+- apiVersion: v1
+  data:
+    scpcfg.yaml: |2
+
+      logger:
+        file: /open5gs/install/var/log/open5gs/scp.log
+
+      global:
+        max:
+          ue: 1024
+
+      scp:
+        sbi:
+          server:
+            - dev: eth0
+              advertise: scp-nscp
+              port: 80
+          client:
+            nrf:
+              - uri: http://nrf-nnrf:80
+        no_sepp: true
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"scpcfg.yaml":"\nlogger:\n  file: /open5gs/install/var/log/open5gs/scp.log\n\nglobal:\n  max:\n    ue: 1024\n\nscp:\n  sbi:\n    server:\n      - dev: eth0\n        advertise: scp-nscp\n        port: 80\n    client:\n      nrf:\n        - uri: http://nrf-nnrf:80\n  no_sepp: true\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs","nf":"scp"},"name":"scp-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+      nf: scp
+    name: scp-configmap
+    namespace: open5gs
+    resourceVersion: "4162684"
+    uid: 1ea29ae2-40f2-45b0-b5c7-4d5308fd75ad
+- apiVersion: v1
+  data:
+    smfcfg.yaml: |
+      logger:
+        file: /open5gs/install/var/log/open5gs/smf.log
+      global:
+        max:
+          ue: 1024
+      smf:
+        sbi:
+          server:
+            - dev: eth0
+              advertise: smf1-nsmf
+              port: 80
+          client:
+            scp:
+              - uri: http://scp-nscp:80
+        pfcp:
+          server:
+            - dev: n4
+          client:
+            upf:
+              - address: 10.10.4.1
+                dnn: internet
+              - address: 10.10.4.2
+                dnn: internet
+              - address: 10.10.4.3
+                dnn: internet
+        gtpc:
+          server:
+            - dev: eth0
+        gtpu:
+          server:
+            - dev: n3
+        metrics:
+          server:
+            - address: 0.0.0.0
+              port: 9090
+        session:
+          - subnet: 10.41.0.1/16
+        dns:
+          - 8.8.8.8
+          - 8.8.4.4
+        mtu: 1400
+        ctf:
+          enabled: auto
+        freeDiameter: /open5gs/install/etc/freeDiameter/smf.conf
+        info:
+          - s_nssai:
+              - sst: 1
+                sd: 1
+                dnn:
+                  - internet
+        upf:
+          - address: 10.10.4.1
+            links:
+              - address: 10.10.4.3
+          - address: 10.10.4.2
+            links:
+              - address: 10.10.4.3
+          - address: 10.10.4.3
+        route:
+          - destination: 10.107.115.169/32
+            upf:
+              - address: 10.10.4.1
+          - destination: 0.0.0.0/0
+            upf:
+              - address: 10.10.4.3
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"smfcfg.yaml":"logger:\n  file: /open5gs/install/var/log/open5gs/smf.log\nglobal:\n  max:\n    ue: 1024\nsmf:\n  sbi:\n    server:\n      - dev: eth0\n        advertise: smf1-nsmf\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n  pfcp:\n    server:\n      - dev: n4\n    client:\n      upf:\n        - address: 10.10.4.1\n          dnn: internet\n        - address: 10.10.4.2\n          dnn: internet\n        - address: 10.10.4.3\n          dnn: internet\n  gtpc:\n    server:\n      - dev: eth0\n  gtpu:\n    server:\n      - dev: n3\n  metrics:\n    server:\n      - address: 0.0.0.0\n        port: 9090\n  session:\n    - subnet: 10.41.0.1/16\n  dns:\n    - 8.8.8.8\n    - 8.8.4.4\n  mtu: 1400\n  ctf:\n    enabled: auto\n  freeDiameter: /open5gs/install/etc/freeDiameter/smf.conf\n  info:\n    - s_nssai:\n        - sst: 1\n          sd: 1\n          dnn:\n            - internet\n  upf:\n    - address: 10.10.4.1\n      links:\n        - address: 10.10.4.3\n    - address: 10.10.4.2\n      links:\n        - address: 10.10.4.3\n    - address: 10.10.4.3\n  route:\n    - destination: 10.107.115.169/32\n      upf:\n        - address: 10.10.4.1\n    - destination: 0.0.0.0/0\n      upf:\n        - address: 10.10.4.3\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"smf1-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    name: smf1-configmap
+    namespace: open5gs
+    resourceVersion: "16980171"
+    uid: 817a786e-29ad-4fe6-b6a6-2e763ac46b5b
+- apiVersion: v1
+  data:
+    udmcfg.yaml: "logger:\n  file: /open5gs/install/var/log/open5gs/udm.log\n\nglobal:\n
+      \ max:\n    ue: 1024\n    \nudm:\n  hnet:\n    - id: 1\n      scheme: 1\n      key:
+      /open5gs/install/etc/open5gs/hnet/curve25519-1.key\n    - id: 2\n      scheme:
+      2\n      key: /open5gs/install/etc/open5gs/hnet/secp256r1-2.key\n    - id: 3\n
+      \     scheme: 1\n      key: /open5gs/install/etc/open5gs/hnet/curve25519-3.key\n
+      \   - id: 4\n      scheme: 2\n      key: /open5gs/install/etc/open5gs/hnet/secp256r1-4.key\n
+      \   - id: 5\n      scheme: 1\n      key: /open5gs/install/etc/open5gs/hnet/curve25519-5.key\n
+      \   - id: 6\n      scheme: 2\n      key: /open5gs/install/etc/open5gs/hnet/secp256r1-6.key\n\n
+      \ sbi:\n    server:\n      - dev: eth0\n        advertise: udm-nudm\n        port:
+      80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n"
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"udmcfg.yaml":"logger:\n  file: /open5gs/install/var/log/open5gs/udm.log\n\nglobal:\n  max:\n    ue: 1024\n    \nudm:\n  hnet:\n    - id: 1\n      scheme: 1\n      key: /open5gs/install/etc/open5gs/hnet/curve25519-1.key\n    - id: 2\n      scheme: 2\n      key: /open5gs/install/etc/open5gs/hnet/secp256r1-2.key\n    - id: 3\n      scheme: 1\n      key: /open5gs/install/etc/open5gs/hnet/curve25519-3.key\n    - id: 4\n      scheme: 2\n      key: /open5gs/install/etc/open5gs/hnet/secp256r1-4.key\n    - id: 5\n      scheme: 1\n      key: /open5gs/install/etc/open5gs/hnet/curve25519-5.key\n    - id: 6\n      scheme: 2\n      key: /open5gs/install/etc/open5gs/hnet/secp256r1-6.key\n\n  sbi:\n    server:\n      - dev: eth0\n        advertise: udm-nudm\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs"},"name":"udm-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+    name: udm-configmap
+    namespace: open5gs
+    resourceVersion: "4162687"
+    uid: 41531e9c-7119-4195-a4aa-ca90bddd3b0d
+- apiVersion: v1
+  data:
+    udrcfg.yaml: "db_uri: mongodb://mongodb/open5gs\n\nlogger:\n  file: /open5gs/install/var/log/open5gs/udr.log\n\nglobal:\n
+      \ max:\n    ue: 1024\n    \nudr:\n  sbi:\n    server:\n      - dev: eth0\n        advertise:
+      udr-nudr\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n"
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"udrcfg.yaml":"db_uri: mongodb://mongodb/open5gs\n\nlogger:\n  file: /open5gs/install/var/log/open5gs/udr.log\n\nglobal:\n  max:\n    ue: 1024\n    \nudr:\n  sbi:\n    server:\n      - dev: eth0\n        advertise: udr-nudr\n        port: 80\n    client:\n      scp:\n        - uri: http://scp-nscp:80\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs"},"name":"udr-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+    name: udr-configmap
+    namespace: open5gs
+    resourceVersion: "4162688"
+    uid: 541708fa-072f-45d7-9b18-d90f7c69e0be
+- apiVersion: v1
+  data:
+    ue1.yaml: |
+      # IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)
+      supi: 'imsi-001010000000001'
+      # Mobile Country Code value of HPLMN
+      mcc: '999'
+      # Mobile Network Code value of HPLMN (2 or 3 digits)
+      mnc: '70'
+
+      # Permanent subscription key
+      key: '465B5CE8B199B49FAA5F0A2EE238A6BC'
+      # Operator code (OP or OPC) of the UE
+      op: 'E8ED289DEBA952E4283B54E88E6183CA'
+      # This value specifies the OP type and it can be either 'OP' or 'OPC'
+      opType: 'OPC'
+      # Authentication Management Field (AMF) value
+      amf: '8000'
+      # IMEI number of the device. It is used if no SUPI is provided
+      imei: '356938035643803'
+      # IMEISV number of the device. It is used if no SUPI and IMEI is provided
+      imeiSv: '4370816125816151'
+
+      # List of gNB IP addresses for Radio Link Simulation
+      gnbSearchList:
+        - gnb-service
+
+      # UAC Access Identities Configuration
+      uacAic:
+        mps: false
+        mcs: false
+
+      # UAC Access Control Class
+      uacAcc:
+        normalClass: 0
+        class11: false
+        class12: false
+        class13: false
+        class14: false
+        class15: false
+
+      # Initial PDU sessions to be established
+      sessions:
+        - type: 'IPv4'
+          apn: 'internet'
+          slice:
+            sst: 1
+            sd: 000001
+
+      # Configured NSSAI for this UE by HPLMN
+      configured-nssai:
+        - sst: 1
+          sd: 000001
+
+      # Default Configured NSSAI for this UE
+      default-nssai:
+        - sst: 1
+          sd: 000001
+
+      # Supported integrity algorithms by this UE
+      integrity:
+        IA1: true
+        IA2: true
+        IA3: true
+
+      # Supported encryption algorithms by this UE
+      ciphering:
+        EA1: true
+        EA2: true
+        EA3: true
+
+      # Integrity protection maximum data rate for user plane
+      integrityMaxRate:
+        uplink: 'full'
+        downlink: 'full'
+    wrapper.sh: "#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue
+      -c /ueransim/config/ue1.yaml "
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"ue1.yaml":"# IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)\nsupi: 'imsi-001010000000001'\n# Mobile Country Code value of HPLMN\nmcc: '999'\n# Mobile Network Code value of HPLMN (2 or 3 digits)\nmnc: '70'\n\n# Permanent subscription key\nkey: '465B5CE8B199B49FAA5F0A2EE238A6BC'\n# Operator code (OP or OPC) of the UE\nop: 'E8ED289DEBA952E4283B54E88E6183CA'\n# This value specifies the OP type and it can be either 'OP' or 'OPC'\nopType: 'OPC'\n# Authentication Management Field (AMF) value\namf: '8000'\n# IMEI number of the device. It is used if no SUPI is provided\nimei: '356938035643803'\n# IMEISV number of the device. It is used if no SUPI and IMEI is provided\nimeiSv: '4370816125816151'\n\n# List of gNB IP addresses for Radio Link Simulation\ngnbSearchList:\n  - gnb-service\n\n# UAC Access Identities Configuration\nuacAic:\n  mps: false\n  mcs: false\n\n# UAC Access Control Class\nuacAcc:\n  normalClass: 0\n  class11: false\n  class12: false\n  class13: false\n  class14: false\n  class15: false\n\n# Initial PDU sessions to be established\nsessions:\n  - type: 'IPv4'\n    apn: 'internet'\n    slice:\n      sst: 1\n      sd: 000001\n\n# Configured NSSAI for this UE by HPLMN\nconfigured-nssai:\n  - sst: 1\n    sd: 000001\n\n# Default Configured NSSAI for this UE\ndefault-nssai:\n  - sst: 1\n    sd: 000001\n\n# Supported integrity algorithms by this UE\nintegrity:\n  IA1: true\n  IA2: true\n  IA3: true\n\n# Supported encryption algorithms by this UE\nciphering:\n  EA1: true\n  EA2: true\n  EA3: true\n\n# Integrity protection maximum data rate for user plane\nintegrityMaxRate:\n  uplink: 'full'\n  downlink: 'full'\n","wrapper.sh":"#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue -c /ueransim/config/ue1.yaml "},"kind":"ConfigMap","metadata":{"annotations":{},"name":"ue1-configmap-958dfff995","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T16:11:45Z"
+    name: ue1-configmap-958dfff995
+    namespace: open5gs
+    resourceVersion: "4213480"
+    uid: d78a4a2d-1fb5-45b9-807a-ce37b64db61a
+- apiVersion: v1
+  data:
+    ue1.yaml: |
+      # IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)
+      supi: 'imsi-001010000000001'
+      # Mobile Country Code value of HPLMN
+      mcc: '001'
+      # Mobile Network Code value of HPLMN (2 or 3 digits)
+      mnc: '01'
+
+      # Permanent subscription key
+      key: '465B5CE8B199B49FAA5F0A2EE238A6BC'
+      # Operator code (OP or OPC) of the UE
+      op: 'E8ED289DEBA952E4283B54E88E6183CA'
+      # This value specifies the OP type and it can be either 'OP' or 'OPC'
+      opType: 'OPC'
+      # Authentication Management Field (AMF) value
+      amf: '8000'
+      # IMEI number of the device. It is used if no SUPI is provided
+      imei: '356938035643803'
+      # IMEISV number of the device. It is used if no SUPI and IMEI is provided
+      imeiSv: '4370816125816151'
+
+      # List of gNB IP addresses for Radio Link Simulation
+      gnbSearchList:
+        - 10.102.97.242
+        - 10.100.233.99
+    wrapper.sh: "#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue
+      -c /ueransim/config/ue1.yaml "
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"ue1.yaml":"# IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)\nsupi: 'imsi-001010000000001'\n# Mobile Country Code value of HPLMN\nmcc: '001'\n# Mobile Network Code value of HPLMN (2 or 3 digits)\nmnc: '01'\n\n# Permanent subscription key\nkey: '465B5CE8B199B49FAA5F0A2EE238A6BC'\n# Operator code (OP or OPC) of the UE\nop: 'E8ED289DEBA952E4283B54E88E6183CA'\n# This value specifies the OP type and it can be either 'OP' or 'OPC'\nopType: 'OPC'\n# Authentication Management Field (AMF) value\namf: '8000'\n# IMEI number of the device. It is used if no SUPI is provided\nimei: '356938035643803'\n# IMEISV number of the device. It is used if no SUPI and IMEI is provided\nimeiSv: '4370816125816151'\n\n# List of gNB IP addresses for Radio Link Simulation\ngnbSearchList:\n  - 10.102.97.242\n  - 10.100.233.99\n","wrapper.sh":"#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue -c /ueransim/config/ue1.yaml "},"kind":"ConfigMap","metadata":{"annotations":{},"creationTimestamp":null,"name":"ue1-configmap-bf6k66264b","namespace":"open5gs"}}
+    creationTimestamp: "2026-01-04T12:50:02Z"
+    name: ue1-configmap-bf6k66264b
+    namespace: open5gs
+    resourceVersion: "125020"
+    uid: aadffa91-9036-4407-83d9-0bda3aad26e6
+- apiVersion: v1
+  data:
+    ue1.yaml: |
+      # IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)
+      supi: 'imsi-001010000000001'
+      # Mobile Country Code value of HPLMN
+      mcc: '001'
+      # Mobile Network Code value of HPLMN (2 or 3 digits)
+      mnc: '01'
+
+      # Permanent subscription key
+      key: '465B5CE8B199B49FAA5F0A2EE238A6BC'
+      # Operator code (OP or OPC) of the UE
+      op: 'E8ED289DEBA952E4283B54E88E6183CA'
+      # This value specifies the OP type and it can be either 'OP' or 'OPC'
+      opType: 'OPC'
+      # Authentication Management Field (AMF) value
+      amf: '8000'
+      # IMEI number of the device. It is used if no SUPI is provided
+      imei: '356938035643803'
+      # IMEISV number of the device. It is used if no SUPI and IMEI is provided
+      imeiSv: '4370816125816151'
+
+      # List of gNB IP addresses for Radio Link Simulation
+      gnbSearchList:
+        - 10.102.97.242
+        - 10.100.233.99
+    wrapper.sh: "#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue
+      -c /ueransim/config/ue1.yaml "
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"ue1.yaml":"# IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)\nsupi: 'imsi-001010000000001'\n# Mobile Country Code value of HPLMN\nmcc: '001'\n# Mobile Network Code value of HPLMN (2 or 3 digits)\nmnc: '01'\n\n# Permanent subscription key\nkey: '465B5CE8B199B49FAA5F0A2EE238A6BC'\n# Operator code (OP or OPC) of the UE\nop: 'E8ED289DEBA952E4283B54E88E6183CA'\n# This value specifies the OP type and it can be either 'OP' or 'OPC'\nopType: 'OPC'\n# Authentication Management Field (AMF) value\namf: '8000'\n# IMEI number of the device. It is used if no SUPI is provided\nimei: '356938035643803'\n# IMEISV number of the device. It is used if no SUPI and IMEI is provided\nimeiSv: '4370816125816151'\n\n# List of gNB IP addresses for Radio Link Simulation\ngnbSearchList:\n  - 10.102.97.242\n  - 10.100.233.99\n","wrapper.sh":"#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue -c /ueransim/config/ue1.yaml "},"kind":"ConfigMap","metadata":{"annotations":{},"name":"ue1-configmap-bt9m5g8994","namespace":"open5gs"}}
+    creationTimestamp: "2026-01-04T13:26:33Z"
+    name: ue1-configmap-bt9m5g8994
+    namespace: open5gs
+    resourceVersion: "126184"
+    uid: 83d6b8fc-4a17-437f-b28e-c7ca676f697d
+- apiVersion: v1
+  data:
+    ue1.yaml: |
+      # IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)
+      supi: 'imsi-001010000000001'
+      # Mobile Country Code value of HPLMN
+      mcc: '001'
+      # Mobile Network Code value of HPLMN (2 or 3 digits)
+      mnc: '01'
+
+      # Permanent subscription key
+      key: '465B5CE8B199B49FAA5F0A2EE238A6BC'
+      # Operator code (OP or OPC) of the UE
+      op: 'E8ED289DEBA952E4283B54E88E6183CA'
+      # This value specifies the OP type and it can be either 'OP' or 'OPC'
+      opType: 'OPC'
+      # Authentication Management Field (AMF) value
+      amf: '8000'
+      # IMEI number of the device. It is used if no SUPI is provided
+      imei: '356938035643803'
+      # IMEISV number of the device. It is used if no SUPI and IMEI is provided
+      imeiSv: '4370816125816151'
+
+      # List of gNB IP addresses for Radio Link Simulation
+      gnbSearchList:
+        - gnb-service-mec1
+
+      # UAC Access Identities Configuration
+      uacAic:
+        mps: false
+        mcs: false
+
+      # UAC Access Control Class
+      uacAcc:
+        normalClass: 0
+        class11: false
+        class12: false
+        class13: false
+        class14: false
+        class15: false
+
+      # Initial PDU sessions to be established
+      sessions:
+        - type: 'IPv4'
+          apn: 'internet'
+          slice:
+            sst: 1
+            sd: 000001
+
+      # Configured NSSAI for this UE by HPLMN
+      configured-nssai:
+        - sst: 1
+          sd: 000001
+
+      # Default Configured NSSAI for this UE
+      default-nssai:
+        - sst: 1
+          sd: 000001
+
+      # Supported integrity algorithms by this UE
+      integrity:
+        IA1: true
+        IA2: true
+        IA3: true
+
+      # Supported encryption algorithms by this UE
+      ciphering:
+        EA1: true
+        EA2: true
+        EA3: true
+
+      # Integrity protection maximum data rate for user plane
+      integrityMaxRate:
+        uplink: 'full'
+        downlink: 'full'
+    wrapper.sh: "#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue
+      -c /ueransim/config/ue1.yaml "
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"ue1.yaml":"# IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)\nsupi: 'imsi-001010000000001'\n# Mobile Country Code value of HPLMN\nmcc: '001'\n# Mobile Network Code value of HPLMN (2 or 3 digits)\nmnc: '01'\n\n# Permanent subscription key\nkey: '465B5CE8B199B49FAA5F0A2EE238A6BC'\n# Operator code (OP or OPC) of the UE\nop: 'E8ED289DEBA952E4283B54E88E6183CA'\n# This value specifies the OP type and it can be either 'OP' or 'OPC'\nopType: 'OPC'\n# Authentication Management Field (AMF) value\namf: '8000'\n# IMEI number of the device. It is used if no SUPI is provided\nimei: '356938035643803'\n# IMEISV number of the device. It is used if no SUPI and IMEI is provided\nimeiSv: '4370816125816151'\n\n# List of gNB IP addresses for Radio Link Simulation\ngnbSearchList:\n  - gnb-service-mec1\n\n# UAC Access Identities Configuration\nuacAic:\n  mps: false\n  mcs: false\n\n# UAC Access Control Class\nuacAcc:\n  normalClass: 0\n  class11: false\n  class12: false\n  class13: false\n  class14: false\n  class15: false\n\n# Initial PDU sessions to be established\nsessions:\n  - type: 'IPv4'\n    apn: 'internet'\n    slice:\n      sst: 1\n      sd: 000001\n\n# Configured NSSAI for this UE by HPLMN\nconfigured-nssai:\n  - sst: 1\n    sd: 000001\n\n# Default Configured NSSAI for this UE\ndefault-nssai:\n  - sst: 1\n    sd: 000001\n\n# Supported integrity algorithms by this UE\nintegrity:\n  IA1: true\n  IA2: true\n  IA3: true\n\n# Supported encryption algorithms by this UE\nciphering:\n  EA1: true\n  EA2: true\n  EA3: true\n\n# Integrity protection maximum data rate for user plane\nintegrityMaxRate:\n  uplink: 'full'\n  downlink: 'full'\n","wrapper.sh":"#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue -c /ueransim/config/ue1.yaml "},"kind":"ConfigMap","metadata":{"annotations":{},"name":"ue1-configmap-gh9h9h47gm","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T16:33:31Z"
+    name: ue1-configmap-gh9h9h47gm
+    namespace: open5gs
+    resourceVersion: "4215929"
+    uid: 99d1e998-7cd9-4686-9a11-bb8f27c05ebb
+- apiVersion: v1
+  data:
+    ue1.yaml: |
+      # IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)
+      supi: 'imsi-001010000000001'
+      # Mobile Country Code value of HPLMN
+      mcc: '001'
+      # Mobile Network Code value of HPLMN (2 or 3 digits)
+      mnc: '01'
+
+      # Permanent subscription key
+      key: '465B5CE8B199B49FAA5F0A2EE238A6BC'
+      # Operator code (OP or OPC) of the UE
+      op: 'E8ED289DEBA952E4283B54E88E6183CA'
+      # This value specifies the OP type and it can be either 'OP' or 'OPC'
+      opType: 'OPC'
+      # Authentication Management Field (AMF) value
+      amf: '8000'
+      # IMEI number of the device. It is used if no SUPI is provided
+      imei: '356938035643803'
+      # IMEISV number of the device. It is used if no SUPI and IMEI is provided
+      imeiSv: '4370816125816151'
+
+      # List of gNB IP addresses for Radio Link Simulation
+      gnbSearchList:
+        - 10.102.97.242   # gnb-service-mec1 ClusterIP
+        - 10.100.233.99   # gnb-service-mec2 ClusterIP
+
+      # UAC Access Identities Configuration
+      uacAic:
+        mps: false
+        mcs: false
+
+      # UAC Access Control Class
+      uacAcc:
+        normalClass: 0
+        class11: false
+        class12: false
+        class13: false
+        class14: false
+        class15: false
+
+      # Initial PDU sessions to be established
+      sessions:
+        - type: 'IPv4'
+          apn: 'internet'
+          slice:
+            sst: 1
+            sd: 000001
+
+      # Configured NSSAI for this UE by HPLMN
+      configured-nssai:
+        - sst: 1
+          sd: 000001
+
+      # Default Configured NSSAI for this UE
+      default-nssai:
+        - sst: 1
+          sd: 000001
+
+      # Supported integrity algorithms by this UE  (BẮT BUỘC)
+      integrity:
+        IA1: true
+        IA2: true
+        IA3: true
+
+      # Supported encryption algorithms by this UE  (BẮT BUỘC)
+      ciphering:
+        EA1: true
+        EA2: true
+        EA3: true
+
+      # Integrity protection maximum data rate for user plane
+      integrityMaxRate:
+        uplink: 'full'
+        downlink: 'full'
+    wrapper.sh: "#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue
+      -c /ueransim/config/ue1.yaml "
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"ue1.yaml":"# IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)\nsupi: 'imsi-001010000000001'\n# Mobile Country Code value of HPLMN\nmcc: '001'\n# Mobile Network Code value of HPLMN (2 or 3 digits)\nmnc: '01'\n\n# Permanent subscription key\nkey: '465B5CE8B199B49FAA5F0A2EE238A6BC'\n# Operator code (OP or OPC) of the UE\nop: 'E8ED289DEBA952E4283B54E88E6183CA'\n# This value specifies the OP type and it can be either 'OP' or 'OPC'\nopType: 'OPC'\n# Authentication Management Field (AMF) value\namf: '8000'\n# IMEI number of the device. It is used if no SUPI is provided\nimei: '356938035643803'\n# IMEISV number of the device. It is used if no SUPI and IMEI is provided\nimeiSv: '4370816125816151'\n\n# List of gNB IP addresses for Radio Link Simulation\ngnbSearchList:\n  - 10.102.97.242   # gnb-service-mec1 ClusterIP\n  - 10.100.233.99   # gnb-service-mec2 ClusterIP\n\n# UAC Access Identities Configuration\nuacAic:\n  mps: false\n  mcs: false\n\n# UAC Access Control Class\nuacAcc:\n  normalClass: 0\n  class11: false\n  class12: false\n  class13: false\n  class14: false\n  class15: false\n\n# Initial PDU sessions to be established\nsessions:\n  - type: 'IPv4'\n    apn: 'internet'\n    slice:\n      sst: 1\n      sd: 000001\n\n# Configured NSSAI for this UE by HPLMN\nconfigured-nssai:\n  - sst: 1\n    sd: 000001\n\n# Default Configured NSSAI for this UE\ndefault-nssai:\n  - sst: 1\n    sd: 000001\n\n# Supported integrity algorithms by this UE  (BẮT BUỘC)\nintegrity:\n  IA1: true\n  IA2: true\n  IA3: true\n\n# Supported encryption algorithms by this UE  (BẮT BUỘC)\nciphering:\n  EA1: true\n  EA2: true\n  EA3: true\n\n# Integrity protection maximum data rate for user plane\nintegrityMaxRate:\n  uplink: 'full'\n  downlink: 'full'\n","wrapper.sh":"#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue -c /ueransim/config/ue1.yaml "},"kind":"ConfigMap","metadata":{"annotations":{},"name":"ue1-configmap-gm4m9kf6d9","namespace":"open5gs"}}
+    creationTimestamp: "2026-01-04T13:37:45Z"
+    name: ue1-configmap-gm4m9kf6d9
+    namespace: open5gs
+    resourceVersion: "127326"
+    uid: f8ed570e-5297-4b5a-85e3-44f45db8e95c
+- apiVersion: v1
+  data:
+    ue1.yaml: |
+      # IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)
+      supi: 'imsi-001010000000001'
+      # Mobile Country Code value of HPLMN
+      mcc: '999'
+      # Mobile Network Code value of HPLMN (2 or 3 digits)
+      mnc: '70'
+
+      # Permanent subscription key
+      key: '465B5CE8B199B49FAA5F0A2EE238A6BC'
+      # Operator code (OP or OPC) of the UE
+      op: 'E8ED289DEBA952E4283B54E88E6183CA'
+      # This value specifies the OP type and it can be either 'OP' or 'OPC'
+      opType: 'OPC'
+      # Authentication Management Field (AMF) value
+      amf: '8000'
+      # IMEI number of the device. It is used if no SUPI is provided
+      imei: '356938035643803'
+      # IMEISV number of the device. It is used if no SUPI and IMEI is provided
+      imeiSv: '4370816125816151'
+
+      # List of gNB IP addresses for Radio Link Simulation
+      gnbSearchList:
+        - gnb-service-mec1
+
+      # UAC Access Identities Configuration
+      uacAic:
+        mps: false
+        mcs: false
+
+      # UAC Access Control Class
+      uacAcc:
+        normalClass: 0
+        class11: false
+        class12: false
+        class13: false
+        class14: false
+        class15: false
+
+      # Initial PDU sessions to be established
+      sessions:
+        - type: 'IPv4'
+          apn: 'internet'
+          slice:
+            sst: 1
+            sd: 000001
+
+      # Configured NSSAI for this UE by HPLMN
+      configured-nssai:
+        - sst: 1
+          sd: 000001
+
+      # Default Configured NSSAI for this UE
+      default-nssai:
+        - sst: 1
+          sd: 000001
+
+      # Supported integrity algorithms by this UE
+      integrity:
+        IA1: true
+        IA2: true
+        IA3: true
+
+      # Supported encryption algorithms by this UE
+      ciphering:
+        EA1: true
+        EA2: true
+        EA3: true
+
+      # Integrity protection maximum data rate for user plane
+      integrityMaxRate:
+        uplink: 'full'
+        downlink: 'full'
+    wrapper.sh: "#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue
+      -c /ueransim/config/ue1.yaml "
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"ue1.yaml":"# IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)\nsupi: 'imsi-001010000000001'\n# Mobile Country Code value of HPLMN\nmcc: '999'\n# Mobile Network Code value of HPLMN (2 or 3 digits)\nmnc: '70'\n\n# Permanent subscription key\nkey: '465B5CE8B199B49FAA5F0A2EE238A6BC'\n# Operator code (OP or OPC) of the UE\nop: 'E8ED289DEBA952E4283B54E88E6183CA'\n# This value specifies the OP type and it can be either 'OP' or 'OPC'\nopType: 'OPC'\n# Authentication Management Field (AMF) value\namf: '8000'\n# IMEI number of the device. It is used if no SUPI is provided\nimei: '356938035643803'\n# IMEISV number of the device. It is used if no SUPI and IMEI is provided\nimeiSv: '4370816125816151'\n\n# List of gNB IP addresses for Radio Link Simulation\ngnbSearchList:\n  - gnb-service-mec1\n\n# UAC Access Identities Configuration\nuacAic:\n  mps: false\n  mcs: false\n\n# UAC Access Control Class\nuacAcc:\n  normalClass: 0\n  class11: false\n  class12: false\n  class13: false\n  class14: false\n  class15: false\n\n# Initial PDU sessions to be established\nsessions:\n  - type: 'IPv4'\n    apn: 'internet'\n    slice:\n      sst: 1\n      sd: 000001\n\n# Configured NSSAI for this UE by HPLMN\nconfigured-nssai:\n  - sst: 1\n    sd: 000001\n\n# Default Configured NSSAI for this UE\ndefault-nssai:\n  - sst: 1\n    sd: 000001\n\n# Supported integrity algorithms by this UE\nintegrity:\n  IA1: true\n  IA2: true\n  IA3: true\n\n# Supported encryption algorithms by this UE\nciphering:\n  EA1: true\n  EA2: true\n  EA3: true\n\n# Integrity protection maximum data rate for user plane\nintegrityMaxRate:\n  uplink: 'full'\n  downlink: 'full'\n","wrapper.sh":"#!/bin/bash\n\nmkdir /dev/net\nmknod /dev/net/tun c 10 200\n\n/ueransim/nr-ue -c /ueransim/config/ue1.yaml "},"kind":"ConfigMap","metadata":{"annotations":{},"name":"ue1-configmap-hhkc54cd6t","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T16:17:15Z"
+    name: ue1-configmap-hhkc54cd6t
+    namespace: open5gs
+    resourceVersion: "4214097"
+    uid: 66a845ea-a7c8-457c-90af-858daab154b2
+- apiVersion: v1
+  data:
+    exporter.py: "from prometheus_client import start_http_server, Gauge\nimport time\n\n#
+      Tạo biến RSRP chuẩn cho Prometheus\nrsrp_metric = Gauge('ueransim_ue_rsrp',
+      'RSRP of UE', ['pod_name'])\n\nif __name__ == '__main__':\n    start_http_server(8080)\n
+      \   print(\"\U0001F680 Exporter bắt đầu giả lập kịch bản UE di chuyển...\")\n
+      \   \n    # Bắt đầu ở gần trạm (Sóng khỏe: -70 dBm)\n    current_rsrp = -70.0
+      \n    \n    while True:\n        # Giả lập UE đi xa dần (giảm 1 dBm mỗi 2 giây)\n
+      \       current_rsrp -= 1.0\n        \n        # Cập nhật vào Prometheus\n        rsrp_metric.labels(pod_name=\"ue1\").set(current_rsrp)\n
+      \       \n        # In ra log để bạn dễ theo dõi\n        print(f\"Exporter
+      đẩy vào Prometheus: {current_rsrp} dBm\")\n        \n        # Nếu sóng quá
+      yếu (dưới -105 dBm), giả lập UE đã được Handover và sóng khỏe lại\n        if
+      current_rsrp < -105.0:\n            current_rsrp = -70.0\n            \n        time.sleep(2)\n"
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: "{\"apiVersion\":\"v1\",\"data\":{\"exporter.py\":\"from
+        prometheus_client import start_http_server, Gauge\\nimport time\\n\\n# Tạo
+        biến RSRP chuẩn cho Prometheus\\nrsrp_metric = Gauge('ueransim_ue_rsrp', 'RSRP
+        of UE', ['pod_name'])\\n\\nif __name__ == '__main__':\\n    start_http_server(8080)\\n
+        \   print(\\\"\U0001F680 Exporter bắt đầu giả lập kịch bản UE di chuyển...\\\")\\n
+        \   \\n    # Bắt đầu ở gần trạm (Sóng khỏe: -70 dBm)\\n    current_rsrp =
+        -70.0 \\n    \\n    while True:\\n        # Giả lập UE đi xa dần (giảm 1 dBm
+        mỗi 2 giây)\\n        current_rsrp -= 1.0\\n        \\n        # Cập nhật
+        vào Prometheus\\n        rsrp_metric.labels(pod_name=\\\"ue1\\\").set(current_rsrp)\\n
+        \       \\n        # In ra log để bạn dễ theo dõi\\n        print(f\\\"Exporter
+        đẩy vào Prometheus: {current_rsrp} dBm\\\")\\n        \\n        # Nếu sóng
+        quá yếu (dưới -105 dBm), giả lập UE đã được Handover và sóng khỏe lại\\n        if
+        current_rsrp \\u003c -105.0:\\n            current_rsrp = -70.0\\n            \\n
+        \       time.sleep(2)\\n\"},\"kind\":\"ConfigMap\",\"metadata\":{\"annotations\":{},\"creationTimestamp\":null,\"name\":\"ueransim-exporter-script\",\"namespace\":\"open5gs\"}}\n"
+    creationTimestamp: "2026-07-02T04:00:57Z"
+    name: ueransim-exporter-script
+    namespace: open5gs
+    resourceVersion: "16712491"
+    uid: 10e93ba3-9930-4c17-a9f8-af206e2b7629
+- apiVersion: v1
+  data:
+    upfcfg.yaml: |
+      logger:
+          file: /open5gs/install/var/log/open5gs/upf.log
+          level: info
+      global:
+        max:
+          ue: 1024
+      upf:
+        pfcp:
+          server:
+            - dev: n4
+        gtpu:
+          server:
+            - dev: n9
+        session:
+          - subnet: 10.41.0.1/16
+            dnn: internet
+        metrics:
+          server:
+            - address: 0.0.0.0
+              port: 9090
+    wrapper.sh: "#!/bin/bash   \nip tuntap add name ogstun mode tun;\nip addr add
+      10.41.0.1/16 dev ogstun;\nsysctl -w net.ipv6.conf.all.disable_ipv6=1;\nip link
+      set ogstun up;\nsh -c \"echo 1 > /proc/sys/net/ipv4/ip_forward\";\niptables
+      -t nat -A POSTROUTING -s 10.41.0.0/16 ! -o ogstun -j MASQUERADE;\n/open5gs/install/bin/open5gs-upfd
+      -c /open5gs/config/upfcfg.yaml\n"
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"upfcfg.yaml":"logger:\n    file: /open5gs/install/var/log/open5gs/upf.log\n    level: info\nglobal:\n  max:\n    ue: 1024\nupf:\n  pfcp:\n    server:\n      - dev: n4\n  gtpu:\n    server:\n      - dev: n9\n  session:\n    - subnet: 10.41.0.1/16\n      dnn: internet\n  metrics:\n    server:\n      - address: 0.0.0.0\n        port: 9090\n","wrapper.sh":"#!/bin/bash   \nip tuntap add name ogstun mode tun;\nip addr add 10.41.0.1/16 dev ogstun;\nsysctl -w net.ipv6.conf.all.disable_ipv6=1;\nip link set ogstun up;\nsh -c \"echo 1 \u003e /proc/sys/net/ipv4/ip_forward\";\niptables -t nat -A POSTROUTING -s 10.41.0.0/16 ! -o ogstun -j MASQUERADE;\n/open5gs/install/bin/open5gs-upfd -c /open5gs/config/upfcfg.yaml\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs","name":"upf-core","nf":"upf"},"name":"upf-core-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-06-19T06:42:50Z"
+    labels:
+      app: open5gs
+      name: upf-core
+      nf: upf
+    name: upf-core-configmap
+    namespace: open5gs
+    resourceVersion: "14899833"
+    uid: 9e0cf158-d828-4bb5-aa87-cf12f6b833f7
+- apiVersion: v1
+  data:
+    upfcfg.yaml: |
+      logger:
+          file: /open5gs/install/var/log/open5gs/upf.log
+          level: info
+
+      global:
+        max:
+          ue: 1024
+
+      upf:
+        pfcp:
+          server:
+            - dev: n4
+        gtpu:
+          server:
+            - dev: n3
+        session:
+          - subnet: 10.41.0.1/16
+            dnn: internet
+        metrics:
+          server:
+            - address: 0.0.0.0
+              port: 9090
+    wrapper.sh: "#!/bin/bash   \n\nip tuntap add name ogstun mode tun;\nip addr add
+      10.41.0.1/16 dev ogstun;\nsysctl -w net.ipv6.conf.all.disable_ipv6=1;\nip link
+      set ogstun up;\nsh -c \"echo 1 > /proc/sys/net/ipv4/ip_forward\";\niptables
+      -t nat -A POSTROUTING -s 10.41.0.0/16 ! -o ogstun -j MASQUERADE;\n\n/open5gs/install/bin/open5gs-upfd
+      -c /open5gs/config/upfcfg.yaml\n# sleep 1000000\n"
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"upfcfg.yaml":"logger:\n    file: /open5gs/install/var/log/open5gs/upf.log\n    level: info\n\nglobal:\n  max:\n    ue: 1024\n\nupf:\n  pfcp:\n    server:\n      - dev: n4\n  gtpu:\n    server:\n      - dev: n3\n  session:\n    - subnet: 10.41.0.1/16\n      dnn: internet\n  metrics:\n    server:\n      - address: 0.0.0.0\n        port: 9090\n","wrapper.sh":"#!/bin/bash   \n\nip tuntap add name ogstun mode tun;\nip addr add 10.41.0.1/16 dev ogstun;\nsysctl -w net.ipv6.conf.all.disable_ipv6=1;\nip link set ogstun up;\nsh -c \"echo 1 \u003e /proc/sys/net/ipv4/ip_forward\";\niptables -t nat -A POSTROUTING -s 10.41.0.0/16 ! -o ogstun -j MASQUERADE;\n\n/open5gs/install/bin/open5gs-upfd -c /open5gs/config/upfcfg.yaml\n# sleep 1000000\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs","name":"upf1","nf":"upf"},"name":"upf1-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+      name: upf1
+      nf: upf
+    name: upf1-configmap
+    namespace: open5gs
+    resourceVersion: "4162690"
+    uid: caa4f417-d42f-43de-8ca4-abe5182364ce
+- apiVersion: v1
+  data:
+    upfcfg.yaml: "logger:\n    file: /open5gs/install/var/log/open5gs/upf.log\n\nglobal:\n
+      \ max:\n    ue: 1024\n    \nupf:\n  pfcp:\n    server:\n      - dev: n4\n  gtpu:\n
+      \   server:\n      - dev: n3\n  session:\n    - subnet: 10.42.0.1/16\n      dnn:
+      streaming\n  metrics:\n    server:\n      - address: 0.0.0.0\n        port:
+      9090\n"
+    wrapper.sh: "#!/bin/bash   \n\nip tuntap add name ogstun mode tun;\nip addr add
+      10.42.0.1/16 dev ogstun;\nsysctl -w net.ipv6.conf.all.disable_ipv6=1;\nip link
+      set ogstun up;\nsh -c \"echo 1 > /proc/sys/net/ipv4/ip_forward\";\niptables
+      -t nat -A POSTROUTING -s 10.42.0.0/16 ! -o ogstun -j MASQUERADE;\n\n/open5gs/install/bin/open5gs-upfd
+      -c /open5gs/config/upfcfg.yaml\n"
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"upfcfg.yaml":"logger:\n    file: /open5gs/install/var/log/open5gs/upf.log\n\nglobal:\n  max:\n    ue: 1024\n    \nupf:\n  pfcp:\n    server:\n      - dev: n4\n  gtpu:\n    server:\n      - dev: n3\n  session:\n    - subnet: 10.42.0.1/16\n      dnn: streaming\n  metrics:\n    server:\n      - address: 0.0.0.0\n        port: 9090\n","wrapper.sh":"#!/bin/bash   \n\nip tuntap add name ogstun mode tun;\nip addr add 10.42.0.1/16 dev ogstun;\nsysctl -w net.ipv6.conf.all.disable_ipv6=1;\nip link set ogstun up;\nsh -c \"echo 1 \u003e /proc/sys/net/ipv4/ip_forward\";\niptables -t nat -A POSTROUTING -s 10.42.0.0/16 ! -o ogstun -j MASQUERADE;\n\n/open5gs/install/bin/open5gs-upfd -c /open5gs/config/upfcfg.yaml\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs","name":"upf2","nf":"upf"},"name":"upf2-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-05-29T07:38:27Z"
+    labels:
+      app: open5gs
+      name: upf2
+      nf: upf
+    name: upf2-configmap
+    namespace: open5gs
+    resourceVersion: "4162691"
+    uid: db982fb0-c8d7-4c88-a113-d145cb2583a3
+- apiVersion: v1
+  data:
+    webuicfg.yaml: ""
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"webuicfg.yaml":""},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"open5gs","nf":"webui"},"name":"webui-configmap","namespace":"open5gs"}}
+    creationTimestamp: "2026-01-04T07:02:46Z"
+    labels:
+      app: open5gs
+      nf: webui
+    name: webui-configmap
+    namespace: open5gs
+    resourceVersion: "12957"
+    uid: 01f05f4a-8657-4e84-bfe1-e0b5419210ca
+kind: List
+metadata:
+  resourceVersion: ""

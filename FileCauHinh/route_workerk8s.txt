@@ -1,0 +1,15 @@
+Creating debugging pod node-debugger-workerk8s-lf9w9 with container debugger on node workerk8s.
+default via 103.121.91.1 dev ens18 
+10.10.33.32/27 dev ens19 scope link  src 10.10.33.60 
+103.121.91.0/24 dev ens18 scope link  src 103.121.91.87 
+blackhole 192.168.30.128/26 
+192.168.30.132 dev cali4bb7f544152 scope link 
+192.168.30.137 dev cali954078426a2 scope link 
+192.168.30.146 dev cali125c8b0f687 scope link 
+192.168.30.150 dev califa5f52f0c86 scope link 
+192.168.30.156 dev califc954e7bce9 scope link 
+192.168.30.190 dev cali4e9df2fe8e3 scope link 
+192.168.35.128/26 via 10.10.33.45 dev tunl0 onlink 
+192.168.35.173 via 10.10.33.45 dev tunl0 
+192.168.43.192/26 via 10.10.33.54 dev tunl0 onlink 
+192.168.131.192/26 via 10.10.33.40 dev tunl0 onlink 

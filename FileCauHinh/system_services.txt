@@ -1,0 +1,11 @@
+NAMESPACE     NAME                TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                  AGE
+default       kubernetes          ClusterIP   10.96.0.1        <none>        443/TCP                  36d
+default       mec-app-2-svc       ClusterIP   10.109.144.29    <none>        80/TCP                   9d
+kube-system   kube-dns            ClusterIP   10.96.0.10       <none>        53/UDP,53/TCP,9153/TCP   181d
+mec           mec-app-1-svc       ClusterIP   10.97.63.74      <none>        80/TCP,5201/TCP          36d
+mec           mec-app-2-svc       ClusterIP   10.101.130.62    <none>        80/TCP,5201/TCP          36d
+mec           mec-app-svc         ClusterIP   10.99.131.123    <none>        80/TCP                   3d
+mec           node-exporter-svc   ClusterIP   None             <none>        9100/TCP                 36d
+mec           prometheus-svc      NodePort    10.103.148.210   <none>        9090:30090/TCP           36d
+mec           redis-service       ClusterIP   10.100.219.196   <none>        6379/TCP                 36d
+open5gs       mec-app-service     NodePort    10.99.229.8      <none>        8000:30615/TCP           21h

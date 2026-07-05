@@ -1,0 +1,2 @@
+mec-app-1-9f46f4456-xbrdr
+  FLASK_RUN_HOST: 0.0.0.0

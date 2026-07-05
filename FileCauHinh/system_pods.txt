@@ -1,0 +1,60 @@
+NAMESPACE                NAME                                               READY   STATUS      RESTARTS            AGE     IP                NODE        NOMINATED NODE   READINESS GATES
+cluster-network-addons   cluster-network-addons-operator-54c4dbfbbf-dtv5h   2/2     Running     0                   38d     192.168.35.141    masterk8s   <none>           <none>
+cluster-network-addons   ovs-cni-amd64-95vdz                                1/1     Running     14892 (8m52s ago)   181d    10.10.33.40       ue          <none>           <none>
+cluster-network-addons   ovs-cni-amd64-f9fs6                                1/1     Running     1 (154d ago)        181d    10.10.33.60       workerk8s   <none>           <none>
+cluster-network-addons   ovs-cni-amd64-pkpql                                1/1     Running     3 (42h ago)         181d    10.10.33.45       masterk8s   <none>           <none>
+cluster-network-addons   ovs-cni-amd64-ztw9b                                1/1     Running     2 (26d ago)         181d    10.10.33.54       open5gs     <none>           <none>
+default                  mec-app-1-7d8b5658b-p669c                          1/1     Running     0                   9d      192.168.43.247    open5gs     <none>           <none>
+default                  mec-app-2-9ff69847f-w6jpp                          1/1     Running     0                   9d      192.168.30.190    workerk8s   <none>           <none>
+default                  node-debugger-masterk8s-wslg7                      0/1     Completed   0                   7m23s   10.10.33.45       masterk8s   <none>           <none>
+default                  node-debugger-open5gs-d7z8b                        0/1     Completed   0                   7m16s   10.10.33.54       open5gs     <none>           <none>
+default                  node-debugger-workerk8s-8qt8x                      0/1     Completed   0                   7m9s    10.10.33.60       workerk8s   <none>           <none>
+kube-system              calico-kube-controllers-ddf655445-b9drz            1/1     Running     2 (26d ago)         181d    192.168.35.135    masterk8s   <none>           <none>
+kube-system              calico-node-4bcjd                                  1/1     Running     1 (154d ago)        181d    10.10.33.45       masterk8s   <none>           <none>
+kube-system              calico-node-fg9xc                                  1/1     Running     1 (154d ago)        181d    10.10.33.40       ue          <none>           <none>
+kube-system              calico-node-n5wgx                                  1/1     Running     1 (154d ago)        181d    10.10.33.60       workerk8s   <none>           <none>
+kube-system              calico-node-tw94d                                  1/1     Running     1 (154d ago)        181d    10.10.33.54       open5gs     <none>           <none>
+kube-system              coredns-55cb58b774-5k7gp                           1/1     Running     1 (154d ago)        181d    192.168.35.150    masterk8s   <none>           <none>
+kube-system              coredns-55cb58b774-xtr4s                           1/1     Running     1 (154d ago)        181d    192.168.35.136    masterk8s   <none>           <none>
+kube-system              etcd-masterk8s                                     1/1     Running     2 (154d ago)        181d    10.10.33.45       masterk8s   <none>           <none>
+kube-system              kube-apiserver-masterk8s                           1/1     Running     2 (154d ago)        181d    10.10.33.45       masterk8s   <none>           <none>
+kube-system              kube-controller-manager-masterk8s                  1/1     Running     5 (18d ago)         181d    10.10.33.45       masterk8s   <none>           <none>
+kube-system              kube-multus-ds-7sbjz                               1/1     Running     1 (154d ago)        181d    10.10.33.54       open5gs     <none>           <none>
+kube-system              kube-multus-ds-84p6w                               1/1     Running     5 (154d ago)        181d    10.10.33.40       ue          <none>           <none>
+kube-system              kube-multus-ds-flmgl                               1/1     Running     1 (154d ago)        181d    10.10.33.60       workerk8s   <none>           <none>
+kube-system              kube-multus-ds-hrvzr                               1/1     Running     1 (154d ago)        181d    10.10.33.45       masterk8s   <none>           <none>
+kube-system              kube-proxy-62vfd                                   1/1     Running     1 (154d ago)        181d    10.10.33.54       open5gs     <none>           <none>
+kube-system              kube-proxy-g4c84                                   1/1     Running     1 (154d ago)        181d    10.10.33.45       masterk8s   <none>           <none>
+kube-system              kube-proxy-t7hjw                                   1/1     Running     1 (154d ago)        181d    10.10.33.60       workerk8s   <none>           <none>
+kube-system              kube-proxy-v678g                                   1/1     Running     1 (154d ago)        181d    10.10.33.40       ue          <none>           <none>
+kube-system              kube-scheduler-masterk8s                           1/1     Running     5 (18d ago)         181d    10.10.33.45       masterk8s   <none>           <none>
+local-path-storage       local-path-provisioner-6947c64c68-r8x9m            1/1     Running     0                   38d     192.168.35.168    masterk8s   <none>           <none>
+mec                      cloud-848ccfcdd9-hd7wm                             1/1     Running     0                   15d     192.168.35.187    masterk8s   <none>           <none>
+mec                      drl-agent-597ffcd444-zktvh                         1/1     Running     0                   15d     192.168.35.138    masterk8s   <none>           <none>
+mec                      mec-app-6784d984bc-g8jvd                           1/1     Running     0                   3d17h   192.168.30.146    workerk8s   <none>           <none>
+mec                      mec-app-6784d984bc-zkgkr                           1/1     Running     0                   3d17h   192.168.43.209    open5gs     <none>           <none>
+mec                      node-exporter-jxxmd                                1/1     Running     0                   36d     10.10.33.45       masterk8s   <none>           <none>
+mec                      node-exporter-k2cx5                                1/1     Running     0                   36d     10.10.33.60       workerk8s   <none>           <none>
+mec                      node-exporter-wn9sv                                1/1     Running     0                   36d     10.10.33.54       open5gs     <none>           <none>
+mec                      prometheus-ai-66dc567758-46gkb                     1/1     Running     0                   2d21h   192.168.35.177    masterk8s   <none>           <none>
+mec                      redis-state-store-549db7f99-clqfz                  1/1     Running     0                   15d     192.168.35.173    masterk8s   <none>           <none>
+open5gs                  mec-app-1-85cc7b66c8-hwfjt                         1/1     Running     0                   22h     192.168.30.132    workerk8s   <none>           <none>
+open5gs                  mec-app-1-9f46f4456-xbrdr                          1/1     Running     0                   21h     192.168.43.242    open5gs     <none>           <none>
+open5gs                  mongodb-0                                          1/1     Running     0                   36d     192.168.35.165    masterk8s   <none>           <none>
+open5gs                  open5gs-amf-57f6995c9-dt8fq                        1/1     Running     0                   23h     192.168.35.151    masterk8s   <none>           <none>
+open5gs                  open5gs-ausf-675d6d5865-pxgsn                      1/1     Running     0                   15d     192.168.35.148    masterk8s   <none>           <none>
+open5gs                  open5gs-bsf-6c94585f79-mfqb5                       1/1     Running     0                   15d     192.168.35.185    masterk8s   <none>           <none>
+open5gs                  open5gs-nrf-6c997f96cb-qvtc9                       1/1     Running     0                   15d     192.168.35.130    masterk8s   <none>           <none>
+open5gs                  open5gs-nssf-7ff65b6c8d-fq9m4                      1/1     Running     0                   15d     192.168.35.129    masterk8s   <none>           <none>
+open5gs                  open5gs-pcf-7d49d4b94b-lhmw9                       1/1     Running     0                   15d     192.168.35.155    masterk8s   <none>           <none>
+open5gs                  open5gs-scp-5fc94c65fd-94w4c                       1/1     Running     0                   15d     192.168.35.166    masterk8s   <none>           <none>
+open5gs                  open5gs-smf1-794ff9cf96-lm8d5                      1/1     Running     0                   22h     192.168.35.142    masterk8s   <none>           <none>
+open5gs                  open5gs-udm-56c8469d75-b5lmh                       1/1     Running     0                   15d     192.168.35.146    masterk8s   <none>           <none>
+open5gs                  open5gs-udr-c85f848d9-tq7lx                        1/1     Running     0                   15d     192.168.35.154    masterk8s   <none>           <none>
+open5gs                  open5gs-upf-core-68f59f558d-9svqm                  1/1     Running     0                   41h     192.168.35.178    masterk8s   <none>           <none>
+open5gs                  open5gs-upf1-68774996-lxwlt                        1/1     Running     0                   41h     192.168.43.238    open5gs     <none>           <none>
+open5gs                  open5gs-upf2-f746f4457-b5ht4                       1/1     Running     0                   41h     192.168.30.137    workerk8s   <none>           <none>
+open5gs                  ueransim-exporter-78554cf6b7-f5gbd                 1/1     Running     0                   22h     192.168.30.150    workerk8s   <none>           <none>
+open5gs                  ueransim-gnb-mec1-68ffd5d576-qzhnf                 1/1     Running     1 (22h ago)         22h     192.168.43.193    open5gs     <none>           <none>
+open5gs                  ueransim-gnb-mec2-56d6697fbb-4dt4l                 1/1     Running     1 (22h ago)         22h     192.168.30.156    workerk8s   <none>           <none>
+open5gs                  ueransim-ue1-54f54cdd9c-whxgt                      1/1     Running     0                   22h     192.168.131.236   ue          <none>           <none>

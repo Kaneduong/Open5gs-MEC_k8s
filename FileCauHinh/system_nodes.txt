@@ -1,0 +1,5 @@
+NAME        STATUS   ROLES                AGE    VERSION    INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION       CONTAINER-RUNTIME
+masterk8s   Ready    control-plane,core   181d   v1.30.14   10.10.33.45   <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://2.2.1
+open5gs     Ready    mec                  181d   v1.30.14   10.10.33.54   <none>        Ubuntu 22.04.5 LTS   5.15.0-176-generic   containerd://2.2.1
+ue          Ready    ue                   181d   v1.30.14   10.10.33.40   <none>        Ubuntu 22.04.5 LTS   5.15.0-164-generic   containerd://2.2.1
+workerk8s   Ready    mec                  181d   v1.30.14   10.10.33.60   <none>        Ubuntu 22.04.5 LTS   5.15.0-171-generic   containerd://2.2.1
