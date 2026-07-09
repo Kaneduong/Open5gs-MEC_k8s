@@ -287,75 +287,134 @@ Hạn chế 1:
 UERANSIM không mô phỏng tầng vật lý (PHY), vì vậy UE trong UERANSIM không đo được RSRP, RSRQ, SINR như UE thật
 Kiến trúc của UERANSIM không có: MAC, PHY, RF. Nó truyền trực tiếp bằng socket UDP: UE -> UDP -> gNB
 UE chỉ giả lập rằng đã bắt được sóng (Found PLMN, Selected Cell, RRC Setup, Registration Request)
+
 Hướng giải quyết 1:
 Vì vậy: Sinh RSRP giả lập --> tạo pod exporter sinh rsrp
-RSRP (dBm)
-2-120                                                -70
-3  |--------------------------------------------------|
-4       Node 2              Hysteresis         Node 1
-5       ưu tiên MEC         Chuyển giao        ưu tiên MEC
+   RSRP (dBm)
+2 -120                                                -70
+3   |--------------------------------------------------|
+4   Node 2              Hysteresis         Node 1
+5   ưu tiên MEC         Chuyển giao        ưu tiên MEC
 6 
-7  <───────────────|═══════════════|───────────────>
-8                 -100           -90
-9 
-10  RSRP < -100      -100 ≤ RSRP ≤ -90      RSRP > -90
-11      ↓                    ↓                  ↓
-12   MEC Node 2       Giữ trạng thái       MEC Node 1
-13                    hiện tại / HO
+7   <───────────────|═══════════════|───────────────>
+8                  -100           -90
+9  
+10   RSRP < -100      -100 ≤ RSRP ≤ -90      RSRP > -90
+11       ↓                    ↓                  ↓
+12    MEC Node 2       Giữ trạng thái       MEC Node 1
+13                     hiện tại / HO
 
-cat <<EOF > ~/drl-agent-build/data_collector.py
-import urllib.request
+cat <<EOF > ~/drl-agent-build/exporter.py
+from prometheus_client import start_http_server, Gauge
+import time
 
-URL = "http://192.168.30.150:8080/metrics"
+rsrp_metric = Gauge('ueransim_ue_rsrp', 'RSRP of UE', ['pod_name'])
 
-def get_rsrp():
-    try:
-        # Tăng timeout để đợi dữ liệu từ exporter
-        with urllib.request.urlopen(URL, timeout=1) as res:
-            data = res.read().decode()
-            for line in data.split('\n'):
-                if 'ueransim_ue_rsrp{pod_name="ue1"}' in line:
-                    return float(line.split()[-1])
-    except Exception:
-        return None # Chỉ trả về None khi lỗi
-    return None
+if __name__ == '__main__':
+    start_http_server(8080)
+    print("🚀 Exporter đang chạy trên port 8080...")
+    current_rsrp = -70.0
+    direction = -1.0
+    while True:
+        current_rsrp += direction
+        if current_rsrp <= -120.0 or current_rsrp >= -70.0:
+            direction *= -1
+        rsrp_metric.labels(pod_name="ue1").set(current_rsrp)
+        time.sleep(1)
 EOF
 
 
 cat <<EOF > ~/drl-agent-build/agent.py
-import time, os
-from data_collector import get_rsrp
+import time, os, urllib.request
+
+URL = "http://localhost:8080/metrics"
+
+def get_rsrp():
+    try:
+        with urllib.request.urlopen(URL, timeout=2) as res:
+            data = res.read().decode()
+            for line in data.split('\n'):
+                # Tìm dòng chứa giá trị RSRP cho ue1
+                if 'ueransim_ue_rsrp{pod_name="ue1"}' in line:
+                    return float(line.split()[-1])
+    except Exception as e:
+        return None
+    return None
 
 def update_mec_node(node_name):
     print(f"🔄 ĐANG HANDOVER sang Node: {node_name}")
-    # Đảm bảo dùng lệnh patch chính xác
     patch_cmd = f'kubectl patch deployment mec-counter-app -n open5gs -p \'{{"spec":{{"template":{{"spec":{{"nodeSelector":{{"kubernetes.io/hostname":"{node_name}"}}}}}}}}}}\''
     os.system(patch_cmd)
 
 current_node = "open5gs"
+print("📡 Agent đã sẵn sàng theo dõi...")
 
 while True:
     rsrp = get_rsrp()
-    
     if rsrp is None:
-        print("❌ LỖI: Exporter không phản hồi! Kiểm tra exporter.py")
+        print("❌ Chưa nhận được dữ liệu từ Exporter (port 8080)...")
     else:
-        # LOG RSRP để bạn thấy nó giảm từ -70 xuống -120
-        print(f"📡 RSRP thực: {rsrp:.1f} dBm | Node: {current_node}")
+        print(f"📡 RSRP thực: {rsrp:.1f} dBm | Node hiện tại: {current_node}")
         
-        # Logic Handover
-        # Chuyển sang workerk8s nếu RSRP < -90
+        # Logic Handover (Vùng trễ từ -80 đến -90)
         if current_node == "open5gs" and rsrp < -90.0:
             update_mec_node("workerk8s")
             current_node = "workerk8s"
-        # Chuyển về open5gs nếu RSRP > -80
         elif current_node == "workerk8s" and rsrp > -80.0:
             update_mec_node("open5gs")
             current_node = "open5gs"
-    
-    time.sleep(1) # Đồng bộ 1s/lần
+            
+    time.sleep(1)
 EOF
 
-kubectl get pods -n open5gs -l app=mec-counter -o wide
+
+
 ps aux | grep python
 kill -9 448211
+
+Chứng minh ngữ cảnh:
+Bước 1: Lấy tên UE -> lấy IP mec app -> Truy cập ue vào mec-counter-app:
+UE_POD=$(kubectl get pods -n open5gs -l component=ue -o jsonpath='{.items[0].metadata.name}')
+MEC_IP=$(kubectl get pods -n open5gs -l app=mec-counter -o jsonpath='{.items[0].status.podIP}')
+kubectl exec -it $UE_POD -n open5gs -- curl http://$MEC_IP:8000/video_stream
+Output: {"current_frame":11,"serving_pod":"mec-counter-app-9d69cd954-dqqlf","status":"active"}
+Kiểm tra:
+{"current_frame":11, <== đang ở số 11
+"serving_pod":"mec-counter-app-9d69cd954-dqqlf", <== tên, có thể kiểm tra xem đang ở mec nào, ip nhiêu
+"status":"active"}
+
+Chứng minh di chuyển
+Show mec-counter-app ở mec (node) nào (open5gs là mec1, workerk8s là mec 2)
+kubectl get pods -n open5gs -l app=mec-counter -o wide
+
+Chạy exporter.py ở terminal 1 để tạo rsrp
+python3 ~/drl-build-agent/exporter.py
+
+Chạy agent.py ở terminal 2 để nhận diện rsrp cho thấy ue di chuyển
+python3 ~/drl-build-agent/agent.py
+
+
+Chờ agent báo handover (di chuyển qua mec khác), check mec-counter-app ở mec (node) nào (open5gs là mec1, workerk8s là mec 2)
+Ghi nhớ tên và ip mới của mec-counter-app:
+kubectl get pods -n open5gs -l app=mec-counter -o wide
+
+Kiểm tra redis:
+kubectl exec -it <tên mec-counter-app mới> -n open5gs -- python3 -c '
+import redis
+r = redis.Redis(host="10.100.219.196", port=6379, db=0, decode_responses=True)
+keys = r.keys("*")
+print("Các keys hiện có:", keys)
+for key in keys:
+    print(f"{key}: {r.get(key)}")
+'
+
+Output:
+Các keys hiện có: ['ue1_migration', 'ue1_session']
+ue1_migration: {"target": "10.10.4.1", "time": 1782974196.3115513}
+ue1_session: 11 <== sau di chuyển ue vẫn giữ ngữ cảnh là số 11
+
+Tiến hành truy cập mec-counter-app lần nữa xem có nhớ ngữ cảnh là 11 và frame có tăng không, tên pod có giống mec-counter-app mới không?
+UE_POD=$(kubectl get pods -n open5gs -l component=ue -o jsonpath='{.items[0].metadata.name}')
+MEC_IP=$(kubectl get pods -n open5gs -l app=mec-counter -o jsonpath='{.items[0].status.podIP}')
+kubectl exec -it $UE_POD -n open5gs -- curl http://$MEC_IP:8000/video_stream
+
