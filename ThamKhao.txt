@@ -399,7 +399,7 @@ Ghi nhớ tên và ip mới của mec-counter-app:
 kubectl get pods -n open5gs -l app=mec-counter -o wide
 
 Kiểm tra redis:
-kubectl exec -it <tên mec-counter-app mới> -n open5gs -- python3 -c '
+kubectl exec -it mec-counter-app-9d69cd954-7w8gb -n open5gs -- python3 -c '
 import redis
 r = redis.Redis(host="10.100.219.196", port=6379, db=0, decode_responses=True)
 keys = r.keys("*")
@@ -417,4 +417,30 @@ Tiến hành truy cập mec-counter-app lần nữa xem có nhớ ngữ cảnh l
 UE_POD=$(kubectl get pods -n open5gs -l component=ue -o jsonpath='{.items[0].metadata.name}')
 MEC_IP=$(kubectl get pods -n open5gs -l app=mec-counter -o jsonpath='{.items[0].status.podIP}')
 kubectl exec -it $UE_POD -n open5gs -- curl http://$MEC_IP:8000/video_stream
+
+
+
+kubectl get pods -n open5gs -l app=mec-counter -o wide
+
+UE_POD=$(kubectl get pods -n open5gs -l component=ue -o jsonpath='{.items[0].metadata.name}')
+MEC_IP=$(kubectl get pods -n open5gs -l app=mec-counter -o jsonpath='{.items[0].status.podIP}')
+kubectl exec -it $UE_POD -n open5gs -- curl http://$MEC_IP:8000/video_stream
+
+kubectl get pods -n open5gs -l app=mec-counter -o wide
+
+kubectl exec -it mec-counter-app-9d69cd954-jcjvr -n open5gs -- python3 -c '
+import redis
+r = redis.Redis(host="10.100.219.196", port=6379, db=0, decode_responses=True)
+keys = r.keys("*")
+print("Các keys hiện có:", keys)
+for key in keys:
+    print(f"{key}: {r.get(key)}")
+'
+
+UE_POD=$(kubectl get pods -n open5gs -l component=ue -o jsonpath='{.items[0].metadata.name}')
+MEC_IP=$(kubectl get pods -n open5gs -l app=mec-counter -o jsonpath='{.items[0].status.podIP}')
+kubectl exec -it $UE_POD -n open5gs -- curl http://$MEC_IP:8000/video_stream
+
+
+https://youtu.be/uY1P3T4dtWU
 
