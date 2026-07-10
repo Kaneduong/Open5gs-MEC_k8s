@@ -99,6 +99,9 @@ application/vnd.oci.image.manifest.v1+json sha256:d6c30dddfdc818eadc9e9649bf133b
 Importing       elapsed: 9.0 s  total:   0.0 B  (0.0 B/s)
 root@WorkerK8s:~#
 
+kind: Deployment (gồm nhiều pod giống nhau với rep)
+kind: Pod
+
 nano deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -326,9 +329,7 @@ EOF
 
 cat <<EOF > ~/drl-agent-build/agent.py
 import time, os, urllib.request
-
 URL = "http://localhost:8080/metrics"
-
 def get_rsrp():
     try:
         with urllib.request.urlopen(URL, timeout=2) as res:
@@ -340,12 +341,10 @@ def get_rsrp():
     except Exception as e:
         return None
     return None
-
 def update_mec_node(node_name):
     print(f"🔄 ĐANG HANDOVER sang Node: {node_name}")
     patch_cmd = f'kubectl patch deployment mec-counter-app -n open5gs -p \'{{"spec":{{"template":{{"spec":{{"nodeSelector":{{"kubernetes.io/hostname":"{node_name}"}}}}}}}}}}\''
     os.system(patch_cmd)
-
 current_node = "open5gs"
 print("📡 Agent đã sẵn sàng theo dõi...")
 
